@@ -26,12 +26,12 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	@(#)fd2.c	1.5 (jneitzel) 2006/08/20
+ *	@(#)$Id:$
  */
 
 #ifndef	lint
 #include "version.h"
-OSH_SOURCEID("fd2.c	1.5 (jneitzel) 2006/08/20");
+OSH_RCSID("$Id:$");
 #endif	/* !lint */
 
 #include <sys/stat.h>

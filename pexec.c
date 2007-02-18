@@ -23,7 +23,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	@(#)pexec.c	1.4 (jneitzel) 2006/05/30
+ *	@(#)$Id:$
  */
 /*
  *	Derived from:
@@ -63,7 +63,7 @@
 
 #ifndef	lint
 #include "version.h"
-OSH_SOURCEID("pexec.c	1.4 (jneitzel) 2006/05/30");
+OSH_RCSID("$Id:$");
 #endif	/* !lint */
 
 #include <errno.h>

@@ -23,11 +23,29 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	@(#)version.h	1.5 (jneitzel) 2007/01/31
+ *	@(#)$Id:$
  */
 
 #ifndef	VERSION_H
 #define	VERSION_H
+
+#ifndef	OSH_VERSION
+#define	OSH_VERSION		"osh-20070131"
+#endif	/* !OSH_VERSION */
+
+#ifndef	OSH_RCSID
+# if __GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ >= 4
+#  define	ATTR	__attribute__((__used__))
+# elif defined(__GNUC__)
+#  define	ATTR	__attribute__((__unused__))
+# else
+#  define	ATTR	/* nothing */
+# endif
+#define	OSH_RCSID(string)	/*@unused@*/	\
+		static const char rcsid[] ATTR = "\100(#)" string
+#endif	/* !OSH_RCSID */
+
+#if 0
 
 #ifndef	OSH_RELEASE
 #define	OSH_RELEASE		"osh-20070131"
@@ -44,5 +62,7 @@
 #define	OSH_SOURCEID(string)	/*@unused@*/	\
 		static const char sid[] ATTR = "\100(#)" OSH_RELEASE ": " string
 #endif	/* !OSH_SOURCEID */
+
+#endif
 
 #endif	/* VERSION_H */

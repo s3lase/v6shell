@@ -26,7 +26,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	@(#)goto.c	1.4 (jneitzel) 2006/06/25
+ *	@(#)$Id:$
  */
 /*
  *	Derived from: Sixth Edition Unix /usr/source/s1/goto.c
@@ -66,7 +66,7 @@
 
 #ifndef	lint
 #include "version.h"
-OSH_SOURCEID("goto.c	1.4 (jneitzel) 2006/06/25");
+OSH_RCSID("$Id:$");
 #endif	/* !lint */
 
 #include <stdio.h>

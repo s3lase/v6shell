@@ -26,7 +26,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	@(#)sh6.c	1.4 (jneitzel) 2007/01/14
+ *	@(#)$Id:$
  */
 /*
  *	Derived from: Sixth Edition Unix /usr/source/s2/sh.c
@@ -66,7 +66,7 @@
 
 #ifndef	lint
 #include "version.h"
-OSH_SOURCEID("sh6.c	1.4 (jneitzel) 2007/01/14");
+OSH_RCSID("$Id:$");
 #endif	/* !lint */
 
 #include <sys/types.h>
