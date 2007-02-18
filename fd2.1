@@ -1,0 +1,127 @@
+.\"
+.\" Copyright (c) 2005, 2006
+.\"	Jeffrey Allen Neitzel <jneitzel (at) sdf1 (dot) org>.
+.\"	All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY JEFFREY ALLEN NEITZEL ``AS IS'', AND ANY
+.\" EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL JEFFREY ALLEN NEITZEL BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+.\" USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.TH FD2 1 "August 20, 2006" "osh-20070131" "General Commands"
+.SH NAME
+fd2 \- redirect file descriptor 2
+.SH SYNOPSIS
+.B fd2
+[\fB\-f\fR \fIfile\fR] \fIcommand\fR [\fIarg ...\fR]
+.SH DESCRIPTION
+Since the shell provides no way to
+redirect the diagnostic output,
+.I fd2
+provides this functionality instead by
+executing the specified
+.I command
+with the given arguments
+and redirecting file descriptor 2 (standard error)
+.\" either to file descriptor 1 (standard output),
+to file descriptor 1 (standard output) by default,
+.\" or to a file.
+or optionally to the specified file.
+.PP
+The following option is available:
+.TP
+.BI \-f \ file
+Causes all diagnostic output from
+.I command
+to be redirected to \fIfile\fR,
+which is created if it does not exist.
+If it already exists,
+all diagnostic output is appended
+to the end of \fIfile\fR.
+.SH "EXIT STATUS"
+If
+.I fd2
+detects an error,
+it prints an appropriate diagnostic
+and exits with a non-zero status.
+Otherwise,
+the exit status is that
+of the executed command.
+.SH EXAMPLES
+The following examples assume that the directory
+referred to by `/tmp/$$' already exists,
+is writable by the user,
+and that the shell being used is either
+.IR osh (1)
+or
+.IR sh6 (1).
+The following command line:
+.PP
+.RS 6
+fd2 make foo >/tmp/$$/foo.outerr
+.RE
+.PP
+causes all standard and diagnostic output from
+.I make
+to be redirected to the file `/tmp/$$/foo.outerr',
+which is first created by the shell.
+In contrast:
+.PP
+.RS 6
+fd2 \-f /tmp/$$/foo.err make foo >/tmp/$$/foo.out
+.RE
+.PP
+causes all standard output to be redirected
+to the file `/tmp/$$/foo.out',
+which is created by the shell.
+All diagnostic output is redirected
+to the file `/tmp/$$/foo.err',
+which is created by
+.I fd2
+if it does not already exist.
+.SH ENVIRONMENT
+.TP
+.B EXECSHELL
+If set to a non-empty string,
+the value of this variable is taken as the
+path name of the shell which is invoked to
+execute the specified command when it does not
+begin with the proper magic number
+or a `#!shell' sequence.
+.TP
+.B PATH
+If set to a non-empty string,
+the value of this variable is taken as the
+sequence of directories which is used to
+search for the specified command.
+.SH "SEE ALSO"
+osh(1),
+sh6(1)
+.PP
+Osh home page:
+http://jneitzel.sdf1.org/osh/
+.SH AUTHOR
+This implementation of
+.I fd2
+is written by Jeffrey Allen Neitzel.
+.SH LICENSE
+See either the LICENSE file which is distributed with
+.I osh
+or
+http://jneitzel.sdf1.org/osh/license/
+for full details.

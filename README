@@ -1,0 +1,76 @@
+Welcome to release 20070131 of osh!
+
+Osh(1) is an enhanced, backward-compatible port of the Sixth Edition
+Thompson shell (circa 1975).  The original Thompson shell was
+principally written by Ken Thompson of Bell Labs.
+
+Sh6(1) (a port of the original shell) and glob6(1) (a port of the
+global command) are also included in this package.  Like osh, they
+provide a user interface which is backward compatible with that
+provided by the Sixth Edition Thompson shell and global command,
+without the obvious enhancements.
+
+Notice that this package also includes the following shell utilities:
+
+	if(1) - conditional command (ported from Sixth Edition Unix)
+
+	goto(1) - transfer command (ported from Sixth Edition Unix)
+
+	fd2(1) - a utility to redirect file descriptor 2
+
+--------
+INSTALL:
+Select the instructions under 1), 2), or 3) depending on which parts
+of the osh package you wish to install.
+
+1) The following steps build/install everything:
+
+	a) Adjust the CONFIGURATION section in the Makefile to match
+	   your desires and/or the requirements of your system.
+
+	b) Type `make' to compile the binaries.
+
+	c) Type `make install' to install the binaries
+	   and manual pages.
+
+2) The following steps build/install osh, if, goto, and fd2:
+
+	a) Adjust the CONFIGURATION section in the Makefile to match
+	   your desires and/or the requirements of your system.
+
+	b) Type `make oshall' to compile the binaries.
+
+	c) Type `make install-oshall' to install the binaries
+	   and manual pages.
+
+3) The following steps build/install sh6, glob6, if, goto, and fd2:
+
+	a) Adjust the CONFIGURATION section in the Makefile to match
+	   your desires and/or the requirements of your system.
+
+	b) Type `make sh6all' to compile the binaries.
+
+	c) Type `make install-sh6all' to install the binaries
+	   and manual pages.
+
+--------
+This software should build and work correctly on any POSIX-compliant
+Unix system.  In particular, it is currently developed, maintained,
+and tested by the developer on NetBSD, OpenBSD, and Mac OS X.  In
+the past, it has also been successfully tested on FreeBSD and on
+various distributions of GNU/Linux.
+
+If you think you may have found a bug, before reporting it, please
+try to reproduce it with the latest version of the code.  With bug
+reports, please try to ensure that enough information to reproduce
+the problem is enclosed.  Also, if a known fix for it exists then
+please include that as well.  All bug reports should be sent to the
+following email address:
+	jneitzel (at) sdf1 (dot) org
+
+If you have any questions about this software, I encourage you to
+contact me via email.  Enjoy!
+
+Jeffrey Allen Neitzel
+jneitzel (at) sdf1 (dot) org
+http://jneitzel.sdf1.org/osh/

@@ -1,0 +1,136 @@
+--------
+Historical notes for osh(1) and sh6(1):
+
+The Thompson shell, by Ken Thompson of Bell Labs, was distributed
+as the standard command interpreter through Sixth Edition Unix.
+Then, in the Seventh Edition, it was replaced by the Bourne shell.
+However, the Thompson shell was still distributed with the system
+as osh because of known portability problems with the Bourne shell's
+memory management in Seventh Edition Unix.
+
+The name of the Thompson shell's binary executable was `sh'.
+It was installed as `/bin/sh' through Sixth Edition Unix and
+made use of the following external utilities:
+
+	1) /bin/exit was used to terminate command files.
+
+	2) /bin/goto was used to transfer the shell's control
+	   from one point to another within a command file.
+
+	3) /bin/if was used to evaluate conditional expressions.
+	   This is the predecessor of test(1), which was first
+	   released in Seventh Edition Unix.
+
+	4) /etc/glob was used to expand `*', `?', and `[...]'
+	   in command arguments.
+
+The functionality of each of the above-mentioned utilities is
+provided here.  However, the `exit' utility is implemented as a
+special built-in command.  See the goto(1) and if(1) manual pages
+for full details regarding the ports of these utilities.
+
+For osh(1), `glob' is built into the shell by using a port of the
+glob6(1) source code.
+
+For sh6(1), the Thompson-shell port's binary executable has been
+renamed from `sh' to `sh6' to avoid name conflict and confusion
+with the system shell, sh(1), on modern Unix systems.  Similarly,
+the `glob' utility has been renamed to `glob6' and is installed
+into the same directory as the shell, rather than being installed
+into the /etc directory.
+
+--------
+Compatibility notes for osh(1):
+
+This is an enhanced, backward-compatible port of the Thompson shell
+from Sixth Edition Unix.  However, when it is known to differ in
+some way from the original, this fact is indicated in the osh(1)
+manual page.
+
+Aside from those differences which are detailed either in the manual
+page or below, the only other substantial difference is that this
+port of the shell can handle 8-bit character sets.  However, the
+original can only handle 7-bit ASCII.
+
+Further details regarding some of the known differences:
+
+1) This port of the shell uses PATH to search for external commands,
+   but the original always uses the equivalent of `.:/bin:/usr/bin'.
+   The sh(1) manual page from Sixth Edition Unix reads as follows:
+
+       If  the  first argument is the name of an executable file,
+       it is invoked; otherwise the string `/bin/'  is  prepended
+       to  the  argument.   (In  this way most standard commands,
+       which reside in `/bin', are found.)  If no such command is
+       found,  the  string  `/usr'  is further prepended (to give
+       `/usr/bin/command') and another attempt is made to execute
+       the resulting file.  (Certain lesser-used commands live in
+       `/usr/bin'.)
+
+   ...
+   The primary reason this port of the shell uses PATH instead of a
+   procedure like that described above is for both user convenience
+   and security.  The behavior described above can conceivably be
+   quite dangerous as an unchangeable default.
+
+   Using PATH allows the user to choose the search behavior.
+   If search behavior like that of the original is desired, the
+   user can set PATH to a value of `.:/bin:/usr/bin' in order to
+   accomplish this.
+
+2) This port of the shell ignores the first line of a command file
+   if it begins with `#!' in order to play nicely with kernels which
+   support the `#!' mechanism.  For example, the first line might be
+   `#!/usr/local/bin/osh' or `#!/usr/bin/env osh'.  This is just for
+   user convenience in the face of conflicting shell languages.
+
+3) The original implementation of the shell does shell accounting
+   in order to record command execution data; this one does not.
+
+--------
+Compatibility notes for sh6(1):
+
+This is a port of the Thompson shell from Sixth Edition Unix.
+However, when it is known to differ in some way from the original,
+this fact is indicated in the sh6(1) manual page.
+
+Aside from those differences which are detailed either in the manual
+page or below, the CHANGES_sh-to-sh6 file contains further information
+regarding how this port differs from the original.
+
+Further details regarding the substantial differences:
+
+1) This port of the shell uses PATH to search for external commands,
+   but the original always uses the equivalent of `.:/bin:/usr/bin'.
+   The sh(1) manual page from Sixth Edition Unix reads as follows:
+
+       If  the  first argument is the name of an executable file,
+       it is invoked; otherwise the string `/bin/'  is  prepended
+       to  the  argument.   (In  this way most standard commands,
+       which reside in `/bin', are found.)  If no such command is
+       found,  the  string  `/usr'  is further prepended (to give
+       `/usr/bin/command') and another attempt is made to execute
+       the resulting file.  (Certain lesser-used commands live in
+       `/usr/bin'.)
+
+   ...
+   The primary reason this port of the shell uses PATH instead of a
+   procedure like that described above is for both user convenience
+   and security.  The behavior described above can conceivably be
+   quite dangerous as an unchangeable default.
+
+   Using PATH allows the user to choose the search behavior.
+   If search behavior like that of the original is desired, the
+   user can set PATH to a value of `.:/bin:/usr/bin' in order to
+   accomplish this.
+
+2) This port of the shell ignores the first line of a command file
+   if it begins with `#!' in order to play nicely with kernels which
+   support the `#!' mechanism.  For example, the first line might be
+   `#!/usr/local/bin/sh6' or `#!/usr/bin/env sh6'.  This is just for
+   user convenience in the face of conflicting shell languages.
+
+3) The original implementation of the shell does shell accounting
+   in order to record command execution data; this port does not.
+
+Jeffrey Allen Neitzel						2007/01/28

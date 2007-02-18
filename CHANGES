@@ -1,0 +1,1094 @@
+Changes that improve compatibility w/ the Sixth Edition Unix shell
+are marked w/ a `C:' in the details below.
+
+-------------------------------------------------------------------------------
+[osh-20070131]:
+osh.1:
+	* Made a few minimal changes to synchronize the manual w/ the code.
+
+osh.c	1.2 (jneitzel) 2007/01/14:
+	* Changed the `chdir: No old directory' diagnostic to
+	  `chdir: No previous directory' to match the manual.
+
+-------------------------------------------------------------------------------
+[osh-20061230]:
+	The following files have been removed in this release:
+		examples/*: These files are now available at:
+			    http://jneitzel.sdf1.org/osh/initialization_files/
+		   tests/*: ... until I have a chance to rewrite them ...
+
+*.1:
+	* Changed all instances of `UNIX' to `Unix' since the name
+	  of the Unix operating system is not an acronym.
+
+pexec.c:
+	* Fixed a possible, but very unlikely, memory leak.
+
+osh.c:
+	C: Rewrote the shell!  It is now a combination of the ports of the
+	   original source code from sh6.c and glob6.c (see CHANGES_sh-to-sh6)
+	   w/ the prior enhancements which were found in osh-060124/osh*.[ch] .
+
+fd2.c:
+	* Removed the call to lseek(2) to end-of-file for errors.
+	  The shell determines when this is necessary.
+
+	* Changed the `: no shell' diagnostic to `: No shell!'
+	  in the spirit of sh6(1).
+
+goto.c:
+	* Fixed a bug which interfered w/ finding a requested label when
+	  its first character had the high-order bit set.  The value of the
+	  first character is now passed to getlabel() as an unsigned char
+	  converted to an int to allow correct comparison in such a case.
+
+if.c:
+	* Removed the call to lseek(2) to end-of-file for errors.
+	  The shell determines when this is necessary.
+
+	* Changed the method used to build the argument list for all commands
+	  executed by this utility, and removed the `Too many args' diagnostic.
+	  The maximum length of the argument list for a command is now limited
+	  only by the maximum length that the invoker can pass and by any
+	  system-imposed limit for execve(2) (see E2BIG in errno(2)).
+
+	* Changed the `: no shell' diagnostic to `: No shell!'
+	  in the spirit of sh6(1).
+
+	* Changed the diagnostic used for `!', `-a', `-o', and `(' operator
+	  errors from `: argument expected' to `: expression expected'.
+
+-------------------------------------------------------------------------------
+[osh-060124]:
+Makefile:
+	* Added targets for building/installing sh6(1) and glob6(1).
+	  Refer to the README file for further details.
+
+	* Removed the `check-sh6' target since the tests were originally
+	  written for osh(1) and sh6(1) as Thompson-shell reimplementations,
+	  not ports.
+
+sh6:
+	* Changed sh6(1) from being a reimplementation which is compiled from
+	  the same sources as osh(1) to being a port of the original Thompson
+	  shell from Sixth Edition Unix.  Refer to the CHANGES_sh-to-sh6 file
+	  for further details.
+
+osh:
+	C: Treat both `( ; )' and `( & )' as syntax errors.
+
+	C: Print the process ID for each command of an asynchronous pipeline,
+	   not just the last command.
+
+	C: Added the `newgrp' special command.  It is similar to `login'
+	   except that the newgrp(1) utility replaces the current interactive
+	   shell rather than the login(1) utility.
+
+	* When opening `/dev/null' is needed for an asynchronous command,
+	  call open(2) w/ the O_RDONLY flag instead of O_RDWR.
+
+-------------------------------------------------------------------------------
+[osh-051120]:
+	This release fixes some problems introduced in osh-051030.
+
+[fios]*.1:
+	* Made a few minimal changes for the sake of clarity.
+
+osh and sh6:
+	* Fixed a file (pipe) descriptor leak in pipeline execution when
+	  the shell is interactive.  This also includes those cases where
+	  the shell is executing an initialization file or sourcing a file
+	  from an interactive shell.  Specifically, when the shell detected
+	  an error during execution of a pipeline, it did not close(2) all
+	  of the appropriate pipe descriptors which had been allocated by
+	  pipe(2) for the next command in the pipeline.
+
+	* Reverted the unconventional execution error behavior introduced
+	  in the previous release since this change was out of character
+	  w/ the Thompson shell, and other common Unix shells as well.
+
+osh only:
+	* Fixed a bug in the `exec' special command where a pipeline such as
+	  `( cat /dev/zero ) | exec sleep 1' would not replace the current
+	  shell with an instance of sleep(1).
+
+-------------------------------------------------------------------------------
+[osh-051030]:
+	This release includes the following new files:
+		  fd2.[1c]: This is the fd2 utility from fd2-050215.
+		pexec.[ch]: The pexec() function is used instead of execvp(3).
+			    See below for details.
+
+LICENSE:
+	* Added an entry for pexec.c which mentions its being derived from
+	  the NetBSD project's /usr/src/lib/libc/gen/execvp.c and includes
+	  a copy of its original license.  Of course, the pexec.c file also
+	  includes the pertinent license information.
+
+Makefile:
+	* Added appropriate targets for building/installing the fd2 utility.
+	  The default is to build/install osh, if, goto, and fd2.
+
+examples:
+	* Updated the example initialization files and command files.
+
+tests:
+	* Made changes to the tests in accordance w/ changes to the software.
+
+*.1:
+	* Made revisions in accordance w/ changes to the software.
+
+osh and sh6:
+	* Did some more generic code cleanup and simplification.
+	  This was largely inspired by the fact that the developer was
+	  seeking workarounds for a few system bugs present in Mac OS X
+	  (Panther and Tiger).  The system and library calls with some
+	  incorrect behavior include:
+		lseek(2)             - Panther only,
+		fstat(2) and glob(3) - Tiger only.
+
+	  Since the bugs present in Panther differ from those in Tiger, the
+	  workarounds were removed for the sake of simplicity.  However, the
+	  generic code cleanups remain.  The observed problems for the shell
+	  in Mac OS X are very minor and do not interfere w/ using the shell
+	  in the normal case.  The results from `make check' demonstrate the
+	  exceptional cases where Mac OS X impedes operation of the shell.
+
+	* If the shell is invoked w/ an invalid argument list (argc == 0),
+	  exit w/ error and print the diagnostic `Invalid argument list'.
+
+	* After the shell is invoked and initializes itself but before it
+	  begins reading/executing commands, close any open descriptors in
+	  the range 3 - 19 (inclusive) that the shell did not set up for
+	  itself.  Note that doing so does not break x-only scripts if
+	  such scripts are supported on a particular Unix system.
+
+	* Increased some key buffer sizes...
+	  The size of the command-line buffer now allows for 2047 characters
+	  in each command line instead of 1023.  The size of the argument list
+	  array now allows for 511 arguments in each command instead of 255.
+
+	* Set the SIGCHLD signal to its default action when the shell starts.
+	  This is necessary on some systems because the shell's parent process
+	  might try to ignore SIGCHLD, and correct operation of the shell
+	  requires that zombies be created for its terminated children.
+	  Otherwise, the shell may not be able to properly waitpid(2)
+	  for, and report the termination status of, its children
+	  when they terminate.
+
+	* The asynchronous and sequential process lists are no longer
+	  dynamically allocated.  Now, these process lists are statically
+	  allocated, each allowing up to 64 process IDs.  This is more than
+	  adequate in the normal case.  Also, it has the benefit of a simpler
+	  implementation.  A diagnostic is printed if the limits are exceeded.
+
+	* The shell no longer uses execvp(3).  Instead, it uses pexec() which
+	  is simply a derivation of NetBSD's execvp(3).  This change allows the
+	  shell to deal with ENOEXEC errors in a way which is to similar to how
+	  the Thompson shell handled it.  In addition, it allows the user to
+	  disable the searching of PATH for external commands.  This is done
+	  by unsetting PATH or setting it to the empty string.
+
+	* Instead of exiting with a status of 1 for some errors and a status
+	  of 2 for others, simply use a status of 2 to indicate that the shell
+	  has detected an error.  See the `EXIT STATUS' section of the shell
+	  manual pages for the final word on the exit status of the shell.
+
+	* Fixed a problem in how the shell exits on error when invoked w/
+	  the `-c' option.  The problem can be observed in ssh(1) by doing
+	  a `ssh user@host "syntax error >"' which requires the user to type
+	  an EOT (^D) (assuming input is a terminal) in order to cause the
+	  shell to exit.  Now, the shell exits as it should.
+
+	* A cleanup of the logic and code for shell termination on errors
+	  was also done.  This is related to the problem mentioned above.
+	  Now, for the `-c' and `-t' options the shell does not affect the
+	  offset of the standard input when an error occurs.  That is, it
+	  no longer calls lseek(2), simply calling exit(3) in such cases.
+
+	* The shell now aborts execution of a command line when it detects
+	  an execution error that happens before calling fork(2).  This can
+	  help in an interactive shell in particular.  For example:
+	  1)
+		% wc -l data
+		      66 data
+		% chdir bad_dir; ( : ) >data
+		chdir: bad directory
+		% wc -l data
+		       0 data
+
+	  2)
+		% wc -l data
+		      66 data
+		% chdir bad_dir; ( : ) >data
+		chdir: bad directory
+		% wc -l data
+		      66 data
+
+	  In the first case, this obviously clobbers the file `data' which
+	  might be very undesirable if `data' is important.  In the second
+	  case however, `data' is never clobbered since the failed `chdir'
+	  aborts execution of the command line.
+
+	* If command-line overflow occurs on a terminal device, the shell
+	  no longer uses tcflush(3) to discard the overflowed characters.
+	  Instead, it simply reads and discards the remaining overflowed
+	  characters which have been received from the terminal for the
+	  overflowed line.
+
+	* Changed when the shell generates termination reports for
+	  asynchronous processes.  Instead of being generated after
+	  a command line is read and parsed, but before it is executed...
+	  They are now generated after a command line is executed.
+	  This prevents the possibility that the user might miss an
+	  important process termination if it is reported just before
+	  a screen-oriented text editor (like vi(1)) is invoked.
+	  Now, the process termination will be reported after the
+	  user quits the editor.
+
+osh only:
+	* Eliminated all of the code for the run-time compatibility toggles.
+	  Trying to have 2 shells in one is simply not worth the increase in
+	  code size and complexity.  If the user wants compatible only, the
+	  simple solution is to compile and run the shell as sh6(1).
+	  Otherwise, compile and run it as osh(1).
+
+	* Eliminated the globbing behavior for failed matches which was like
+	  that found in the Bourne shell.  Osh(1) now uses only the behavior
+	  found in the Thompson shell for failed matches.  See the manual page
+	  for details, but in short the user may see a `No match' diagnostic.
+
+	* Changed the effect of command-line overflow when it occurs in an
+	  initialization file.  Previously, the shell would treat it as an
+	  error and lseek(2) to the end of the file.  Now, the shell shall
+	  continue to read and execute commands from the file as if no error
+	  had occurred.  Though, the `Command line overflow' diagnostic is
+	  still printed, and the exit status is set accordingly.
+
+	* Added 2 new environment variables and 2 new special parameters.
+	  OSHDIR corresponds w/ `$d', and EXECSHELL corresponds w/ `$e'.
+	  See the osh(1) manual page for full details.
+
+	* Made the shell to be more picky about correct usage for the
+	  `setenv', `unsetenv', and `umask' special commands.
+
+	* The `source' special command can now substitute
+	  positional parameters.
+
+goto:
+	* Reduced LABELSIZE from 1024 to 64.  This allows a maximum label
+	  length of 63 characters, which is more than adequate.  Assuming the
+	  user limits each possible label character to be one of [0-9A-Za-z],
+	  a label length limit of 63 characters still allows 8.33060e+112
+	  possible unique labels.
+
+	* Changed the way `label too long' is handled.  Rather than giving a
+	  `label too long' error if a possible label found in a command file
+	  is too long, simply give this error when the user-requested label
+	  is longer than 63 characters.  In such a case, no label search
+	  shall be performed at all.
+
+-------------------------------------------------------------------------------
+[osh-050219]:
+examples:
+	* Updated the example initialization files.
+
+	* Added a few command files to give users a head start
+	  in scripting the shell.
+
+osh.1 and sh6.1:
+	* Made a few more minimal revisions.
+
+osh and sh6:
+	* Did some more code cleanup.
+
+-------------------------------------------------------------------------------
+[osh-050131]:
+*.1:
+	* Made some revisions and added some new content.
+
+osh and sh6:
+	* Did some code cleanup for the sake of clarity and simplicity.
+	  Basically, this just removes some redundant operations.
+
+-------------------------------------------------------------------------------
+[osh-041231]:
+LICENSE:
+	* Removed clauses 3 and 4 from the license under which I release
+	  this software.  This only affects my license.  Do not worry;
+	  this software is still free!  Read LICENSE for further info.
+	  Each file on which I explicitly claim copyright also contains
+	  a copy of this license.
+
+tests:
+	* Added 2 more tests to be run by `make check' and `make check-sh6'.
+
+	* Did some reorganization as well.
+
+osh and sh6:
+	* Fixed a typo in the execute() function that can cause a memory fault
+	  in sh6, and in osh when running in compatible mode.  This error was
+	  only possible when using the `chdir' special command preceded by a
+	  redirection such as `> file' (e.g., `> /dev/null chdir foo').
+
+	* Made several changes to how the shell reads input into the
+	  command-line buffer.  Generally, this is not a user-visible
+	  change but is noteworthy nonetheless.
+
+	* Made a few improvements to the parser.
+	  It now catches a few errors that could have previously caused some
+	  confusion.  Before: `echo \<<', `echo \>>', `echo foo>bar', etc...
+	  None of these would have been considered a syntax error.  Now, all
+	  of them are.  The unquoted `<' and `>' characters in the above
+	  commands are not considered to be redirection arguments.
+
+	  In this implementation of the shell, a redirection argument must be
+	  separated from other command-line arguments by one or more blanks.
+	  This is unlike other shells.  However, since this is the documented
+	  behavior of the Thompson shell, this implementation of the shell
+	  adheres to the documented behavior for the sake of simplicity.
+
+	* Fixed incorrect globbing results for quoted glob characters.
+	  Now, the shell correctly handles quoted glob characters in an
+	  argument when the same argument also contains *unquoted* glob
+	  characters.  Note that the correct behavior of globbing in
+	  the shell relies on a POSIX-compliant glob(3) being available
+	  on the system where the shell is built and/or used.
+
+osh only:
+	* Fixed a small problem with the `source' special command.
+	  Doing a `source /path/to/nonexistent_file' in an initialization file
+	  should not cause the shell to cease execution of that file.  Now,
+	  execution of the initialization file continues as normal.  Of course,
+	  user can test for error and have the shell act accordingly in such
+	  a case.
+
+	* Renamed the `trap' special command to `sigign' since it is really
+	  nothing like the trap command found in other shells.  Thus, I thought
+	  calling it `trap' could be misleading to the user.  On the other hand,
+	  `sigign' makes sense given what the command does, which is to ignore
+	  or unignore signals.
+
+if:
+	* Did another rewrite of the if(1) utility.
+	  Started with a fresh copy of if.c from Sixth Edition Unix.
+	  User-visible changes?  None.
+
+goto:
+	* Did another rewrite of the goto(1) utility.
+	  Started with a fresh copy of goto.c from Sixth Edition Unix.
+	  User-visible changes?  Yes, it is no longer an error for a NUL
+	  character to appear in the input.  Also, it now prints an explicit
+	  `cannot seek' diagnostic if the input file is not seekable.
+
+-------------------------------------------------------------------------------
+[osh-041028]:
+*.1:
+	* Fixed a few typos in osh.1 and sh6.1.
+
+	* Did a little fine tuning of osh.1 and sh6.1 to hopefully
+	  eliminate some incomplete and/or unclear explanations.
+
+	* Did the same for both if.1 and goto.1.
+
+osh and sh6:
+	* Fixed an annoying bug introduced in the previous release...
+	  The way error messages were printed in error() was not accounting
+	  for the fact that the standard error stream is quite often (if not
+	  always) unbuffered by default.  This could make some error messages
+	  difficult to read when a pipeline was involved.  A little example:
+	  Before (unfixed):
+		% foo|bar|baz
+		foo: not foundbar: not foundbaz: not found
+
+
+	  After (fixed):
+		% foo|bar|baz
+		foo: not found
+		bar: not found
+		baz: not found
+
+-------------------------------------------------------------------------------
+[osh-041018]:
+	This release includes sh6 in addition to osh, if, and goto.
+	Sh6 is simply osh without the enhancements.  It is built from the
+	same sources as osh, but it is not built or installed by default.
+
+Makefile:
+	* Added targets for sh6 so that it can optionally be built, tested,
+	  and installed if desired.
+
+osh and sh6:
+	* Split the code into modules.
+	  This is primarily for developer sanity... ;)
+	  The new files are osh.h, main.c, parse.c, and exec.c.
+
+	* If (geteuid() != getuid() || getegid() != getgid()) is true,
+	  print a nice error message and exit with a status of 2.
+
+	* Strip all NUL characters from the shell's standard input as it is
+	  being read into the command line buffer.  Input to the shell is
+	  expected to be text.
+
+	* Changed the way the shell handles non-seekable files.
+	  This is for both initialization files (osh only) and command files.
+	  Do not block on open(2); open it and determine if it is a regular
+	  file (or seekable).  If it is not a regular file or is not seekable,
+	  exit with an error.  If seekable, reset the file for blocking I/O
+	  and continue as normal.
+
+	  Note that you can still read commands from FIFOs if you want.
+	  Instead of doing `osh myfifo', you can either do `osh <myfifo'
+	  or `osh - my list of positional parameters <myfifo'.
+
+	* Changed the error handling to use stdarg(3).
+	  This allows for more code consistency and makes it easier
+	  to handle all errors with just one line of code.
+
+osh only:
+	* Added another possible initialization file for osh: $HOME/.oshrc
+	  Osh only attempts to execute commands from this file if it is an
+	  interactive shell.  In the case of a login shell, osh tries this
+	  file only after it tries both /etc/osh.login and $HOME/.osh.login.
+
+	* Made osh less strict about errors in initialization files.
+	  Previously, common shell-detected errors in any of the files
+	  were generally treated in the same way as they would have been
+	  treated in a command file (i.e., the error was fatal).  Realizing
+	  that this potentially caused difficulty and annoyance for the user,
+	  I opted to change it so that these types of errors are handled as
+	  they are when osh is interactive.
+
+	  This should make it easier for the user to debug
+	  initialization files if needed.
+
+	* Added a `source' special command.
+	  It is functionally similar to the way this command works in csh(1).
+	  See osh(1) for details.
+
+if:
+	* Changed ARGMAX from 50 to 256.
+
+	* If (geteuid() != getuid() || getegid() != getgid()) is true,
+	  print a nice error message and exit with a status of 2.
+
+	* Added a few new primaries: `-h', `-s', `-t', and `-x'
+	  See if(1) for details.
+
+goto:
+	* Changed the size of the label buffer from 128 to 1024.
+
+	* Do not require the `:' of a labelled line to appear in column 1.
+	  Instead, allow the `:' to optionally be preceded by blanks so that
+	  labelled lines can be indented in command files.  See goto(1) for
+	  more details if needed.
+
+	* Eliminated unnecessary calls to strcmp(3) whenever a possible label
+	  cannot possibly match the label argument given on the command line.
+
+	* Give an error if any NUL character is encountered in the input.
+
+	* Give an error if a zero-length string is given as the label argument.
+
+-------------------------------------------------------------------------------
+[osh-040812]:
+osh.c:
+	* Changed the way unused pipe descriptors are handled in the child
+	  process after fork().  This fixes a bug where the pipe in a pipeline
+	  such as `( cat /dev/zero ) | sleep 1' would never enter an EOF state.
+	  Previously, the close-on-exec flag was being set for the descriptors
+	  in question.  Of course, this did not work for the above and similar
+	  cases.  So, the descriptors in question are now close()d explicitly.
+
+	* Made some final changes to globbing to allow for more sensible
+	  behavior WRT quoting.  The functions affected are: globargs(),
+	  globchar(), and striparg().  Read and/or run `tests/glob_test.osh'
+	  for details of the user-visible changes.  This script may cause
+	  previous releases of the shell to dump core.
+
+	  Basically, since striparg() had always been called *after* glob(3)
+	  and since the path names generated by glob(3) cannot be trusted, it
+	  ends up that the best course of action is to call striparg() *before*
+	  glob(3).  This relatively simple change fixes a variety of *possible*
+	  problems related to globbing.
+
+-------------------------------------------------------------------------------
+[osh-040731]:
+osh.c:
+	* Added bounds checking to striparg() to protect against a possible
+	  buffer overflow.  Though this is unlikely to happen in the general
+	  case, it is certainly *not* impossible.  This function had been
+	  unprotected since at least osh-020214.
+
+	* Added a new diagnostic, `Arg too long', to go with the
+	  above-mentioned change.
+
+	* Removed the `No directory' diagnostic from globargs().
+	  It was simply not worth the trouble.  In compatible mode,
+	  the `No match' diagnostic provides sufficient compatibility
+	  in my opinion...
+
+	* Changed the `chdir' command so that it only attempts to change to
+	  the previous working directory when the `-' argument is *not* quoted.
+	  This alows the shell to change to a directory by that name.
+	  For example:
+	  % mkdir -; chdir -; pwd; chdir \-; pwd; chdir -; pwd; rmdir -
+	  chdir: no old directory
+	  /home/jneitzel/osh_stuff/osh-040731
+	  /home/jneitzel/osh_stuff/osh-040731/-
+	  /home/jneitzel/osh_stuff/osh-040731
+
+	  Remember that "-" or '-' has the same effect as the \- used above.
+	  This is perhaps a little silly, but I figure if a directory *can*
+	  exist then it should be possible to change to it.
+
+	* Fixed the `<-' redirection argument so that it adheres to the
+	  documentation.  This fixes a file descriptor leak in addition
+	  to the incorrect behavior.  It should be silently ignored in
+	  the following case: `echo hello | grep h <-'; now it is.
+
+-------------------------------------------------------------------------------
+[osh-040723]:
+osh.c:
+	C: Fixed a small idiosyncrasy with the `No directory' and `No match'
+	   diagnostics when running in compatible mode.  For example:
+	   Before:
+	   % if -d . -a -r . echo "`.' is a readable directory.";\
+	     echo foo*; echo ?; echo []
+	   `.' is a readable directory.
+	   No match
+	   No match
+	   No directory
+
+	   After:
+	   % if -d . -a -r . echo "`.' is a readable directory.";\
+	     echo foo*; echo ?; echo []
+	   `.' is a readable directory.
+	   No match
+	   No match
+	   No match
+
+	   The shell should only print `No directory' when a directory
+	   does not exist (ENOENT) or cannot be read (EACCES).  Yes, it is
+	   expected that invalid patterns such as `[' and `[]' result in
+	   the shell printing a `No match' diagnostic.
+
+	* Changed the `<--' input redirection argument to `<-' instead.
+	  This seems more consistent and will allow for possibly clearer
+	  documentation in the future (if and when I add another feature
+	  I've been thinking about).
+
+fd2.[1c]:
+	* Removed the fd2 utility and its manual page because of
+	  possible licensing issues.
+
+-------------------------------------------------------------------------------
+[osh-040718]:
+	This release is made primarily to synchronize with the new branch
+	of the shell which is named `sh6'.
+
+osh.1:
+	* More revisions and clarifications...
+
+-------------------------------------------------------------------------------
+[osh-040714]:
+Makefile:
+	* Refined the description for _XOPEN_SOURCE a little.
+
+osh.1:
+	* General improvements...
+	  This includes documenting some things that have never been very well
+	  documented in this shell.
+
+osh.c:
+	C: Made changes to globbing which affect the shell in compatible mode.
+	   This includes the addition of the `No directory' diagnostic which
+	   was present in /etc/glob from Sixth Edition Unix.  Also, it looks
+	   like I had previously misinterpreted exactly when the `No match'
+	   diagnostic was supposed to be printed.  Now, when running in
+	   compatible mode the shell really is compatible.  Yay =)
+
+	* Added a `umask' special command.
+
+	* Disallow SIGCHLD from being trapped.
+	  When this signal is requested in a `trap' command, it is quietly
+	  disallowed.  This is the same behavior seen with both SIGKILL and
+	  SIGSTOP.  Thus, doing a `trap + 9 17 20' quietly has no effect.
+
+	* Made changes to how the shell builds a command's argument vector.
+	  Previously, malloc(3) was used.  Now, each command in the command
+	  line is simply split into `\0'-terminated words.  Each argument is
+	  actually a pointer to the corresponding word in the command line.
+
+	  The changes to parameter substitution in osh-040628 made this
+	  a perfectly sensible course of action.  This change also gives
+	  a microscopic improvement in run-time performance (as judged
+	  by time(1)).
+
+	  The only remaining use of malloc(3) in the shell's execution stage
+	  can be found in globargs().
+
+-------------------------------------------------------------------------------
+[osh-040628]:
+	Thanks to Stephen M. Jones for suggesting that osh should be able
+	to read a global rc file.  Thanks to Stephen C. VanDahm for assisting
+	with some portability issues found in osh-040421.  Thanks also to
+	Josep Portella Florit for reviewing osh-040421, making several useful
+	suggestions, and sending patches.
+
+	BTW, many changes were made to the manual pages.
+	I hope they are clear, but I trust that if they are not then someone
+	might be kind enough to tell me so and/or make suggestions.
+
+	Some new files are included:
+		examples/*:	initialization file examples
+		  fd2.[1c]:	the fd2 utility
+
+Makefile:
+	* Added some notes about _XOPEN_SOURCE.
+
+	* Added a target to optionally build and install fd2.
+
+	* Removed the compile-time definition of `CLONE'.
+	  This is now a run-time option which can be toggled in order to
+	  enable or disable enhancements to the shell.
+
+osh.c:
+	C: Changed how the shell does parameter substitution.
+	   This was the last major incompatibility w/ the Thompson shell.
+	   Now, substitution is done *before* any command-line parsing
+	   takes place.
+
+	* Added the ability for login shells to read the initialization files
+	  /etc/osh.login and/or $HOME/.osh.login if they exist.  A shell is
+	  considered to be a login shell if its first argument starts w/ a
+	  `-' character (e.g., -osh).
+
+	* Added a `set' command to allow shell compatibility to be toggled
+	  at run time.  In addition, the shell now checks for `OSH_COMPAT'
+	  in the environment to tell future invocations of the shell which
+	  mode the user wishes to run in.
+
+	* In addition to the `set' command mentioned above, the following
+	  special built-in commands have been added and are available when
+	  the shell is in "noclone" mode:
+		exec, setenv, trap, unsetenv
+
+	* In globargs(), use `gl_pathc == 0' to detect an unmatched pattern
+	  instead of checking if glob(3) returned `GLOB_NOMATCH'.  This allows
+	  for those cases where glob(3) may not be POSIX-compliant.
+
+	* Made osh command files that are run asynchronously ignore interrupts.
+	  For example, `osh runcom&' should ignore SIGINT and SIGQUIT, and now
+	  it does.
+
+	* Reverted a so-called compatibility fix made in osh-040421.
+	  Now, ignore SIGINT and SIGQUIT for asynchronous commands invoked
+	  from a command file.  From a usability perspective, it is simply
+	  too annoying to not do it this way.
+
+	* Changed the `exit' command so that it always terminates a shell when
+	  reading commands from a file.  Previously, it only terminated a shell
+	  when invoked as `osh file'.  Note that `exit' still has no effect for
+	  interactive shells or `osh -c command'; this is intentional as it is
+	  compatible w/ the behavior of `exit' under the Thompson shell.
+
+if.c:
+	* Include <stdlib.h> for exit(3) so that Mac OS X doesn't complain.
+	  In fact, <stdlib.h> should be included for exit(3) on all systems
+	  as a simple matter of correctness.
+
+	* Rename exp() to expr() to avoid conflicts w/ exp(3) on Mac OS X.
+	  Strange, as <math.h> is not included there should not have been
+	  any conflict.  Oh well, it is fixed now.
+
+	* Enable this utility to return a meaningful exit status to the user.
+	  In short, `if foo = foo' returns an exit status of 0; `if foo = bar'
+	  returns an exit status of 1.  Previously, exit status was always 0.
+
+	* Made the usage less ambiguous; corrected the documentation to reflect
+	  the actual behavior.  In short, usage is (and always has been) as
+	  follows:
+		if expr [command [arg ...]]
+
+	* Added some useful conditional primaries for constructing expressions.
+	  See the manual pages for details.
+
+	* Use the stdio(3) functions instead of write(2) for printing
+	  the error messages.
+
+	* In addition, added some useful diagnostic messages which were
+	  inspired by the test(1) utility from Seventh Edition Unix.
+
+goto.c:
+	* Give an error message when standard input is not seekable.
+	  Previously, a label not found error would be produced instead.
+
+fd2.c:
+	* A new utility and manual page...  It is an adaptation of the PWB/Unix
+	  (roughly PWB/1.0 ?) redirect diagnostic output command.  The original
+	  source came from the file `spencer_pwb.tar.gz' which can be found at:
+
+		http://www.tuhs.org/Archive/PDP-11/Distributions/usdl/
+
+-------------------------------------------------------------------------------
+[osh-040421]:
+osh*.1:
+	* Made various changes to hopefully improve the clarity.
+	  Added COMPATIBILITY, HISTORY, and NOTES sections.
+
+osh.c:
+	C: Made changes to how the shell handles terminating `\' characters
+	   w/ the `-c' and `-t' flags.  This is a simple extension of the
+	   same behavior exhibited when the shell is interactive or when it
+	   executes a command file, the only difference being that where a
+	   terminating `\' character causes the shell to read the next line
+	   of input in an interactive shell or command file, w/ the `-c' and
+	   `-t' flags the shell terminates w/o executing the command line.
+
+	C: Allow parameter substitution w/ the `-c' and `-t' flags.  This
+	   feature is not documented.  For example, invoking the shell as
+	   follows allows parameter substitution to take place:
+	   % osh -t one two three
+	   echo $0 $1 $2 $3
+	   -t one two three
+
+	C: The shell now ignores SIGINT and SIGQUIT when the `-c' or `-t' flag
+	   is used.  Thus, asynchronous commands invoked in this way ignore
+	   interrupts as they should.
+
+	C: Ignore SIGINT and SIGQUIT for all commands started from asynchronous
+	   subshells.  For example, `( sleep 300; some_command ) >outfile&' now
+	   ignores `^C' and `^\' as it should.
+
+	C: Don't ignore SIGINT and SIGQUIT for asynchronous commands started
+	   in command files.  If a command file is terminated by one of these
+	   signals, the asynchronous commands should also terminate.
+
+	* Reverted a change made to termination reporting in osh-040216 that
+	  was not actually compatible w/ the V6 shell.
+
+	* Always terminate the shell when read(2) fails.
+	  This fixes a possible infinite loop.
+
+	* Fixed a bug in the parser that caused syntactically incorrect
+	  subshell commands not to be detected as such when preceded by
+	  redirection arguments (e.g., `<infile >outfile ( | )').
+	  This bug was introduced in osh-040216.
+
+	* Fixed possible buffer overflows in substparm(); added a new error
+	  message, "Too many characters", and made other changes necessary to
+	  properly deal w/ the new error condition.  This problem had been
+	  present since at least osh-020214.
+
+	* Made some changes to how globbing is handled by the shell.
+	  Specifically, glob(3) should only be called when an argument contains
+	  unquoted occurrences of any of the glob characters `*', `?', or `['.
+	  Previously, it was being called for every argument of an external
+	  command.  This change improves run-time performance slightly as
+	  judged by time(1) and information returned by getrusage(2).
+
+	* The above-mentioned change also allows the following compatibility
+	  feature.  Added globbing compatibility when the shell is compiled
+	  w/ -DCLONE so that when no matches are found a diagnostic,
+	  "No match", is printed.
+
+-------------------------------------------------------------------------------
+[osh-040216]:
+Makefile:
+	* Use 'PREFIX?=' to allow passing PREFIX to make from
+	  the build environment.  This is a BSD extension, but
+	  it appears that GNU make supports it as well.
+
+	* Added a 'check' target to run a minimal test suite.
+
+osh.c:
+	* Security fix:
+	  Always revoke set-id privileges.
+
+	C: Redesigned and rewrote the parser.
+	   Now, parsing and execution are completely separate.
+	   This was the primary difference between the original implementation
+	   by Ken Thompson and this one.  All remaining incompatibilities are
+	   quite minor by comparison.
+
+	C: Don't perform globbing on the argument given to 'chdir'.
+	   It can be useful to glob in this case, but the V6 shell did not
+	   do this.  So, this feature has been removed.
+
+	C: Fixed the way that built-in commands are handled in pipelines.
+	   Built-in commands do not participate as elements of a pipeline the
+	   same way that external commands do.  They neither read input from,
+	   nor write output to, a pipe.  Data passed down the pipeline is lost.
+	   For example, `echo hello | chdir / | cat' still changes to /; it
+	   simply does not say hello.  This same command line would have
+	   previously caused a file descriptor leak.
+
+	C: Allow redirection arguments to appear before the command.
+	   Hence, the following examples are all identical to the shell:
+	   % cat <infile >outfile
+	   % <infile >outfile cat
+	   % <infile cat >outfile
+
+	C: Allow parameter substitution for redirection arguments
+	   (e.g., 'command <$1', 'command >$1', and 'command >>$1').
+
+	C: Fixed annoying behavior when user types EOF not at the beginning
+	   of a line.  Doing so previously was effectively the same as hitting
+	   'return' in that unread input before the EOF would be read, parsed,
+	   and executed.  It now matches the behavior of the V6 shell (mostly)
+	   and ignores the first EOF not at the beginning of a line.  Three
+	   sequential EOFs (two in the V6 shell) will terminate the shell.
+	   Of course, typing EOF once at the beginning of a line immediately
+	   terminates the shell as it always has.
+
+	C: Fixed incorrect handling of '\' at the end of an input line.
+	   One or any other 'odd' number of '\' characters at the end of an
+	   input line will continue the input onto the next line, while two or
+	   any other 'even' number of '\' characters will not.
+
+	* Fixed handling of command line overflow when shell is interactive.
+	  The previous behavior could potentially be quite dangerous.  At the
+	  least, it was very undesirable!  Now, when overflow happens only one
+	  error message is printed, all unread data is flushed w/ tcflush(3),
+	  and a new prompt is printed.  At this point, the shell will continue
+	  w/ its normal read/parse/execute loop as if nothing had happened.
+
+	* Fixed some problems w/ termination reporting of async processes.
+	  For example, a `foo | bar | baz &' would mistaken try to report
+	  termination status for all three commands.  Obviously, only the
+	  last command should be reported.
+
+	* When a child process of the shell or a command file receives the
+	  SIGINT signal (e.g., user types '^C'), do not set termination status
+	  to zero.  This matches the behavior of osh on V7, but it appears
+	  the V6 shell may have not have done this..?  Non-zero termination
+	  status is certainly more desirable in this case.
+
+	* Fixed a file descriptor leak that happened when redirection failed.
+	  For example, doing a `cat <infile >outfile' did not close 'infile'
+	  when 'outfile' could not be created.
+
+	* Fixed incorrect behavior of the 'shift' special built-in command.
+	  '$0' was also being shifted.  Now, '$0' remains constant during the
+	  life of a command file run.
+
+	* Fixed some quoting abnormalities.  The behavior did not match the
+	  V6 shell.  This was caused primarily because of calling glob(3) w/o
+	  the GLOB_NOESCAPE flag.  So, a backslash was lost when globargs()
+	  was called.  Also, I accidently broke nested quoting in a previous
+	  release (e.g., '"word"' and/or "'word'").  All correct now! =)
+
+	* Replaced the execv(3)/execvp(3) combo used when CLONE was defined
+	  in the Makefile.  Simply use execvp(3) and document that the V6 shell
+	  always used '.:/bin:/usr/bin', not PATH.  User can opt to set PATH
+	  appropriately if more clone-like behavior is desired.
+
+if.c:
+	* Security fix:
+	  Always revoke set-id privileges.
+
+	* Replaced the execv(3)/execvp(3) combo used when CLONE was defined
+	  in the Makefile.  Simply use execvp(3) and document it as described
+	  above for osh.c.
+
+goto.c:
+	* Use strcmp(3) to compare strings instead of reimplementing
+	  the same function internally.
+
+	* Use the stdio(3) functions instead of write(2) for printing
+	  the error messages.
+
+	* Changed how 'label too long' errors are handled.
+	  Now, when a label is encountered that happens to be too long
+	  print the line number w/ the error message and terminate the
+	  command file.
+
+-------------------------------------------------------------------------------
+[osh-031112]:
+Makefile:
+	* Added a test to ensure that destination directories exist.  If a
+	  directory is missing, create it before trying to install the files.
+
+osh.c:
+	C: Reverted some previous changes to abnormal termination messages.
+	   Specifically, the original on V6 used signal numbers instead of
+	   the "Alarm clock" and "Terminated" messages.
+
+	C: When printing termination reports for asynchronous commands
+	   also print the process ID w/ the message.
+
+	* Made changes/improvements to the detection of syntax errors for
+	  malformed pipelines.  These syntax checks are done before actually
+	  creating any pipes; otherwise, there would be file descriptor leakage
+	  and possibly bad behavior when command lines have bad syntax.  This
+	  is part one of a multipart fix.  The most critical parsing problems
+	  are fixed now, but the problem of internal commands and pipelines
+	  still needs attention.
+
+	* Fixed a file descriptor leak caused when user hits, or would exceed,
+	  the limit for maximum number of processes.
+
+	* Added a missing newline to the 'Cannot pipe' error message.
+
+	* Changed the prototype for xchdir() and made associated changes;
+	  only pass args[1] to this function, not the entire argument vector.
+
+	* Avoid possible difficulties caused when commands begin w/ blanks
+	  (spaces, tabs) by stripping them away first.  This has the benefit
+	  of simplifying some parts of the code, in addition to avoiding
+	  needless function calls when command lines contains only blanks.
+
+	* Added code to make command files terminate when any of the commands
+	  cannot be executed, cannot be found, or terminate w/ a signal.
+
+-------------------------------------------------------------------------------
+[osh-031014+]:
+	The only noteworthy changes in this release are to the commentary
+	in Makefile, NOTES, README, etc.
+
+-------------------------------------------------------------------------------
+[osh-031014]:
+LICENSE:
+	* Added additional license for code that I've written.
+
+osh.c:
+	* Added an additional copyright notice.
+
+	* Changed a char *pointer to a const char *pointer since it is
+	  only used for string constants.
+
+-------------------------------------------------------------------------------
+[osh-031012]:
+	A lot of the changes in this release are related to compatibility
+	w/ the behavior of the original implementations from V6 and V7.
+	In addition, the manual pages for "if" and "goto" have been changed
+	to use man macros instead of escape sequences wherever possible
+	as well as improving the appearance of the formatted output for
+	the if(1) manual page.
+
+osh.c:
+	C: Write the prompt to stderr instead of stdout.
+
+	C: Added an exit command to terminate command files.
+
+	C: Make the 'login' command only work in interactive shells and
+	   give an error message if not interactive.
+
+	C: Changed the '>' and '>>' error message to 'cannot create'
+	   instead of 'cannot open'.
+
+	C: Make '>>' create the file if it does not already exist.
+
+	C: Added a 'shift: no args' error message for the 'shift' command
+	   when there is nothing to shift.
+
+	C: Added "Hangup", "Alarm clock", and "Terminated" to the abnormal
+	   termination messages that osh reports.  This matches osh on V7.
+
+	C: Added code to properly report the abnormal termination status of
+	   asynchronous commands (&) upon receipt of the next command.  This
+	   was documented in the V6 sh(1) manual page.
+
+	* Fixed a problem where terminated children (zombies) could get in the
+	  way and render the shell unusable when the user reached hard or soft
+	  process limit.  The shell's 'wait' command was, and still is, an
+	  effective way to exorcise these zombies.  Although, this should
+	  be less necessary now that the above feature is implemented.
+
+	* Avoid an infinite loop and give an error when the shell loses its
+	  input.  An easy way to reproduce this is to close standard input
+	  from another shell w/ redirection.
+
+	* Merged in code I use that makes 'chdir' more like 'cd' in modern
+	  shells by allowing 'chdir' to HOME, 'chdir -' to previous, and
+	  'chdir dir' to any other directory.  You can always define CLONE
+	  in the Makefile to compile w/ the original behavior if you wish.
+
+	* Ignore '#!' at the beginning of command files.  This is just for
+	  convenience.  The original did not do this, but it makes sense since
+	  this implementation differs from the original by not taking any extra
+	  steps to feed executable text files to osh directly.  Let the kernel
+	  do this for us.
+
+if.c:
+	C: Added an exit command.
+
+	* Added a 'cannot fork' error message.
+
+	* Error messages are now written to stderr, not stdout.
+
+	* Changed the '-r' and '-w' tests to use access(2) instead of open(2).
+	  This makes the '-w' test give correct results for directories where
+	  it previously failed to do so.
+
+	* Match the documentation and give an error when the command in
+	  '{ command }' is another 'if'.
+
+	* Temporarily removed the '-c' primitive from the code since it
+	  is undocumented and does not appear to do anything useful.
+
+goto.c:
+	* Fixed a buffer overflow caused when the label was too long.
+	  It looks like this bug has been there since goto was written
+	  back in the 1970s.  Also, reduced the maximum size of the buffer
+	  to 128 characters instead of LINE_MAX characters.
+
+	* Added a 'label too long' error message to go w/ the above fix.
+
+	* Error messages are now written to stderr, not stdout.
+
+	* Replaced all of the gotos w/ while loops for the sake of clarity.
+
+-------------------------------------------------------------------------------
+[osh-030811]:
+osh.c:
+	* Fixed bug introduced in previous release by declaring array
+	  w/ incorrect size.  This array is now dynamically allocated.
+
+if.c:
+	* Added code to check and enforce maximum number of arguments.
+
+goto.c:
+	* Completely fixed detection of EOF in command files.
+	  The reason for these EOF problems was because getchar(3) in
+	  V6 Unix indicated end-of-file w/ '\0', and of course this
+	  is no longer the case today.
+
+-------------------------------------------------------------------------------
+[osh-030730]:
+	* This is the initial maintenance release by Jeffrey Allen Neitzel.
+
+osh.c:
+	* Added '#ifdef CLONE' so the desired command search behavior
+	  can be chosen at build time.
+
+	* Fixed segfault when command line contains only whitespace.
+	  We simply ignore this situation now.
+
+	* Fixed segfault when redirections are used w/o a command.
+	  This will now result in a syntax error.
+
+	* Fixed segfault when redirecting a command w/o a filename.
+	  This will now result in a syntax error.
+
+	* Fixed a small memory leak when using redirection arguments.
+
+	* Made osh correctly detect when a command line contains
+	  too many arguments.  This allows command lines to have a
+	  maximum of 255 arguments.
+
+if.c:
+	* Added '#ifdef CLONE' to make if(1) search for external commands
+	  the same way osh(1) does.
+
+goto.c:
+	* Fixed a bug where goto should produce a 'label not found' error
+	  but would instead go into an infinite loop at the end of the
+	  command file.  We now correctly detect EOF and successfully
+	  report 'label not found' errors.
+
+-------------------------------------------------------------------------------
+[osh-020214]:
+	* All releases of osh prior to and including 020214 were authored
+	  and maintained by Gunnar Ritter.

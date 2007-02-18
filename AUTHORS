@@ -1,0 +1,48 @@
+The original Thompson shell was principally written by Ken Thompson
+of Bell Labs.  However, it should be noted that other individuals
+at Bell Labs also had a role in its development: Dennis Ritchie,
+Doug McIlroy, and quite probably others whose names I do not know.
+
+Jeffrey Allen Neitzel is the principal developer and maintainer of
+the enhanced, backward-compatible port of the Sixth Edition Thompson
+shell (and all of the other software) released in this package.
+Notice that I have developed two different variations of osh(1)
+since July 2003.  The origin of each one is described below.
+
+[osh-030730 through osh-060124]:
+	The first variation was originally authored by Gunnar Ritter as
+	osh-020214/osh.c and was then adopted by Jeffrey Allen Neitzel.
+
+	Unfortunately, the design of Gunnar Ritter's implementation was
+	broken.  Thus, it required a lot of workarounds in order to fix
+	the fact that his design resulted in a shell which was basically
+	incompatible with the Thompson shell.
+
+	In effect, I modified Gunnar's design to separate command-line
+	parsing and execution so that the shell could at least be compatible
+	in a very basic sense.  The only catch was that word splitting was
+	still incompatible.
+
+[osh-20061230 through osh-current]:
+	The second variation was originally authored by Ken Thompson as
+	Sixth Edition Unix /usr/source/s2/sh.c and was then ported by
+	Jeffrey Allen Neitzel for personal use in January 2004.
+
+	I eventually got around to releasing it as sh6(1) as part of
+	osh-060124.  Then, after its release, I quickly realized that the
+	design of the original shell (see: osh-060124/*6.c) offered a far
+	better starting point for making osh(1) truly backward-compatible
+	with the Thompson shell.
+
+	Bothered by the fact that osh(1) still got word splitting wrong, I
+	ditched the design used in the first variation, adapted sh6.c and
+	glob6.c, copied them to osh.c, and began working on it during my
+	free time in 2006.  Finally, I released the new osh(1) as part of
+	osh-20061230.
+
+...
+I wish to thank the original authors very much for their efforts.
+Without their previous work, none of this software or documentation
+would exist today.
+
+Jeffrey Allen Neitzel						2007/01/31

@@ -1,0 +1,258 @@
+.\"
+.\" Copyright (c) 2004, 2005, 2006
+.\"	Jeffrey Allen Neitzel <jneitzel (at) sdf1 (dot) org>.
+.\"	All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY JEFFREY ALLEN NEITZEL ``AS IS'', AND ANY
+.\" EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL JEFFREY ALLEN NEITZEL BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+.\" USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	Derived from: Sixth Edition Unix /usr/man/man1/if.1
+.\"
+.\" Copyright (C) Caldera International Inc.  2001-2002.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code and documentation must retain the above
+.\"    copyright notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed or owned by Caldera
+.\"      International, Inc.
+.\" 4. Neither the name of Caldera International, Inc. nor the names of other
+.\"    contributors may be used to endorse or promote products derived from
+.\"    this software without specific prior written permission.
+.\"
+.\" USE OF THE SOFTWARE PROVIDED FOR UNDER THIS LICENSE BY CALDERA
+.\" INTERNATIONAL, INC. AND CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL CALDERA INTERNATIONAL, INC. BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+.\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.TH IF 1 "June 24, 2006" "osh-20070131" "General Commands"
+.SH NAME
+if \- conditional command
+.SH SYNOPSIS
+.B if
+\fIexpr\fR [\fIcommand\fR [\fIarg ...\fR]]
+.SH DESCRIPTION
+.I If
+evaluates the expression
+.IR expr ,
+and if its value is true,
+returns a zero exit status or executes the specified
+.I command
+with the given arguments.
+Otherwise, a non-zero exit status is returned.
+.PP
+The following primaries are used to construct
+.IR expr :
+.TP 10
+.BI \-d \ file
+True if \fIfile\fR exists and is a directory.
+.TP
+.BI \-e \ file
+True if \fIfile\fR exists.
+.TP
+.BI \-f \ file
+True if \fIfile\fR exists and is a regular file.
+.TP
+.BI \-h \ file
+True if \fIfile\fR exists and is a symbolic link.
+.TP
+.BI \-r \ file
+True if \fIfile\fR exists and is readable.
+.TP
+.BI \-s \ file
+True if \fIfile\fR exists and has a size greater than zero bytes.
+.TP
+.BI \-t \ fildes
+True if the file whose file descriptor number is
+.I fildes
+is open and associated with a terminal device.
+.I Fildes
+must be a decimal digit (0 - 9).
+.TP
+.BI \-w \ file
+True if \fIfile\fR exists and is writable.
+.TP
+.BI \-x \ file
+True if \fIfile\fR exists and is executable,
+or if \fIfile\fR is a searchable directory.
+.TP
+.IB s1 \ = \ s2
+True if the strings
+.I s1
+and
+.I s2
+are equal.
+.TP
+.IB s1 \ != \ s2
+True if the strings
+.I s1
+and
+.I s2
+are not equal.
+.TP
+\fB{\fR \fIcommand\fR [\fIarg ...\fR] \fB}\fR
+The specified \fIcommand\fR is executed with the
+given arguments to obtain its exit status.
+A zero status is \fItrue\fR,
+and a non-zero status is \fIfalse\fR.
+.PP
+These primaries may also be combined
+with the following operators:
+.TP 10
+.BI ! \ expr
+unary
+.I negation
+operator
+.TP
+.IB expr1 \ \-a \ expr2
+binary
+.I and
+operator
+.TP
+.IB expr1 \ \-o \ expr2
+binary
+.I or
+operator
+.TP
+.BI ( \ expr \ )
+parentheses for grouping
+.PP
+.B \-a
+has higher precedence than
+.BR \-o .
+Notice that all of the operators and flags
+are separate arguments to
+.IR if .
+Notice also that parentheses are meaningful
+to the shell and must be escaped.
+.SH "EXIT STATUS"
+The
+.I if
+command exits with one of the following values:
+.TP
+0
+The expression was true (see below).
+.TP
+1
+The expression was false or was not specified.
+.TP
+2
+An error was detected.
+.TP
+125
+The specified command was found
+but did not begin with the proper
+magic number or a `#!shell' sequence,
+and a valid shell was not specified by
+EXECSHELL
+with which to execute it.
+.TP
+126
+The specified command was found
+but could not be executed.
+.TP
+127
+The specified command was not found.
+.PP
+If the expression is true and if
+.I command
+is specified and executed,
+the exit status is that of the executed
+.IR command .
+.SH ENVIRONMENT
+Notice that the concept of `user environment'
+was not defined in Sixth Edition Unix.
+Thus,
+use of the following environment variables
+by this port of the conditional command is an enhancement:
+.TP
+.B EXECSHELL
+If set to a non-empty string,
+the value of this variable is taken as the
+path name of the shell which is invoked to
+execute the specified command when it does not
+begin with the proper magic number
+or a `#!shell' sequence.
+.TP
+.B PATH
+If set to a non-empty string,
+the value of this variable is taken as the
+sequence of directories which is used to
+search for the specified command.
+Notice that the
+conditional command from Sixth Edition Unix
+always used the equivalent of `.:/bin:/usr/bin',
+not PATH.
+.SH "SEE ALSO"
+goto(1),
+osh(1),
+sh6(1),
+test(1)
+.PP
+Osh home page:
+http://jneitzel.sdf1.org/osh/
+.SH COMPATIBILITY
+The
+.I if
+command from Sixth Edition Unix
+does not support the
+.BR \-d ,
+.BR \-e ,
+.BR \-f ,
+.BR \-h ,
+.BR \-s ,
+.BR \-t ,
+and
+.B \-x
+operators.
+.PP
+In addition to supporting the above operators,
+this port also differs from the original in that
+the exit status returned varies according to whether
+the expression is true or false,
+as is the case with
+.IR test (1).
+.SH HISTORY
+An
+.I if
+command
+appeared as
+.I /bin/if
+in Third Edition Unix.
+.SH LICENSE
+See either the LICENSE file which is distributed with
+.I osh
+or
+http://jneitzel.sdf1.org/osh/license/
+for full details.
