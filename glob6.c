@@ -26,7 +26,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	@(#)$Id:$
+ *	@(#)$Id$
  */
 /*
  *	Derived from: Sixth Edition Unix /usr/source/s1/glob.c
@@ -66,7 +66,7 @@
 
 #ifndef	lint
 #include "version.h"
-OSH_RCSID("$Id:$");
+OSH_RCSID("$Id$");
 #endif	/* !lint */
 
 #include <dirent.h>

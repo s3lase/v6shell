@@ -26,12 +26,12 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	@(#)$Id:$
+ *	@(#)$Id$
  */
 
 #ifndef	lint
 #include "version.h"
-OSH_RCSID("$Id:$");
+OSH_RCSID("$Id$");
 #endif	/* !lint */
 
 #include <sys/stat.h>
