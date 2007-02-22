@@ -348,7 +348,7 @@ static const char *const sbi[] = {
 /*@null@*/ static
 	const char	*arginp;	/* string for `-c' option           */
 static	int		chintr;		/* SIGINT / SIGQUIT flag for child  */
-static	char		dolbuf[32];	/* dollar buffer for $$, $n, $s     */
+static	char		dolbuf[32];	/* dollar buffer for $$, $n, $s, $v */
 static	int		dolc;		/* $N dollar-argument count         */
 /*@null@*/ /*@only@*/ static
 	const char	*dolp;		/* $ dollar-value pointer           */
@@ -787,6 +787,10 @@ getdolp(int c)
 		break;
 	case 'u':
 		v = user;
+		break;
+	case 'v':
+		r = snprintf(dolbuf, sizeof(dolbuf), "%s", OSH_VERSION);
+		v = (r < 0 || r >= (int)sizeof(dolbuf)) ? NULL : dolbuf;
 		break;
 	default:
 		v = NULL;
