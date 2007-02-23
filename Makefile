@@ -1,4 +1,4 @@
-# Makefile for osh-20070131
+# Makefile for osh-current (20070224)
 
 # Begin CONFIGURATION
 #
@@ -37,27 +37,33 @@ CFLAGS+=	-Wall -W
 PREFIX?=	/usr/local
 BINDIR?=	$(PREFIX)/bin
 MANDIR=		$(PREFIX)/man
-MANSECT=	$(MANDIR)/man1
+SYSCONFDIR?=	/etc
 #BINGRP=		-g bin
 BINMODE=	-m 0555
 #MANGRP=		-g bin
 MANMODE=	-m 0444
 
+#
+# End CONFIGURATION - Generally, there should be no reason to change
+#		      anything below this line.
+
+OSH_VERSION=	osh-current (20070224)
+
 # Enable the X/Open System Interfaces Extension on POSIX-compliant
 # systems which support it.  Notice that this is required!
 #
 XSIE=		-D_XOPEN_SOURCE=600
-#
-# End CONFIGURATION - Generally, there should be no reason to change
-#		      anything below this line.
 
 OSH=	osh
 SH6=	sh6 glob6
 UTILS=	if goto fd2
 PEXSRC=	pexec.h pexec.c
 OBJ=	pexec.o osh.o sh6.o glob6.o if.o goto.o fd2.o
+MANSRC=	osh.1.in sh6.1.in glob6.1.in if.1.in goto.1.in fd2.1.in
+MANDST=	osh.1 sh6.1 glob6.1 if.1 goto.1 fd2.1
 
 DEFS=	-D_PATH_LOGIN='"$(PATH_LOGIN)"' -D_PATH_NEWGRP='"$(PATH_NEWGRP)"'
+DEFS+=	-DSYSCONFDIR='"$(SYSCONFDIR)"'
 
 .c.o:
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(XSIE) $(DEFS) $<
@@ -67,9 +73,9 @@ DEFS=	-D_PATH_LOGIN='"$(PATH_LOGIN)"' -D_PATH_NEWGRP='"$(PATH_NEWGRP)"'
 #
 all: oshall sh6all
 
-oshall: $(OSH) utils
+oshall: $(OSH) utils man
 
-sh6all: $(SH6) utils
+sh6all: $(SH6) utils man
 
 utils: $(UTILS)
 
@@ -114,38 +120,48 @@ fd2bin: pexec.o fd2.o
 	$(CC) $(LDFLAGS) -o fd2 fd2.o pexec.o $(LIBS)
 
 #
+# Manual-page targets
+#
+man: $(MANDST)
+$(MANDST): $(MANSRC)
+	for file in $(MANSRC) ; do sed \
+		-e 's,@OSH_VERSION@,$(OSH_VERSION),' \
+		-e 's,@SYSCONFDIR@,$(SYSCONFDIR),' <$$file >$${file%.in} ; \
+	done
+
+#
 # Install targets
 #
 install: install-oshall install-sh6all
 
-install-oshall: $(OSH) utils install-osh install-utils
+install-oshall: $(OSH) utils man install-osh install-utils
 
-install-sh6all: $(SH6) utils install-sh6 install-utils
+install-sh6all: $(SH6) utils man install-sh6 install-utils
 
-install-osh: $(OSH) install-dest
+install-osh: $(OSH) man install-dest
 	$(INSTALL) -c -s $(BINGRP) $(BINMODE) osh     $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) osh.1   $(DESTDIR)$(MANSECT)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) osh.1   $(DESTDIR)$(MANDIR)/man1
 
-install-sh6: $(SH6) install-dest
+install-sh6: $(SH6) man install-dest
 	$(INSTALL) -c -s $(BINGRP) $(BINMODE) sh6     $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) sh6.1   $(DESTDIR)$(MANSECT)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) sh6.1   $(DESTDIR)$(MANDIR)/man1
 	$(INSTALL) -c -s $(BINGRP) $(BINMODE) glob6   $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) glob6.1 $(DESTDIR)$(MANSECT)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) glob6.1 $(DESTDIR)$(MANDIR)/man1
 
-install-utils: utils install-dest
+install-utils: utils man install-dest
 	$(INSTALL) -c -s $(BINGRP) $(BINMODE) if      $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) if.1    $(DESTDIR)$(MANSECT)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) if.1    $(DESTDIR)$(MANDIR)/man1
 	$(INSTALL) -c -s $(BINGRP) $(BINMODE) goto    $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) goto.1  $(DESTDIR)$(MANSECT)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) goto.1  $(DESTDIR)$(MANDIR)/man1
 	$(INSTALL) -c -s $(BINGRP) $(BINMODE) fd2     $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) fd2.1   $(DESTDIR)$(MANSECT)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) fd2.1   $(DESTDIR)$(MANDIR)/man1
 
 install-dest:
 	test -d $(DESTDIR)$(BINDIR) || { \
 		umask 0022 ; mkdir -p $(DESTDIR)$(BINDIR) ; \
 	}
-	test -d $(DESTDIR)$(MANSECT) || { \
-		umask 0022 ; mkdir -p $(DESTDIR)$(MANSECT) ; \
+	test -d $(DESTDIR)$(MANDIR)/man1 || { \
+		umask 0022 ; mkdir -p $(DESTDIR)$(MANDIR)/man1 ; \
 	}
 
 #
@@ -155,4 +171,4 @@ clean-obj:
 	rm -f $(OBJ)
 
 clean: clean-obj
-	rm -f $(OSH) $(SH6) $(UTILS)
+	rm -f $(OSH) $(SH6) $(UTILS) $(MANDST)
