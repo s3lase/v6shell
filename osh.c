@@ -150,7 +150,7 @@ OSH_RCSID("$Id$");
  * These are the initialization files used by osh.
  * The `_PATH_DOT_*' files are in the user's HOME directory.
  */
-#define	_PATH_SYSTEM_LOGIN	"/etc/osh.login"
+#define	_PATH_SYSTEM_LOGIN	SYSCONFDIR "/osh.login"
 #define	_PATH_DOT_LOGIN		".osh.login"
 #define	_PATH_DOT_OSHRC		".oshrc"
 
