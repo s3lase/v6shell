@@ -90,25 +90,25 @@ sh6all: $(SH6) utils man
 
 utils: $(UTILS)
 
-osh: version.h $(PEXSRC) osh.c
+osh: rcsid.h $(PEXSRC) osh.c
 	@$(MAKE) $@bin
 
-sh6: version.h $(PEXSRC) sh6.c
+sh6: rcsid.h $(PEXSRC) sh6.c
 	@$(MAKE) $@bin
 
-glob6: version.h $(PEXSRC) glob6.c
+glob6: rcsid.h $(PEXSRC) glob6.c
 	@$(MAKE) $@bin
 
-if: version.h $(PEXSRC) if.c
+if: rcsid.h $(PEXSRC) if.c
 	@$(MAKE) $@bin
 
-goto: version.h goto.c
+goto: rcsid.h goto.c
 	@$(MAKE) $@bin
 
-fd2: version.h $(PEXSRC) fd2.c
+fd2: rcsid.h $(PEXSRC) fd2.c
 	@$(MAKE) $@bin
 
-$(OBJ): version.h
+$(OBJ): rcsid.h
 pexec.o: $(PEXSRC)
 osh.o sh6.o glob6.o if.o fd2.o: pexec.h
 

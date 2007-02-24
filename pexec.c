@@ -62,7 +62,7 @@
  */
 
 #ifndef	lint
-#include "version.h"
+#include "rcsid.h"
 OSH_RCSID("$Id$");
 #endif	/* !lint */
 

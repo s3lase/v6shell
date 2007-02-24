@@ -75,7 +75,7 @@
  */
 
 #ifndef	lint
-#include "version.h"
+#include "rcsid.h"
 OSH_RCSID("$Id$");
 #endif	/* !lint */
 
@@ -789,7 +789,7 @@ getdolp(int c)
 		v = user;
 		break;
 	case 'v':
-		r = snprintf(dolbuf, sizeof(dolbuf), "%s", OSH_VERSION);
+		r = snprintf(dolbuf, sizeof(dolbuf), "'%s'", OSH_VERSION);
 		v = (r < 0 || r >= (int)sizeof(dolbuf)) ? NULL : dolbuf;
 		break;
 	default:
