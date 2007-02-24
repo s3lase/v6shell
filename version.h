@@ -30,7 +30,7 @@
 #define	VERSION_H
 
 #ifndef	OSH_VERSION
-#define	OSH_VERSION		"osh-current\\ \\(20070222\\)"
+#define	OSH_VERSION		"osh-current\\ \\(20070224\\)"
 #endif	/* !OSH_VERSION */
 
 #ifndef	OSH_RCSID

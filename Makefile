@@ -1,28 +1,33 @@
 # Makefile for osh-current (20070224)
 
+#
 # Begin CONFIGURATION
 #
 # Adjust the following variables as needed to match your desires
 # and/or the requirements of your system.
 #
 
+#
 # If your system has a login(1) utility, what is its path name?
 # This is the utility used by the shell's `login' special command
 # to replace an interactive shell with an instance of login(1).
 #
 PATH_LOGIN?=	/usr/bin/login
 
+#
 # If your system has a newgrp(1) utility, what is its path name?
 # This is the utility used by the shell's `newgrp' special command
 # to replace an interactive shell with an instance of newgrp(1).
 #
 PATH_NEWGRP?=
 
+#
 # Build utilities
 #
 #CC=		/usr/bin/cc
 INSTALL=	/usr/bin/install
 
+#
 # Compiler and linker flags
 #
 CFLAGS+=	-O2
@@ -32,6 +37,7 @@ CFLAGS+=	-pedantic
 CFLAGS+=	-Wall -W
 #LDFLAGS+=	-static
 
+#
 # Choose where and how to install the binaries and manual pages.
 #
 PREFIX?=	/usr/local
@@ -44,26 +50,31 @@ BINMODE=	-m 0555
 MANMODE=	-m 0444
 
 #
-# End CONFIGURATION - Generally, there should be no reason to change
-#		      anything below this line.
+# End CONFIGURATION
+#
 
-OSH_VERSION=	osh-current (20070224)
-
-# Enable the X/Open System Interfaces Extension on POSIX-compliant
-# systems which support it.  Notice that this is required!
+#
+# X/Open System Interfaces Extension (NOTES: POSIX, required)
 #
 XSIE=		-D_XOPEN_SOURCE=600
+
+#
+# The following specifies the osh version:
+#	osh-YYYYMMDD		== official release
+#	osh-current (YYYYMMDD)	== current development snapshot
+#
+OSH_VERSION=	osh-current (20070224)
 
 OSH=	osh
 SH6=	sh6 glob6
 UTILS=	if goto fd2
 PEXSRC=	pexec.h pexec.c
 OBJ=	pexec.o osh.o sh6.o glob6.o if.o goto.o fd2.o
-MANSRC=	osh.1.in sh6.1.in glob6.1.in if.1.in goto.1.in fd2.1.in
+MANSRC=	osh.1.src sh6.1.src glob6.1.src if.1.src goto.1.src fd2.1.src
 MANDST=	osh.1 sh6.1 glob6.1 if.1 goto.1 fd2.1
 
 DEFS=	-D_PATH_LOGIN='"$(PATH_LOGIN)"' -D_PATH_NEWGRP='"$(PATH_NEWGRP)"'
-DEFS+=	-DSYSCONFDIR='"$(SYSCONFDIR)"'
+DEFS+=	-DSYSCONFDIR='"$(SYSCONFDIR)"' -DOSH_VERSION='"$(OSH_VERSION)"'
 
 .c.o:
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(XSIE) $(DEFS) $<
@@ -124,9 +135,9 @@ fd2bin: pexec.o fd2.o
 #
 man: $(MANDST)
 $(MANDST): $(MANSRC)
-	for file in $(MANSRC) ; do sed \
+	@for file in $(MANSRC) ; do sed \
 		-e 's,@OSH_VERSION@,$(OSH_VERSION),' \
-		-e 's,@SYSCONFDIR@,$(SYSCONFDIR),' <$$file >$${file%.in} ; \
+		-e 's,@SYSCONFDIR@,$(SYSCONFDIR),' <$$file >$${file%.src} ; \
 	done
 
 #
