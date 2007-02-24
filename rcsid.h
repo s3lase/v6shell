@@ -26,12 +26,8 @@
  *	@(#)$Id$
  */
 
-#ifndef	VERSION_H
-#define	VERSION_H
-
-#ifndef	OSH_VERSION
-#define	OSH_VERSION		"osh-current\\ \\(20070224\\)"
-#endif	/* !OSH_VERSION */
+#ifndef	RCSID_H
+#define	RCSID_H
 
 #ifndef	OSH_RCSID
 # if __GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ >= 4
@@ -45,4 +41,4 @@
 		static const char rcsid[] ATTR = "\100(#)" string
 #endif	/* !OSH_RCSID */
 
-#endif	/* VERSION_H */
+#endif	/* RCSID_H */
