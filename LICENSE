@@ -1,7 +1,5 @@
-============================================================
-The license for all modifications to existing code, new code,
-documentation, and other material distributed with osh-20070131
-is as follows:
+======================================================
+Osh is hereby distributed under the following license:
 
 /*-
  * Copyright (c) 2003, 2004, 2005, 2006, 2007
@@ -30,9 +28,9 @@ is as follows:
  */
 ===
 
-============================================================
-The original license for goto.1, goto.c, if.1, if.c, osh.1, osh.c,
-sh6.1, sh6.c, glob6.1, and glob6.c is as follows:
+==================================================================
+Additionally, the original license for goto.1, goto.c, if.1, if.c,
+osh.1, osh.c, sh6.1, sh6.c, glob6.1, and glob6.c is as follows:
 
 /*-
  * Copyright (C) Caldera International Inc.  2001-2002.  All rights reserved.
@@ -68,8 +66,8 @@ sh6.1, sh6.c, glob6.1, and glob6.c is as follows:
  */
 ===
 
-============================================================
-The pexec.c file is derived from /usr/src/lib/libc/gen/execvp.c
+=======================================================================
+Lastly, the pexec.c file is derived from /usr/src/lib/libc/gen/execvp.c
 of the NetBSD project.  The original license is as follows:
 
 /*-
@@ -104,4 +102,4 @@ of the NetBSD project.  The original license is as follows:
  */
 ===
 
-Jeffrey Allen Neitzel						2007/01/31
+Jeffrey Allen Neitzel						2007/02/28
