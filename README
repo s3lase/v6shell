@@ -5,10 +5,10 @@ Thompson shell (circa 1975).  The original Thompson shell was
 principally written by Ken Thompson of Bell Labs.
 
 Sh6(1) (a port of the original shell) and glob6(1) (a port of the
-global command) are also included in this package.  Like osh, they
+global command) are also included in this package.  Together, they
 provide a user interface which is backward compatible with that
 provided by the Sixth Edition Thompson shell and global command,
-without the obvious enhancements.
+but without the obvious enhancements found in osh.
 
 Notice that this package also includes the following shell utilities:
 
