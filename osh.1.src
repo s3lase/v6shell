@@ -58,7 +58,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.TH OSH 1 "January 31, 2007" "@OSH_VERSION@" "General Commands"
+.TH OSH 1 "March 1, 2007" "@OSH_VERSION@" "General Commands"
 .SH NAME
 osh \- old shell (command interpreter)
 .SH SYNOPSIS
@@ -436,6 +436,10 @@ as determined by
 .IR getpwuid (3).
 The value (if any) is equivalent to that
 given by `id\ -un'.
+.TP
+$v (*)
+The version of the current shell represented
+as a one-word, read-only string.
 .PP
 All substitution on a command line is performed
 .I before
