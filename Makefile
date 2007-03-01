@@ -1,4 +1,4 @@
-# Makefile for osh-current (20070224)
+# Makefile for osh-current (20070301)
 
 #
 # Begin CONFIGURATION
@@ -63,7 +63,7 @@ XSIE=		-D_XOPEN_SOURCE=600
 #	osh-YYYYMMDD		== official release
 #	osh-current (YYYYMMDD)	== current development snapshot
 #
-OSH_VERSION=	osh-current (20070224)
+OSH_VERSION=	osh-current (20070301)
 
 OSH=	osh
 SH6=	sh6 glob6
@@ -134,6 +134,7 @@ fd2bin: pexec.o fd2.o
 # Manual-page targets
 #
 man: $(MANDST)
+
 $(MANDST): $(MANSRC)
 	@for file in $(MANSRC) ; do sed \
 		-e 's,@OSH_VERSION@,$(OSH_VERSION),' \
