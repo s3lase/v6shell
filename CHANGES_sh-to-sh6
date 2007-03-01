@@ -3,6 +3,10 @@ code for the Sixth Edition (V6) Unix Thompson shell and global
 command in porting them to run on modern Unix systems.
 
 -------------------------------------------------------------------------------
+[osh-current]:
+	* Imported the project into a local subversion repository.
+
+-------------------------------------------------------------------------------
 [osh-20070131]:
 sh6.c	1.4 (jneitzel) 2007/01/14:
 	* Changed the way SIGINT and SIGQUIT are handled so that the shell's

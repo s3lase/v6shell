@@ -2,6 +2,24 @@ Changes that improve compatibility w/ the Sixth Edition Unix shell
 are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
+[osh-current]:
+	* Imported the project into a local subversion repository.
+
+Makefile:
+	* Added SYSCONFDIR and a new `man' target.
+
+osh.c:
+	* Defined _PATH_SYSTEM_LOGIN as `SYSCONFDIR "/osh.login"' instead of
+	  "/etc/osh.login" so that the user can use SYSCONFDIR (/etc by
+	  default) at build-time to specify the directory where the shell
+	  searches for its system-wide initialization file.
+
+	* Added a new special parameter, $v, which makes the version of the
+	  osh package available as a read-only string.  The format is
+	  `osh-YYYYMMDD' for official releases and `osh-current (YYYYMMDD)'
+	  (interpreted as one word) for current development snapshots.
+
+-------------------------------------------------------------------------------
 [osh-20070131]:
 osh.1:
 	* Made a few minimal changes to synchronize the manual w/ the code.
