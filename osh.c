@@ -143,8 +143,8 @@ OSH_RCSID("$Id$");
  * The following file descriptors are reserved for special use by osh.
  */
 #define	DUPFD0		7	/* used for input redirection w/ `<-' */
-#define	PWD		8	/* see do_chdir()                     */
-#define	SAVFD0		9	/* see do_source()                    */
+#define	PWD		8	/* used in do_chdir()                 */
+#define	SAVFD0		9	/* used in do_source()                */
 
 /*
  * These are the initialization files used by osh.
