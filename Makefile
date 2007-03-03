@@ -152,21 +152,27 @@ install-sh6all: $(SH6) utils man install-sh6 install-utils
 
 install-osh: $(OSH) man install-dest
 	$(INSTALL) -c -s $(BINGRP) $(BINMODE) osh         $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) osh.1.out   $(DESTDIR)$(MANDIR)/osh.1
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) osh.1.out   \
+		$(DESTDIR)$(MANDIR)/osh.1
 
 install-sh6: $(SH6) man install-dest
 	$(INSTALL) -c -s $(BINGRP) $(BINMODE) sh6         $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) sh6.1.out   $(DESTDIR)$(MANDIR)/sh6.1
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) sh6.1.out   \
+		$(DESTDIR)$(MANDIR)/sh6.1
 	$(INSTALL) -c -s $(BINGRP) $(BINMODE) glob6       $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) glob6.1.out $(DESTDIR)$(MANDIR)/glob6.1
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) glob6.1.out \
+		$(DESTDIR)$(MANDIR)/glob6.1
 
 install-utils: utils man install-dest
 	$(INSTALL) -c -s $(BINGRP) $(BINMODE) if          $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) if.1.out    $(DESTDIR)$(MANDIR)/if.1
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) if.1.out    \
+		$(DESTDIR)$(MANDIR)/if.1
 	$(INSTALL) -c -s $(BINGRP) $(BINMODE) goto        $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) goto.1.out  $(DESTDIR)$(MANDIR)/goto.1
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) goto.1.out  \
+		$(DESTDIR)$(MANDIR)/goto.1
 	$(INSTALL) -c -s $(BINGRP) $(BINMODE) fd2         $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) fd2.1.out   $(DESTDIR)$(MANDIR)/fd2.1
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) fd2.1.out   \
+		$(DESTDIR)$(MANDIR)/fd2.1
 
 install-dest:
 	test -d $(DESTDIR)$(BINDIR) || { \
