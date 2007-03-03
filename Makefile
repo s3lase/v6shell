@@ -70,7 +70,7 @@ SH6=	sh6 glob6
 UTILS=	if goto fd2
 PEXSRC=	pexec.h pexec.c
 OBJ=	pexec.o osh.o sh6.o glob6.o if.o goto.o fd2.o
-MANSRC=	osh.1     sh6.1     glob6.1     if.1     goto.1     fd2.1
+MANSRC=	osh.1 sh6.1 glob6.1 if.1 goto.1 fd2.1
 MANDST=	osh.1.out sh6.1.out glob6.1.out if.1.out goto.1.out fd2.1.out
 
 DEFS=	-D_PATH_LOGIN='"$(PATH_LOGIN)"' -D_PATH_NEWGRP='"$(PATH_NEWGRP)"'
@@ -151,22 +151,22 @@ install-oshall: $(OSH) utils man install-osh install-utils
 install-sh6all: $(SH6) utils man install-sh6 install-utils
 
 install-osh: $(OSH) man install-dest
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) osh $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c $(MANGRP) $(MANMODE) osh.1.out $(DESTDIR)$(MANDIR)/osh.1
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) osh         $(DESTDIR)$(BINDIR)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) osh.1.out   $(DESTDIR)$(MANDIR)/osh.1
 
 install-sh6: $(SH6) man install-dest
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) sh6 $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c $(MANGRP) $(MANMODE) sh6.1.out $(DESTDIR)$(MANDIR)/sh6.1
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) glob6 $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c $(MANGRP) $(MANMODE) glob6.1.out $(DESTDIR)$(MANDIR)/glob6.1
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) sh6         $(DESTDIR)$(BINDIR)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) sh6.1.out   $(DESTDIR)$(MANDIR)/sh6.1
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) glob6       $(DESTDIR)$(BINDIR)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) glob6.1.out $(DESTDIR)$(MANDIR)/glob6.1
 
 install-utils: utils man install-dest
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) if $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c $(MANGRP) $(MANMODE) if.1.out $(DESTDIR)$(MANDIR)/if.1
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) goto $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c $(MANGRP) $(MANMODE) goto.1.out $(DESTDIR)$(MANDIR)/goto.1
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) fd2 $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c $(MANGRP) $(MANMODE) fd2.1.out $(DESTDIR)$(MANDIR)/fd2.1
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) if          $(DESTDIR)$(BINDIR)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) if.1.out    $(DESTDIR)$(MANDIR)/if.1
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) goto        $(DESTDIR)$(BINDIR)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) goto.1.out  $(DESTDIR)$(MANDIR)/goto.1
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) fd2         $(DESTDIR)$(BINDIR)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) fd2.1.out   $(DESTDIR)$(MANDIR)/fd2.1
 
 install-dest:
 	test -d $(DESTDIR)$(BINDIR) || { \
