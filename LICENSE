@@ -2,7 +2,7 @@
 Osh is hereby distributed under the following license:
 
 /*-
- * Copyright (c) 2003, 2004, 2005, 2006, 2007
+ * Copyright (c) 2003-2007
  *	Jeffrey Allen Neitzel <jneitzel (at) sdf1 (dot) org>.
  *	All rights reserved.
  *
@@ -102,4 +102,4 @@ of the NetBSD project.  The original license is as follows:
  */
 ===
 
-Jeffrey Allen Neitzel						2007/02/28
+Jeffrey Allen Neitzel						2007/03/04
