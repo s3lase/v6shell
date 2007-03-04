@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2005, 2006
+ * Copyright (c) 2005-2007
  *	Jeffrey Allen Neitzel <jneitzel (at) sdf1 (dot) org>.
  *	All rights reserved.
  *
