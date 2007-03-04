@@ -1,4 +1,4 @@
-Welcome to osh-current (20070301)!
+Welcome to osh-current (20070305), a development snapshot!
 
 Osh(1) is an enhanced, backward-compatible port of the Sixth Edition
 Thompson shell (circa 1975).  The original Thompson shell was
@@ -23,7 +23,7 @@ INSTALL:
 Select the instructions under 1), 2), or 3) depending on which parts
 of the osh package you wish to install.
 
-1) The following steps build/install everything:
+1) To build and install everything:
 
 	a) Adjust the CONFIGURATION section in the Makefile to match
 	   your desires and/or the requirements of your system.
@@ -33,7 +33,7 @@ of the osh package you wish to install.
 	c) Type `make install' to install the binaries
 	   and manual pages.
 
-2) The following steps build/install osh, if, goto, and fd2:
+2) To build and install osh, if, goto, and fd2:
 
 	a) Adjust the CONFIGURATION section in the Makefile to match
 	   your desires and/or the requirements of your system.
@@ -43,7 +43,7 @@ of the osh package you wish to install.
 	c) Type `make install-oshall' to install the binaries
 	   and manual pages.
 
-3) The following steps build/install sh6, glob6, if, goto, and fd2:
+3) To build and install sh6, glob6, if, goto, and fd2:
 
 	a) Adjust the CONFIGURATION section in the Makefile to match
 	   your desires and/or the requirements of your system.
