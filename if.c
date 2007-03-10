@@ -87,6 +87,8 @@ OSH_RCSID("$Id$");
 #define	FSIZE_GZ	1	/* for the `-s' primary           */
 
 #define	EXIT(s)		((getpid() == ifpid) ? exit((s)) : _exit((s)))
+#define	FORKED		true
+#define	RETERR		true
 
 static	int	ac;
 static	int	ap;
@@ -138,7 +140,7 @@ main(int argc, char **argv)
 		ap = 1;
 		re = expr();
 		if (re && ap < ac)
-			doex(false);
+			doex(!FORKED);
 	} else
 		re = 0;
 
@@ -155,7 +157,7 @@ expr(void)
 	bool re;
 
 	re = e1();
-	if (equal(nxtarg(true), "-o"))
+	if (equal(nxtarg(RETERR), "-o"))
 		return re | expr();
 	ap--;
 	return re;
@@ -167,7 +169,7 @@ e1(void)
 	bool re;
 
 	re = e2();
-	if (equal(nxtarg(true), "-a"))
+	if (equal(nxtarg(RETERR), "-a"))
 		return re & e1();
 	ap--;
 	return re;
@@ -177,7 +179,7 @@ static bool
 e2(void)
 {
 
-	if (equal(nxtarg(true), "!"))
+	if (equal(nxtarg(RETERR), "!"))
 		return !e3();
 	ap--;
 	return e3();
@@ -191,7 +193,7 @@ e3(void)
 	int cstat, d;
 	char *a, *b;
 
-	if ((a = nxtarg(true)) == NULL)
+	if ((a = nxtarg(RETERR)) == NULL)
 		error(IF_ERR, av[ap - 2], "expression expected");
 
 	/*
@@ -199,7 +201,7 @@ e3(void)
 	 */
 	if (equal(a, "(")) {
 		re = expr();
-		if (!equal(nxtarg(true), ")"))
+		if (!equal(nxtarg(RETERR), ")"))
 			error(IF_ERR, a, ") expected");
 		return re;
 	}
@@ -212,11 +214,11 @@ e3(void)
 			error(IF_ERR, NULL, "Cannot fork - try again");
 		if (cpid == 0)
 			/**** Child! ****/
-			doex(true);
+			doex(FORKED);
 		else {
 			/**** Parent! ****/
 			tpid = wait(&cstat);
-			while ((a = nxtarg(true)) != NULL && !equal(a, "}"))
+			while ((a = nxtarg(RETERR)) != NULL && !equal(a, "}"))
 				;	/* nothing */
 			if (a == NULL)
 				ap--;
@@ -228,28 +230,28 @@ e3(void)
 	 * file existence/permission tests
 	 */
 	if (equal(a, "-e"))
-		return ifaccess(nxtarg(false), F_OK);
+		return ifaccess(nxtarg(!RETERR), F_OK);
 	if (equal(a, "-r"))
-		return ifaccess(nxtarg(false), R_OK);
+		return ifaccess(nxtarg(!RETERR), R_OK);
 	if (equal(a, "-w"))
-		return ifaccess(nxtarg(false), W_OK);
+		return ifaccess(nxtarg(!RETERR), W_OK);
 	if (equal(a, "-x"))
-		return ifaccess(nxtarg(false), X_OK);
+		return ifaccess(nxtarg(!RETERR), X_OK);
 
 	/*
 	 * file existence/type tests
 	 */
 	if (equal(a, "-d"))
-		return ifstat(nxtarg(false), S_IFDIR);
+		return ifstat(nxtarg(!RETERR), S_IFDIR);
 	if (equal(a, "-f"))
-		return ifstat(nxtarg(false), S_IFREG);
+		return ifstat(nxtarg(!RETERR), S_IFREG);
 	if (equal(a, "-h"))
-		return ifstat(nxtarg(false), S_IFLNK);
+		return ifstat(nxtarg(!RETERR), S_IFLNK);
 	if (equal(a, "-s"))
-		return ifstat(nxtarg(false), FSIZE_GZ);
+		return ifstat(nxtarg(!RETERR), FSIZE_GZ);
 	if (equal(a, "-t")) {
 		/* Does the descriptor refer to a terminal device? */
-		b = nxtarg(true);
+		b = nxtarg(RETERR);
 		if (b == NULL || *b == '\0')
 			error(IF_ERR, a, "digit expected");
 		if (*b >= '0' && *b <= '9' && *(b + 1) == '\0') {
@@ -263,19 +265,19 @@ e3(void)
 	/*
 	 * Compare the string arguments.
 	 */
-	if ((b = nxtarg(true)) == NULL)
+	if ((b = nxtarg(RETERR)) == NULL)
 		error(IF_ERR, a, "operator expected");
 	if (equal(b, "="))
-		return equal(a, nxtarg(false));
+		return equal(a, nxtarg(!RETERR));
 	if (equal(b, "!="))
-		return !equal(a, nxtarg(false));
+		return !equal(a, nxtarg(!RETERR));
 	error(IF_ERR, b, "unknown operator");
 	/*NOTREACHED*/
 	return false;
 }
 
 static void
-doex(bool ischld)
+doex(bool forked)
 {
 	char **xap, **xav;
 
@@ -284,15 +286,15 @@ doex(bool ischld)
 
 	xav = xap = &av[ap];
 	while (*xap != NULL) {
-		if (ischld && equal(*xap, "}"))
+		if (forked && equal(*xap, "}"))
 			break;
 		xap++;
 	}
-	if (ischld && xap - xav > 0 && !equal(*xap, "}"))
+	if (forked && xap - xav > 0 && !equal(*xap, "}"))
 		error(IF_ERR, av[ap - 1], "} expected");
 	*xap = NULL;
 	if (xav[0] == NULL)
-		error(IF_ERR, ischld ? av[ap - 1] : NULL, "command expected");
+		error(IF_ERR, forked ? av[ap - 1] : NULL, "command expected");
 
 	/* Use a built-in exit since there is no external exit utility. */
 	if (equal(xav[0], "exit")) {
@@ -366,14 +368,15 @@ ifstat(const char *file, mode_t type)
 }
 
 static char *
-nxtarg(bool rn)
+nxtarg(bool reterr)
 {
 	char *nap;
 
 	if (ap < 1 || ap > ac)	/* should never be true */
 		error(IF_ERR, NULL, "Invalid argv index");
+
 	if (ap == ac) {
-		if (rn) {
+		if (reterr) {
 			ap++;
 			return NULL;
 		}
