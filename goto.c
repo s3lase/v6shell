@@ -69,16 +69,17 @@
 OSH_RCSID("$Id$");
 #endif	/* !lint */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
 #define	LABELSIZE	64	/* size of the label buffer */
 
-static off_t	offset;
+static	off_t	offset;
 
-static int	getlabel(/*@out@*/ char *, int, size_t);
-static int	xgetc(void);
+static	bool	getlabel(/*@out@*/ char *, int, size_t);
+static	int	xgetc(void);
 
 /*
  * NAME
@@ -120,11 +121,13 @@ main(int argc, char **argv)
 }
 
 /*
- * Get possible label for comparison against argv[1].
- * Return 1 if possible label found.
- * Return 0 at end-of-file.
+ * Search for the first occurrence of a possible label with both
+ * the same first character (fc) and the same length (siz - 1)
+ * as argv[1], and copy this possible label to buf.
+ * Return true  (1) if possible label found.
+ * Return false (0) at end-of-file.
  */
-static int
+static bool
 getlabel(char *buf, int fc, size_t siz)
 {
 	int c;
@@ -169,10 +172,11 @@ getlabel(char *buf, int fc, size_t siz)
 
 		if ((size_t)(b - buf) != siz - 1)	/* not label */
 			continue;
-		return 1;
+		return true;
 	}
+
 	*buf = '\0';
-	return 0;
+	return false;
 }
 
 static int

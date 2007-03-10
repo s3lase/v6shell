@@ -77,6 +77,7 @@ OSH_RCSID("$Id$");
 #include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -113,7 +114,9 @@ OSH_RCSID("$Id$");
 /*
  * Macros
  */
-#define	DOLDIGIT(d, c)	((d) >= 0 && (d) <= 9 && "0123456789"[(d) % 10] == (c))
+#define	DDGT(d, c)	((d) >= 0 && (d) <= 9 && "0123456789"[(d) % 10] == (c))
+#define	DLIT		false
+#define	DSUB		true
 #define	EQUAL(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
 #define	EXIT(s)		((getpid() == spid) ? exit((s)) : _exit((s)))
 
@@ -197,8 +200,8 @@ static	int		dolc;		/* $N dollar-argument count         */
 /*@null@*/ static
 	const char	*dolp;		/* $N and $$ dollar-value pointer   */
 static	char	*const	*dolv;		/* $N dollar-argument value array   */
-static	int		error;		/* error flag for read/parse errors */
-static	int		globit;		/* glob flag for `*', `?', `['      */
+static	bool		error;		/* error flag for read/parse errors */
+static	bool		globit;		/* glob flag for `*', `?', `['      */
 static	const char	*name;		/* $0 - shell command name          */
 static	int		nulcnt;		/* `\0'-character count (per line)  */
 static	int		olnflg;		/* one-line flag for `-t' option    */
@@ -218,7 +221,7 @@ static	char		**wordp;
  */
 static	void		main1(void);
 static	void		word(void);
-static	char		xgetc(int);
+static	char		xgetc(bool);
 static	char		readc(void);
 static	struct tnode	*talloc(void);
 static	void		tfree(/*@null@*/ /*@only@*/ struct tnode *);
@@ -234,7 +237,7 @@ static	void		vscan(/*@null@*/ char **, int (*)(int));
 static	void		ascan(/*@null@*/ char *, int (*)(int));
 static	int		tglob(int);
 static	int		trim(int);
-static	int		any(int, const char *);
+static	bool		any(int, const char *);
 static	void		execute(/*@null@*/ struct tnode *,
 				/*@null@*/ int *, /*@null@*/ int *);
 /*@maynotreturn@*/ static
@@ -245,7 +248,7 @@ static	void		xputc(int);
 static	void		pwait(pid_t);
 static	void		sh_init(void);
 static	void		fdfree(void);
-static	int		fdisdir(int);
+static	bool		fdisdir(int);
 static	void		sh_magic(void);
 /*@out@*/ static
 	void		*xmalloc(size_t);
@@ -293,10 +296,10 @@ main(int argc, char **argv)
 		}
 	} else {
 		chintr = 1;
-		if (isatty(FD0) && isatty(FD2))
+		if (isatty(FD0) != 0 && isatty(FD2) != 0)
 			prompt = (geteuid() != 0) ? "% " : "# ";
 	}
-	if (chintr) {
+	if (chintr != 0) {
 		chintr = 0;
 		if (signal(SIGINT, SIG_IGN) == SIG_DFL)
 			chintr |= CH_SIGINT;
@@ -330,7 +333,8 @@ main1(void)
 
 	linep = line;
 	wordp = words;
-	error = nulcnt = 0;
+	error = false;
+	nulcnt = 0;
 	do {
 		wp = linep;
 		word();
@@ -364,7 +368,7 @@ word(void)
 	*wordp++ = linep;
 
 loop:
-	switch (c = xgetc(1)) {
+	switch (c = xgetc(DSUB)) {
 	case ' ':
 	case '\t':
 		goto loop;
@@ -372,17 +376,17 @@ loop:
 	case '"':
 	case '\'':
 		c1 = c;
-		while ((c = xgetc(0)) != c1) {
+		while ((c = xgetc(DLIT)) != c1) {
 			if (c == '\n') {
 				if (!error)
 					err("syntax error", SH_ERR);
 				peekc = c;
 				*linep++ = '\0';
-				error = 1;
+				error = true;
 				return;
 			}
 			if (c == '\\') {
-				if ((c = xgetc(0)) == '\n')
+				if ((c = xgetc(DLIT)) == '\n')
 					c = ' ';
 				else {
 					peekc = c;
@@ -394,7 +398,7 @@ loop:
 		break;
 
 	case '\\':
-		if ((c = xgetc(0)) == '\n')
+		if ((c = xgetc(DLIT)) == '\n')
 			goto loop;
 		c |= QUOTE;
 		peekc = c;
@@ -414,8 +418,8 @@ loop:
 	}
 
 	for (;;) {
-		if ((c = xgetc(1)) == '\\') {
-			if ((c = xgetc(0)) == '\n')
+		if ((c = xgetc(DSUB)) == '\\') {
+			if ((c = xgetc(DLIT)) == '\n')
 				c = ' ';
 			else
 				c |= QUOTE;
@@ -433,13 +437,13 @@ loop:
 }
 
 /*
- * If dolsub == 0, get the next character from the standard input.
- * Otherwise, if dolsub == 1, get either the next character from the
- * standard input or substitute the current $N or $$ dollar w/ the
- * next character of its value, which is pointed to by dolp.
+ * If act == DLIT, get only the next literal character from the
+ * standard input.  Otherwise, if act == DSUB, get either the next
+ * literal character from the standard input or substitute the current
+ * $ dollar w/ the next character of its value pointed to by dolp.
  */
 static char
-xgetc(int dolsub)
+xgetc(bool act)
 {
 	int n;
 	char c;
@@ -467,7 +471,7 @@ xgetc(int dolsub)
 		goto geterr;
 	}
 
-getdol:
+getd:
 	if (dolp != NULL) {
 		c = *dolp++ & ASCII;
 		if (c != '\0')
@@ -475,17 +479,17 @@ getdol:
 		dolp = NULL;
 	}
 	c = readc();
-	if (c == '$' && dolsub) {
+	if (c == '$' && act) {
 		c = readc();
 		if (c >= '0' && c <= '9') {
 			n = c - '0';
-			if (DOLDIGIT(n, c) && n < dolc)
+			if (DDGT(n, c) && n < dolc)
 				dolp = (n > 0) ? dolv[n] : name;
-			goto getdol;
+			goto getd;
 		}
 		if (c == '$') {
 			dolp = apid;
-			goto getdol;
+			goto getd;
 		}
 	}
 	while (c == '\0') {
@@ -498,7 +502,7 @@ getdol:
 	return c;
 
 geterr:
-	error = 1;
+	error = true;
 	return '\n';
 }
 
@@ -643,7 +647,7 @@ syn1(char **p1, char **p2)
 		return syn2(p1, p2);
 
 synerr:
-	error = 1;
+	error = true;
 	return NULL;
 }
 
@@ -779,7 +783,7 @@ syn3(char **p1, char **p2)
 	return t;
 
 synerr:
-	error = 1;
+	error = true;
 	return NULL;
 }
 
@@ -817,15 +821,15 @@ ascan(char *ap, int (*func)(int))
 }
 
 /*
- * Set the global variable globit to 1 if the character c is
- * a glob character.  Return the character in all cases.
+ * Set the global variable globit to true (1) if the character c
+ * is a glob character.  Return the character in all cases.
  */
 static int
 tglob(int c)
 {
 
 	if (any(c, "*?["))
-		globit = 1;
+		globit = true;
 	return c;
 }
 
@@ -840,10 +844,10 @@ trim(int c)
 }
 
 /*
- * Return 1 if the character c matches any character in the string
- * pointed to by as.  Otherwise, return 0.
+ * Return true (1) if the character c matches any character in
+ * the string pointed to by as.  Otherwise, return false (0).
  */
-static int
+static bool
 any(int c, const char *as)
 {
 	const char *s;
@@ -851,8 +855,8 @@ any(int c, const char *as)
 	s = as;
 	while (*s != '\0')
 		if (*s++ == c)
-			return 1;
-	return 0;
+			return true;
+	return false;
 }
 
 /*
@@ -1060,7 +1064,7 @@ execute(struct tnode *t, int *pin, int *pout)
 			execute(t1, NULL, NULL);
 			_exit(status);
 		}
-		globit = 0;
+		globit = false;
 		vscan(t->nav, tglob);
 		if (globit) {
 			for (i = 0; t->nav[i] != NULL; i++)
@@ -1168,7 +1172,7 @@ pwait(pid_t cp)
 		if (tp == -1)
 			break;
 		if (s != 0) {
-			if (WIFSIGNALED(s)) {
+			if (WIFSIGNALED(s) != 0) {
 				e = WTERMSIG(s);
 				if (e >= XNSIG || (e >= 0 && sig[e] != NULL)) {
 					if (tp != cp) {
@@ -1185,7 +1189,7 @@ pwait(pid_t cp)
 						prs(" -- Core dumped");
 				}
 				status = 128 + e;
-			} else if (WIFEXITED(s))
+			} else if (WIFEXITED(s) != 0)
 				status = WEXITSTATUS(s);
 			if (status >= FC_ERR) {
 				if (status == FC_ERR)
@@ -1262,10 +1266,10 @@ fdfree(void)
 }
 
 /*
- * Return 1 if the file descriptor fd refers to an open file which
- * is a directory.  Otherwise, return 0.
+ * Return true (1) if the file descriptor fd refers to an open file
+ * which is a directory.  Otherwise, return false (0).
  */
-static int
+static bool
 fdisdir(int fd)
 {
 	struct stat sb;

@@ -75,6 +75,7 @@ OSH_RCSID("$Id$");
 #include <sys/wait.h>
 
 #include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -94,18 +95,18 @@ static	uid_t	ifeuid;
 static	pid_t	ifpid;
 
 /*@noreturn@*/ static
-	void	doex(int);
-static	int	e1(void);
-static	int	e2(void);
-static	int	e3(void);
-static	int	equal(/*@null@*/ const char *, /*@null@*/ const char *);
+	void	doex(bool);
+static	bool	e1(void);
+static	bool	e2(void);
+static	bool	e3(void);
+static	bool	equal(/*@null@*/ const char *, /*@null@*/ const char *);
 /*@noreturn@*/ static
 	void	error(int, /*@null@*/ const char *, const char *);
-static	int	expr(void);
-static	int	ifaccess(/*@null@*/ const char *, int);
-static	int	ifstat(/*@null@*/ const char *, mode_t);
+static	bool	expr(void);
+static	bool	ifaccess(/*@null@*/ const char *, int);
+static	bool	ifstat(/*@null@*/ const char *, mode_t);
 /*@null@*/ static
-	char	*nxtarg(int);
+	char	*nxtarg(bool);
 
 /*
  * NAME
@@ -120,7 +121,7 @@ static	int	ifstat(/*@null@*/ const char *, mode_t);
 int
 main(int argc, char **argv)
 {
-	int re;		/* return value of expr() */
+	bool re;	/* return value of expr() */
 
 	ifpid = getpid();
 	ifeuid = geteuid();
@@ -137,7 +138,7 @@ main(int argc, char **argv)
 		ap = 1;
 		re = expr();
 		if (re && ap < ac)
-			doex(0);
+			doex(false);
 	} else
 		re = 0;
 
@@ -146,50 +147,51 @@ main(int argc, char **argv)
 
 /*
  * Evaluate the expression.
- * Return 1 if true or 0 if false.
+ * Return true (1) or false (0).
  */
-static int
+static bool
 expr(void)
 {
-	int re;
+	bool re;
 
 	re = e1();
-	if (equal(nxtarg(1), "-o"))
+	if (equal(nxtarg(true), "-o"))
 		return re | expr();
 	ap--;
 	return re;
 }
 
-static int
+static bool
 e1(void)
 {
-	int re;
+	bool re;
 
 	re = e2();
-	if (equal(nxtarg(1), "-a"))
+	if (equal(nxtarg(true), "-a"))
 		return re & e1();
 	ap--;
 	return re;
 }
 
-static int
+static bool
 e2(void)
 {
 
-	if (equal(nxtarg(1), "!"))
+	if (equal(nxtarg(true), "!"))
 		return !e3();
 	ap--;
 	return e3();
 }
 
-static int
+static bool
 e3(void)
 {
+	bool re;
 	pid_t cpid, tpid;
-	int cstat, d, re;
+	int cstat, d;
 	char *a, *b;
 
-	if ((a = nxtarg(1)) == NULL)
+	if ((a = nxtarg(true)) == NULL)
 		error(IF_ERR, av[ap - 2], "expression expected");
 
 	/*
@@ -197,7 +199,7 @@ e3(void)
 	 */
 	if (equal(a, "(")) {
 		re = expr();
-		if (!equal(nxtarg(1), ")"))
+		if (!equal(nxtarg(true), ")"))
 			error(IF_ERR, a, ") expected");
 		return re;
 	}
@@ -210,15 +212,15 @@ e3(void)
 			error(IF_ERR, NULL, "Cannot fork - try again");
 		if (cpid == 0)
 			/**** Child! ****/
-			doex(1);
+			doex(true);
 		else {
 			/**** Parent! ****/
 			tpid = wait(&cstat);
-			while ((a = nxtarg(1)) != NULL && !equal(a, "}"))
+			while ((a = nxtarg(true)) != NULL && !equal(a, "}"))
 				;	/* nothing */
 			if (a == NULL)
 				ap--;
-			return (tpid != cpid || cstat) ? 0 : 1;
+			return (tpid == cpid && cstat == 0) ? true : false;
 		}
 	}
 
@@ -226,34 +228,34 @@ e3(void)
 	 * file existence/permission tests
 	 */
 	if (equal(a, "-e"))
-		return ifaccess(nxtarg(0), F_OK);
+		return ifaccess(nxtarg(false), F_OK);
 	if (equal(a, "-r"))
-		return ifaccess(nxtarg(0), R_OK);
+		return ifaccess(nxtarg(false), R_OK);
 	if (equal(a, "-w"))
-		return ifaccess(nxtarg(0), W_OK);
+		return ifaccess(nxtarg(false), W_OK);
 	if (equal(a, "-x"))
-		return ifaccess(nxtarg(0), X_OK);
+		return ifaccess(nxtarg(false), X_OK);
 
 	/*
 	 * file existence/type tests
 	 */
 	if (equal(a, "-d"))
-		return ifstat(nxtarg(0), S_IFDIR);
+		return ifstat(nxtarg(false), S_IFDIR);
 	if (equal(a, "-f"))
-		return ifstat(nxtarg(0), S_IFREG);
+		return ifstat(nxtarg(false), S_IFREG);
 	if (equal(a, "-h"))
-		return ifstat(nxtarg(0), S_IFLNK);
+		return ifstat(nxtarg(false), S_IFLNK);
 	if (equal(a, "-s"))
-		return ifstat(nxtarg(0), FSIZE_GZ);
+		return ifstat(nxtarg(false), FSIZE_GZ);
 	if (equal(a, "-t")) {
 		/* Does the descriptor refer to a terminal device? */
-		b = nxtarg(1);
+		b = nxtarg(true);
 		if (b == NULL || *b == '\0')
 			error(IF_ERR, a, "digit expected");
 		if (*b >= '0' && *b <= '9' && *(b + 1) == '\0') {
 			d = *b - '0';
 			if (d >= 0 && d <= 9 && "0123456789"[d % 10] == *b)
-				return isatty(d);
+				return isatty(d) != 0;
 		}
 		error(IF_ERR, b, "not a digit");
 	}
@@ -261,19 +263,19 @@ e3(void)
 	/*
 	 * Compare the string arguments.
 	 */
-	if ((b = nxtarg(1)) == NULL)
+	if ((b = nxtarg(true)) == NULL)
 		error(IF_ERR, a, "operator expected");
 	if (equal(b, "="))
-		return equal(a, nxtarg(0));
+		return equal(a, nxtarg(false));
 	if (equal(b, "!="))
-		return !equal(a, nxtarg(0));
+		return !equal(a, nxtarg(false));
 	error(IF_ERR, b, "unknown operator");
 	/*NOTREACHED*/
-	return 0;
+	return false;
 }
 
 static void
-doex(int earg)
+doex(bool ischld)
 {
 	char **xap, **xav;
 
@@ -282,15 +284,15 @@ doex(int earg)
 
 	xav = xap = &av[ap];
 	while (*xap != NULL) {
-		if (earg && equal(*xap, "}"))
+		if (ischld && equal(*xap, "}"))
 			break;
 		xap++;
 	}
-	if (earg && xap - xav > 0 && !equal(*xap, "}"))
+	if (ischld && xap - xav > 0 && !equal(*xap, "}"))
 		error(IF_ERR, av[ap - 1], "} expected");
 	*xap = NULL;
 	if (xav[0] == NULL)
-		error(IF_ERR, earg ? av[ap - 1] : NULL, "command expected");
+		error(IF_ERR, ischld ? av[ap - 1] : NULL, "command expected");
 
 	/* Use a built-in exit since there is no external exit utility. */
 	if (equal(xav[0], "exit")) {
@@ -311,62 +313,67 @@ doex(int earg)
  * dealing w/ special cases for the superuser and `-x':
  *	- Always grant search access on directories.
  *	- If not a directory, require at least one execute bit.
- * Return 1 if access is granted.
- * Return 0 if access is denied.
+ * Return true  (1) if access is granted.
+ * Return false (0) if access is denied.
  */
-static int
+static bool
 ifaccess(const char *file, int mode)
 {
 	struct stat sb;
-	int ra;
+	bool ra;
 
 	if (file == NULL || *file == '\0')
-		return 0;
+		return false;
 
 	ra = access(file, mode) == 0;
 
 	if (ra && mode == X_OK && ifeuid == 0) {
 		if (stat(file, &sb) < 0)
-			return 0;
-		if (S_ISDIR(sb.st_mode))
-			return 1;
-		return (sb.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) ? 1 : 0;
+			ra = false;
+		else if (S_ISDIR(sb.st_mode))
+			ra = true;
+		else
+			ra = (sb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH)) != 0;
 	}
+
 	return ra;
 }
 
-static int
+static bool
 ifstat(const char *file, mode_t type)
 {
 	struct stat sb;
+	bool rs;
 
 	if (file == NULL || *file == '\0')
-		return 0;
+		return false;
 
 	if (type == S_IFLNK) {
 		if (lstat(file, &sb) < 0)
-			return 0;
-		return (sb.st_mode & S_IFMT) == type;
-	}
-	if (stat(file, &sb) < 0)
-		return 0;
-	if (type == S_IFDIR || type == S_IFREG)
-		return (sb.st_mode & S_IFMT) == type;
-	if (type == FSIZE_GZ)
-		return sb.st_size > (off_t)0;
-	/*NOTREACHED*/
-	return 0;
+			rs = false;
+		else
+			rs = (sb.st_mode & S_IFMT) == type;
+	} else if (stat(file, &sb) < 0)
+		rs = false;
+	else if (type == S_IFDIR || type == S_IFREG)
+		rs = (sb.st_mode & S_IFMT) == type;
+	else if (type == FSIZE_GZ)
+		rs = sb.st_size > (off_t)0;
+	else
+		rs = false;
+
+	return rs;
 }
 
 static char *
-nxtarg(int m)
+nxtarg(bool rn)
 {
 	char *nap;
 
 	if (ap < 1 || ap > ac)	/* should never be true */
 		error(IF_ERR, NULL, "Invalid argv index");
 	if (ap == ac) {
-		if (m) {
+		if (rn) {
 			ap++;
 			return NULL;
 		}
@@ -377,12 +384,12 @@ nxtarg(int m)
 	return nap;
 }
 
-static int
+static bool
 equal(const char *a, const char *b)
 {
 
 	if (a == NULL || b == NULL || *a != *b)
-		return 0;
+		return false;
 	return strcmp(a, b) == 0;
 }
 

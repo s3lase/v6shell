@@ -195,7 +195,7 @@ got_path:
 			goto fail;
 		}
 	} while (*up++ == ':');		/* Otherwise, *up was NUL. */
-	if (eacces)
+	if (eacces != 0)
 		errno = EACCES;
 
 fail:

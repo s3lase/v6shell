@@ -72,6 +72,7 @@ OSH_RCSID("$Id$");
 #include <dirent.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -98,6 +99,8 @@ OSH_RCSID("$Id$");
 #define	QUOTE		0200
 
 typedef	unsigned char	UChar;
+#define	UCHAR(c)	((UChar)c)
+#define	EOS		UCHAR('\0')
 
 static	char		**gavp;	/* points to current gav position     */
 static	char		**gave;	/* points to current gav end          */
@@ -108,7 +111,7 @@ static	char		*gcat(const char *, const char *);
 /*@noreturn@*/ static
 	void		gerr(const char *);
 static	char		**glob1(/*@only@*/ char **, char *, int *);
-static	int		glob2(const UChar *, const UChar *);
+static	bool		glob2(const UChar *, const UChar *);
 static	void		gsort(char **);
 /*@null@*/ static
 	DIR		*gopendir(const char *);
@@ -273,10 +276,7 @@ glob1(char **gav, char *as, int *pmc)
 	return gav;
 }
 
-#define	UCHAR(c)	((UChar)c)
-#define	EOS		UCHAR('\0')
-
-static int
+static bool
 glob2(const UChar *ename, const UChar *pattern)
 {
 	int cok, rok;		/* `[...]' - cok (class), rok (range) */
@@ -301,11 +301,11 @@ glob2(const UChar *ename, const UChar *pattern)
 		while (*p++ == UCHAR('*'))
 			;	/* nothing */
 		if (*--p == EOS)
-			return 1;
+			return true;
 		e--;
 		while (*e != EOS)
 			if (glob2(e++, p))
-				return 1;
+				return true;
 		break;
 
 	case '?':
@@ -346,7 +346,7 @@ glob2(const UChar *ename, const UChar *pattern)
 		if ((pc & ASCII) == ec)
 			return glob2(e, p);
 	}
-	return 0;
+	return false;
 }
 
 static void

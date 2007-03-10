@@ -38,6 +38,7 @@ OSH_RCSID("$Id$");
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -53,7 +54,7 @@ OSH_RCSID("$Id$");
 
 /*@noreturn@*/ static
 	void	error(int, /*@null@*/ const char *, const char *);
-static	int	fdisopen(int);
+static	bool	fdisopen(int);
 /*@noreturn@*/ static
 	void	usage(void);
 
@@ -139,7 +140,7 @@ error(int es, const char *msg1, const char *msg2)
 	exit(es);
 }
 
-static int
+static bool
 fdisopen(int fd)
 {
 	struct stat sb;
