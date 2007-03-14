@@ -476,6 +476,7 @@ main(int argc, char **argv)
 		chintr = 1;
 		if (isatty(FD0) && isatty(FD2)) {
 			stype = INTERACTIVE;
+			(void)signal(SIGTERM, SIG_IGN);
 			rcflag = (*argv[0] == '-') ? 1 : 3;
 			rcfile(&rcflag);
 		}
@@ -486,8 +487,6 @@ main(int argc, char **argv)
 			chintr |= CH_SIGINT;
 		if (signal(SIGQUIT, SIG_IGN) == SIG_DFL)
 			chintr |= CH_SIGQUIT;
-		if (PROMPT)
-			(void)signal(SIGTERM, SIG_IGN);
 	}
 	fdfree();
 
