@@ -114,9 +114,8 @@ OSH_RCSID("$Id$");
 /*
  * Macros
  */
-#define	DDGT(d, c)	((d) >= 0 && (d) <= 9 && "0123456789"[(d) % 10] == (c))
-#define	DLIT		false
-#define	DSUB		true
+#define	DOLDIGIT(d, c)	((d) >= 0 && (d) <= 9 && "0123456789"[(d) % 10] == (c))
+#define	DOLSUB		true
 #define	EQUAL(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
 #define	EXIT(s)		((getpid() == spid) ? exit((s)) : _exit((s)))
 
@@ -368,7 +367,7 @@ word(void)
 	*wordp++ = linep;
 
 loop:
-	switch (c = xgetc(DSUB)) {
+	switch (c = xgetc(DOLSUB)) {
 	case ' ':
 	case '\t':
 		goto loop;
@@ -376,7 +375,7 @@ loop:
 	case '"':
 	case '\'':
 		c1 = c;
-		while ((c = xgetc(DLIT)) != c1) {
+		while ((c = xgetc(!DOLSUB)) != c1) {
 			if (c == '\n') {
 				if (!error)
 					err("syntax error", SH_ERR);
@@ -386,7 +385,7 @@ loop:
 				return;
 			}
 			if (c == '\\') {
-				if ((c = xgetc(DLIT)) == '\n')
+				if ((c = xgetc(!DOLSUB)) == '\n')
 					c = ' ';
 				else {
 					peekc = c;
@@ -398,7 +397,7 @@ loop:
 		break;
 
 	case '\\':
-		if ((c = xgetc(DLIT)) == '\n')
+		if ((c = xgetc(!DOLSUB)) == '\n')
 			goto loop;
 		c |= QUOTE;
 		peekc = c;
@@ -418,8 +417,8 @@ loop:
 	}
 
 	for (;;) {
-		if ((c = xgetc(DSUB)) == '\\') {
-			if ((c = xgetc(DLIT)) == '\n')
+		if ((c = xgetc(DOLSUB)) == '\\') {
+			if ((c = xgetc(!DOLSUB)) == '\n')
 				c = ' ';
 			else
 				c |= QUOTE;
@@ -437,13 +436,13 @@ loop:
 }
 
 /*
- * If act == DLIT, get only the next literal character from the
- * standard input.  Otherwise, if act == DSUB, get either the next
- * literal character from the standard input or substitute the current
- * $ dollar w/ the next character of its value pointed to by dolp.
+ * If dolsub == true, get either the next literal character from the
+ * standard input or substitute the current $ dollar w/ the next
+ * character of its value, which is pointed to by dolp.  Otherwise,
+ * get only the next literal character from the standard input.
  */
 static char
-xgetc(bool act)
+xgetc(bool dolsub)
 {
 	int n;
 	char c;
@@ -479,11 +478,11 @@ getd:
 		dolp = NULL;
 	}
 	c = readc();
-	if (c == '$' && act) {
+	if (c == '$' && dolsub) {
 		c = readc();
 		if (c >= '0' && c <= '9') {
 			n = c - '0';
-			if (DDGT(n, c) && n < dolc)
+			if (DOLDIGIT(n, c) && n < dolc)
 				dolp = (n > 0) ? dolv[n] : name;
 			goto getd;
 		}
