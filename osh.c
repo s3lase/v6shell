@@ -1722,10 +1722,10 @@ do_sig(char **av)
 			if (sigaction(i, NULL, &oact) < 0 ||
 			    oact.sa_handler != SIG_IGN)
 				continue;
-			if (!ignlst[i - 1] ||
-			    (i == SIGINT && (sig_state & SS_SIGINT) != 0) ||
+			if (!ignlst[i - 1] || (STYPE(INTERACTIVE) &&
+			    ((i == SIGINT && (sig_state & SS_SIGINT) != 0) ||
 			    (i == SIGQUIT && (sig_state & SS_SIGQUIT) != 0) ||
-			    (i == SIGTERM && (sig_state & SS_SIGTERM) != 0))
+			    (i == SIGTERM && (sig_state & SS_SIGTERM) != 0))))
 				fdprint(FD1, "%s + %u", av[0], (unsigned)i);
 		}
 	}
