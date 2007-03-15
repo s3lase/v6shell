@@ -296,8 +296,10 @@ main(int argc, char **argv)
 		}
 	} else {
 		chintr = 1;
-		if (isatty(FD0) != 0 && isatty(FD2) != 0)
+		if (isatty(FD0) != 0 && isatty(FD2) != 0) {
 			prompt = (geteuid() != 0) ? "% " : "# ";
+			(void)signal(SIGTERM, SIG_IGN);
+		}
 	}
 	if (chintr != 0) {
 		chintr = 0;
@@ -305,8 +307,6 @@ main(int argc, char **argv)
 			chintr |= CH_SIGINT;
 		if (signal(SIGQUIT, SIG_IGN) == SIG_DFL)
 			chintr |= CH_SIGQUIT;
-		if (prompt != NULL)
-			(void)signal(SIGTERM, SIG_IGN);
 	}
 	fdfree();
 	sh_magic();
