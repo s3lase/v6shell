@@ -97,7 +97,7 @@ main(int argc, char **argv)
 	size_t siz;
 	char label[LABELSIZE];
 
-	if (argc < 2 || *argv[1] == '\0' || isatty(STDIN_FILENO)) {
+	if (argc < 2 || *argv[1] == '\0' || isatty(STDIN_FILENO) != 0) {
 		(void)fprintf(stderr, "goto: error\n");
 		return 124;
 	}
