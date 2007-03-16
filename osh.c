@@ -90,6 +90,7 @@ OSH_RCSID("$Id$");
 #include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -233,9 +234,11 @@ OSH_RCSID("$Id$");
  * Macros
  */
 #define	DOLDIGIT(d, c)	((d) >= 0 && (d) <= 9 && "0123456789"[(d) % 10] == (c))
+#define	DOLSUB		true
 #define	EQUAL(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
 #define	ESTATUS		((getpid() == spid) ? SH_ERR : FC_ERR)
 #define	EXIT(s)		((getpid() == spid) ? exit((s)) : _exit((s)))
+#define	HALT		true
 #define	PROMPT		((stype & 037) == INTERACTIVE)
 #define	STYPE(f)	((stype & (f)) != 0)
 
@@ -352,11 +355,13 @@ static	char		dolbuf[32];	/* dollar buffer for $$, $n, $s, $v */
 static	int		dolc;		/* $N dollar-argument count         */
 /*@null@*/ /*@only@*/ static
 	const char	*dolp;		/* $ dollar-value pointer           */
-static	char	*const	*dolv;		/* $N dollar-argument value list    */
+static	char	*const	*dolv;		/* $N dollar-argument value array   */
 static	int		dupfd0;		/* duplicate of the standard input  */
-static	int		error;		/* error flag for read/parse errors */
-static	int		err_source;	/* error flag for `source' command  */
+static	bool		error;		/* error flag for read/parse errors */
+static	bool		err_source;	/* error flag for `source' command  */
 static	uid_t		euid;		/* effective shell user ID          */
+static	char		line[LINEMAX];	/* command-line buffer              */
+static	char		*linep;
 static	const char	*name;		/* $0 - shell command name          */
 static	int		nulcnt;		/* `\0'-character count (per line)  */
 static	int		peekc;		/* just-read, pushed-back character */
@@ -364,25 +369,22 @@ static	int		sig_state;	/* SIGINT / SIGQUIT / SIGTERM state */
 static	pid_t		spid;		/* shell process ID                 */
 static	int		status;		/* shell exit status                */
 static	int		stype;		/* shell type (determines behavior) */
+/*@only@*/ static
+	struct tnode	*treep;		/* shell command-tree pointer       */
 /*@null@*/ /*@only@*/ static
 	char		*tty;		/* $t - terminal name               */
 /*@null@*/ /*@only@*/ static
 	char		*user;		/* $u - effective user name         */
-
-static	char		line[LINEMAX];	/* command-line buffer              */
-static	char		*linep;
 static	char		*words[WORDMAX];/* argument/word pointer array      */
 static	char		**wordp;
-/*@only@*/ static
-	struct tnode	*treep;		/* shell command-tree pointer       */
 
 /*
  * Function prototypes
  */
-static	void		cmd_loop(int);
+static	void		cmd_loop(bool);
 static	int		rpxline(void);
 static	int		getword(void);
-static	int		xgetc(int);
+static	int		xgetc(bool);
 /*@null@*/ /*@only@*/ static
 	const char	*getdolp(int);
 static	int		readc(void);
@@ -397,9 +399,9 @@ static	void		xfree(/*@null@*/ /*@only@*/ void *);
 	struct tnode	*syn2(char **, char **);
 /*@null@*/ static
 	struct tnode	*syn3(char **, char **);
-static	int		any(int, const char *);
+static	bool		any(int, const char *);
 static	int		which(const char *);
-static	int		vtglob(char **);
+static	bool		vtglob(char **);
 static	void		vtrim(char **);
 static	void		execute(/*@null@*/ struct tnode *,
 				/*@null@*/ int *, /*@null@*/ int *);
@@ -427,7 +429,7 @@ static	char		*xstrdup(const char *);
 	void		err(int, /*@null@*/ const char *, /*@printflike@*/ ...);
 static	void		fdprint(int, const char *, /*@printflike@*/ ...);
 static	void		omsg(int, const char *, va_list);
-static	int		fdtype(int, mode_t);
+static	bool		fdtype(int, mode_t);
 static	char		**glob(char **);
 
 /*
@@ -474,14 +476,14 @@ main(int argc, char **argv)
 		}
 	} else {
 		chintr = 1;
-		if (isatty(FD0) && isatty(FD2)) {
+		if (isatty(FD0) != 0 && isatty(FD2) != 0) {
 			stype = INTERACTIVE;
 			(void)signal(SIGTERM, SIG_IGN);
 			rcflag = (*argv[0] == '-') ? 1 : 3;
 			rcfile(&rcflag);
 		}
 	}
-	if (chintr) {
+	if (chintr != 0) {
 		chintr = 0;
 		if (signal(SIGINT, SIG_IGN) == SIG_DFL)
 			chintr |= CH_SIGINT;
@@ -494,10 +496,10 @@ main(int argc, char **argv)
 		(void)rpxline();
 	else {
 		while (STYPE(RCFILE)) {
-			cmd_loop(0);
+			cmd_loop(!HALT);
 			rcfile(&rcflag);
 		}
-		cmd_loop(0);
+		cmd_loop(!HALT);
 	}
 
 done:
@@ -510,17 +512,17 @@ done:
 
 /*
  * Read and execute command lines forever, or until one of the
- * following conditions is true.  If halt == 1, return on EOF
- * or when err_source == 1.  If halt == 0, return on EOF.
+ * following conditions is true.  If halt == true, return on EOF
+ * or when err_source == true.  If halt == false, return on EOF.
  */
 static void
-cmd_loop(int halt)
+cmd_loop(bool halt)
 {
-	int gz;
+	bool gz;
 
 	sh_magic();
 
-	for (err_source = gz = 0; ; ) {
+	for (err_source = gz = false; ; ) {
 		if (PROMPT)
 			(void)write(FD2, (euid != 0) ? "% " : "# ", (size_t)2);
 		if (rpxline() == EOF) {
@@ -530,7 +532,7 @@ cmd_loop(int halt)
 		}
 		if (halt && err_source)
 			break;
-		gz = 1;
+		gz = true;
 	}
 }
 
@@ -546,7 +548,8 @@ rpxline(void)
 
 	linep = line;
 	wordp = words;
-	error = nulcnt = 0;
+	error = false;
+	nulcnt = 0;
 	do {
 		wp = linep;
 		if (getword() == EOF)
@@ -584,7 +587,7 @@ getword(void)
 	*wordp++ = linep;
 
 	for (;;) {
-		switch (c = xgetc(1)) {
+		switch (c = xgetc(DOLSUB)) {
 		case EOF:
 			return EOF;
 
@@ -596,7 +599,7 @@ getword(void)
 		case '\'':
 			c1 = c;
 			*linep++ = c;
-			while ((c = xgetc(0)) != c1) {
+			while ((c = xgetc(!DOLSUB)) != c1) {
 				if (c == EOF)
 					return EOF;
 				if (c == '\n') {
@@ -604,11 +607,11 @@ getword(void)
 						err(-1, FMT1S, ERR_SYNTAX);
 					peekc = c;
 					*linep++ = '\0';
-					error = 1;
+					error = true;
 					return 1;
 				}
 				if (c == '\\') {
-					if ((c = xgetc(0)) == EOF)
+					if ((c = xgetc(!DOLSUB)) == EOF)
 						return EOF;
 					if (c == '\n')
 						c = ' ';
@@ -623,7 +626,7 @@ getword(void)
 			break;
 
 		case '\\':
-			if ((c = xgetc(0)) == EOF)
+			if ((c = xgetc(!DOLSUB)) == EOF)
 				return EOF;
 			if (c == '\n')
 				continue;
@@ -645,10 +648,10 @@ getword(void)
 		}
 
 		for (;;) {
-			if ((c = xgetc(1)) == EOF)
+			if ((c = xgetc(DOLSUB)) == EOF)
 				return EOF;
 			if (c == '\\') {
-				if ((c = xgetc(0)) == EOF)
+				if ((c = xgetc(!DOLSUB)) == EOF)
 					return EOF;
 				if (c == '\n')
 					c = ' ';
@@ -672,13 +675,13 @@ getword(void)
 }
 
 /*
- * If dolsub == 0, get the next character from the standard input.
- * Otherwise, if dolsub == 1, get either the next character from the
+ * If dolsub == true, get either the next literal character from the
  * standard input or substitute the current $ dollar w/ the next
- * character of its value, which is pointed to by dolp.
+ * character of its value, which is pointed to by dolp.  Otherwise,
+ * get only the next literal character from the standard input.
  */
 static int
-xgetc(int dolsub)
+xgetc(bool dolsub)
 {
 	int c;
 
@@ -690,7 +693,7 @@ xgetc(int dolsub)
 
 	if (wordp >= &words[WORDMAX - 2]) {
 		wordp -= 4;
-		while ((c = xgetc(0)) != EOF && c != '\n')
+		while ((c = xgetc(!DOLSUB)) != EOF && c != '\n')
 			;	/* nothing */
 		wordp += 4;
 		err(-1, FMT1S, ERR_TMARGS);
@@ -698,14 +701,14 @@ xgetc(int dolsub)
 	}
 	if (linep >= &line[LINEMAX - 5]) {
 		linep -= 10;
-		while ((c = xgetc(0)) != EOF && c != '\n')
+		while ((c = xgetc(!DOLSUB)) != EOF && c != '\n')
 			;	/* nothing */
 		linep += 10;
 		err(-1, FMT1S, ERR_TMCHARS);
 		goto geterr;
 	}
 
-getdol:
+getd:
 	if (dolp != NULL) {
 		c = *dolp++;
 		if (c != '\0')
@@ -716,7 +719,7 @@ getdol:
 	if (c == '$' && dolsub) {
 		c = readc();
 		if ((dolp = getdolp(c)) != NULL)
-			goto getdol;
+			goto getd;
 	}
 	while (c == '\0') {
 		if (++nulcnt >= LINEMAX) {
@@ -728,7 +731,7 @@ getdol:
 	return c;
 
 geterr:
-	error = 1;
+	error = true;
 	return '\n';
 }
 
@@ -950,7 +953,7 @@ syn1(char **p1, char **p2)
 		return syn2(p1, p2);
 
 synerr:
-	error = 1;
+	error = true;
 	return NULL;
 }
 
@@ -1089,15 +1092,15 @@ syn3(char **p1, char **p2)
 synerr:
 	xfree(fin);
 	xfree(fout);
-	error = 1;
+	error = true;
 	return NULL;
 }
 
 /*
- * Return 1 if the character c matches any character in the string
- * pointed to by as.  Otherwise, return 0.
+ * Return true (1) if the character c matches any character in
+ * the string pointed to by as.  Otherwise, return false (0).
  */
-static int
+static bool
 any(int c, const char *as)
 {
 	const char *s;
@@ -1105,8 +1108,8 @@ any(int c, const char *as)
 	s = as;
 	while (*s != '\0')
 		if (*s++ == c)
-			return 1;
-	return 0;
+			return true;
+	return false;
 }
 
 /*
@@ -1126,18 +1129,18 @@ which(const char *cmd)
 }
 
 /*
- * Return 1 if any argument in the argument vector pointed to by vp
- * contains any unquoted glob characters.  Otherwise, return 0.
+ * Return true (1) if any argument in the argument vector pointed to by vp
+ * contains any unquoted glob characters.  Otherwise, return false (0).
  */
-static int
+static bool
 vtglob(char **vp)
 {
 	char **p;
 
 	for (p = vp; *p != NULL; p++)
 		if (gchar(*p) != NULL)
-			return 1;
-	return 0;
+			return true;
+	return false;
 }
 
 /*
@@ -1490,7 +1493,7 @@ exec2(struct tnode *t, int *pin, int *pout)
 		if (*t->nfin == '-' && *(t->nfin + 1) == '\0')
 			i = 1;
 		atrim(t->nfin);
-		if (i)
+		if (i != 0)
 			i = dup(dupfd0);
 		else
 			i = open(t->nfin, O_RDONLY);
@@ -1645,7 +1648,7 @@ do_sig(char **av)
 	struct sigaction act, oact;
 	sigset_t new_mask, old_mask;
 	long lsigno;
-	static int ignlst[NSIG], gotlst;
+	static bool ignlst[NSIG], gotlst;
 	int i, sigerr, signo;
 	char *sigbad;
 
@@ -1656,13 +1659,13 @@ do_sig(char **av)
 	if (!gotlst) {
 		/* Initialize the list of already ignored signals. */
 		for (i = 1; i < NSIG; i++) {
-			ignlst[i - 1] = 0;
+			ignlst[i - 1] = false;
 			if (sigaction(i, NULL, &oact) < 0)
 				continue;
 			if (oact.sa_handler == SIG_IGN)
-				ignlst[i - 1] = 1;
+				ignlst[i - 1] = true;
 		}
-		gotlst = 1;
+		gotlst = true;
 	}
 
 	sigerr = 0;
@@ -1805,7 +1808,7 @@ do_source(char **av)
 			;	/* nothing */
 
 	cnt++;
-	cmd_loop(1);
+	cmd_loop(HALT);
 	cnt--;
 
 	/* Restore any saved positional parameters. */
@@ -1865,9 +1868,9 @@ pwait(pid_t cp)
 		if (tp == -1)
 			break;
 		if (s != 0) {
-			if (WIFSIGNALED(s))
+			if (WIFSIGNALED(s) != 0)
 				status = prsig(s, tp, cp);
-			else if (WIFEXITED(s))
+			else if (WIFEXITED(s) != 0)
 				status = WEXITSTATUS(s);
 			if (status >= FC_ERR) {
 				if (status == FC_ERR)
@@ -2296,7 +2299,7 @@ err(int es, const char *msgfmt, ...)
 	case 0:
 		if (STYPE(SOURCE)) {
 			(void)lseek(FD0, (off_t)0, SEEK_END);
-			err_source = 1;
+			err_source = true;
 			return;
 		}
 		if (STYPE(RCFILE) && (status == 130 || status == 131)) {
@@ -2356,13 +2359,13 @@ omsg(int ofd, const char *msgfmt, va_list va)
 
 /*
  * Check if the file descriptor fd refers to an open file
- * of the specified type; return 1 if true or 0 if false.
+ * of the specified type; return true (1) or false (0).
  */
-static int
+static bool
 fdtype(int fd, mode_t type)
 {
 	struct stat sb;
-	int rv = 0;
+	bool rv = false;
 
 	if (fstat(fd, &sb) < 0)
 		return rv;
@@ -2370,7 +2373,7 @@ fdtype(int fd, mode_t type)
 	switch (type) {
 	case FD_OPEN:
 		/* Descriptor refers to any type of open file. */
-		rv = 1;
+		rv = true;
 		break;
 	case FD_DIROK:
 		/* Does descriptor refer to an existent directory? */
@@ -2392,9 +2395,9 @@ static	char		**gave;	/* points to current gav end          */
 static	size_t		gavtot;	/* total bytes used for all arguments */
 
 static	char		**gavnew(/*@only@*/ char **);
-static	char		*gcat(const char *, const char *, int);
+static	char		*gcat(const char *, const char *, bool);
 static	char		**glob1(/*@only@*/ char **, char *, int *);
-static	int		glob2(const UChar *, const UChar *);
+static	bool		glob2(const UChar *, const UChar *);
 static	void		gsort(char **);
 /*@null@*/ static
 	DIR		*gopendir(/*@out@*/ char *, const char *);
@@ -2444,7 +2447,7 @@ gavnew(char **gav)
 }
 
 static char *
-gcat(const char *src1, const char *src2, int slash)
+gcat(const char *src1, const char *src2, bool slash)
 {
 	size_t siz;
 	char *b, buf[PATHMAX], c, *dst;
@@ -2481,19 +2484,19 @@ glob1(char **gav, char *as, int *pmc)
 	DIR *dirp;
 	struct dirent *entry;
 	ptrdiff_t gidx;
-	int slash;
+	bool slash;
 	char dirbuf[PATHMAX], *ps;
 	const char *ds;
 
 	ds = as;
+	slash = false;
 	if ((ps = gchar(as)) == NULL) {
 		atrim(as);
 		gav = gavnew(gav);
-		*gavp++ = gcat(as, "", 0);
+		*gavp++ = gcat(as, "", slash);
 		*gavp = NULL;
 		return gav;
 	}
-	slash = 0;
 	for (;;) {
 		if (ps == ds) {
 			ds = "";
@@ -2504,7 +2507,7 @@ glob1(char **gav, char *as, int *pmc)
 			if (ds == ps)
 				ds = "/";
 			else
-				slash = 1;
+				slash = true;
 			ps++;
 			break;
 		}
@@ -2534,7 +2537,7 @@ glob1(char **gav, char *as, int *pmc)
 #define	UCHAR(c)	((UChar)c)
 #define	EOS		UCHAR('\0')
 
-static int
+static bool
 glob2(const UChar *ename, const UChar *pattern)
 {
 	int cok, rok;		/* `[...]' - cok (class), rok (range) */
@@ -2557,11 +2560,11 @@ glob2(const UChar *ename, const UChar *pattern)
 		while (*p++ == UCHAR('*'))
 			;	/* nothing */
 		if (*--p == EOS)
-			return 1;
+			return true;
 		e--;
 		while (*e != EOS)
 			if (glob2(e++, p))
-				return 1;
+				return true;
 		break;
 
 	case '?':
@@ -2613,7 +2616,7 @@ glob2(const UChar *ename, const UChar *pattern)
 		if (pc == ec)
 			return glob2(e, p);
 	}
-	return 0;
+	return false;
 }
 
 static void
