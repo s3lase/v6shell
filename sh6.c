@@ -209,7 +209,6 @@ static	char		peekc;		/* just-read, pushed-back character */
 	const char	*prompt;	/* interactive-shell prompt pointer */
 static	pid_t		spid;		/* shell process ID                 */
 static	int		status;		/* shell exit status                */
-
 static	char		line[LINEMAX];	/* command-line buffer              */
 static	char		*linep;
 static	char		*words[WORDMAX];/* argument/word pointer array      */
@@ -455,7 +454,7 @@ xgetc(bool dolsub)
 
 	if (wordp >= &words[WORDMAX - 2]) {
 		wordp -= 4;
-		while (xgetc(0) != '\n')
+		while (xgetc(!DOLSUB) != '\n')
 			;	/* nothing */
 		wordp += 4;
 		err("Too many args", SH_ERR);
@@ -463,7 +462,7 @@ xgetc(bool dolsub)
 	}
 	if (linep >= &line[LINEMAX - 5]) {
 		linep -= 10;
-		while (xgetc(0) != '\n')
+		while (xgetc(!DOLSUB) != '\n')
 			;	/* nothing */
 		linep += 10;
 		err("Too many characters", SH_ERR);
