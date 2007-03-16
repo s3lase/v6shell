@@ -201,6 +201,8 @@ static	int		dolc;		/* $N dollar-argument count         */
 static	char	*const	*dolv;		/* $N dollar-argument value array   */
 static	bool		error;		/* error flag for read/parse errors */
 static	bool		globit;		/* glob flag for `*', `?', `['      */
+static	char		line[LINEMAX];	/* command-line buffer              */
+static	char		*linep;
 static	const char	*name;		/* $0 - shell command name          */
 static	int		nulcnt;		/* `\0'-character count (per line)  */
 static	int		olnflg;		/* one-line flag for `-t' option    */
@@ -209,8 +211,6 @@ static	char		peekc;		/* just-read, pushed-back character */
 	const char	*prompt;	/* interactive-shell prompt pointer */
 static	pid_t		spid;		/* shell process ID                 */
 static	int		status;		/* shell exit status                */
-static	char		line[LINEMAX];	/* command-line buffer              */
-static	char		*linep;
 static	char		*words[WORDMAX];/* argument/word pointer array      */
 static	char		**wordp;
 
