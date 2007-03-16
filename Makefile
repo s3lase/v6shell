@@ -134,11 +134,11 @@ fd2bin: pexec.o fd2.o
 # Manual-page targets
 #
 man: $(MANDST)
-
 $(MANDST): $(MANSRC)
-	@for file in $(MANSRC) ; do sed \
-		-e 's,@OSH_VERSION@,$(OSH_VERSION),' \
-		-e 's,@SYSCONFDIR@,$(SYSCONFDIR),' <$$file >$${file}.out ; \
+	@for file in $(MANSRC) ; do \
+		sed -e 's,@OSH_VERSION@,$(OSH_VERSION),' \
+			-e 's,@SYSCONFDIR@,$(SYSCONFDIR),' \
+				<$$file >$${file}.out ; \
 	done
 
 #
