@@ -84,7 +84,10 @@ OSH_RCSID("$Id$");
 #include "pexec.h"
 
 #define	IF_ERR		124	/* default exit status for errors */
-#define	FSIZE_GZ	1	/* for the `-s' primary           */
+#define	F_GZ		1	/* for the `-s' primary           */
+#define	F_OT		2	/* for the `-ot' primary          */
+#define	F_NT		3	/* for the `-nt' primary          */
+#define	F_EF		4	/* for the `-ef' primary          */
 
 #define	EXIT(s)		((getpid() == ifpid) ? exit((s)) : _exit((s)))
 #define	FORKED		true
@@ -106,7 +109,8 @@ static	bool	equal(/*@null@*/ const char *, /*@null@*/ const char *);
 	void	error(int, /*@null@*/ const char *, const char *);
 static	bool	expr(void);
 static	bool	ifaccess(/*@null@*/ const char *, int);
-static	bool	ifstat(/*@null@*/ const char *, mode_t);
+static	bool	ifstat1(/*@null@*/ const char *, mode_t);
+static	bool	ifstat2(/*@null@*/ const char *, /*@null@*/ const char *, int);
 /*@null@*/ static
 	char	*nxtarg(bool);
 
@@ -242,13 +246,13 @@ e3(void)
 	 * file existence/type tests
 	 */
 	if (equal(a, "-d"))
-		return ifstat(nxtarg(!RETERR), S_IFDIR);
+		return ifstat1(nxtarg(!RETERR), S_IFDIR);
 	if (equal(a, "-f"))
-		return ifstat(nxtarg(!RETERR), S_IFREG);
+		return ifstat1(nxtarg(!RETERR), S_IFREG);
 	if (equal(a, "-h"))
-		return ifstat(nxtarg(!RETERR), S_IFLNK);
+		return ifstat1(nxtarg(!RETERR), S_IFLNK);
 	if (equal(a, "-s"))
-		return ifstat(nxtarg(!RETERR), FSIZE_GZ);
+		return ifstat1(nxtarg(!RETERR), F_GZ);
 	if (equal(a, "-t")) {
 		/* Does the descriptor refer to a terminal device? */
 		b = nxtarg(RETERR);
@@ -263,14 +267,20 @@ e3(void)
 	}
 
 	/*
-	 * Compare the string arguments.
+	 * binary comparisons
 	 */
 	if ((b = nxtarg(RETERR)) == NULL)
 		error(IF_ERR, a, "operator expected");
-	if (equal(b, "="))
-		return equal(a, nxtarg(!RETERR));
+	if (equal(b,  "="))
+		return  equal(a, nxtarg(!RETERR));
 	if (equal(b, "!="))
 		return !equal(a, nxtarg(!RETERR));
+	if (equal(b, "-ot"))
+		return ifstat2(a, nxtarg(!RETERR), F_OT);
+	if (equal(b, "-nt"))
+		return ifstat2(a, nxtarg(!RETERR), F_NT);
+	if (equal(b, "-ef"))
+		return ifstat2(a, nxtarg(!RETERR), F_EF);
 	error(IF_ERR, b, "unknown operator");
 	/*NOTREACHED*/
 	return false;
@@ -342,7 +352,7 @@ ifaccess(const char *file, int mode)
 }
 
 static bool
-ifstat(const char *file, mode_t type)
+ifstat1(const char *file, mode_t type)
 {
 	struct stat sb;
 	bool rs;
@@ -359,8 +369,36 @@ ifstat(const char *file, mode_t type)
 		rs = false;
 	else if (type == S_IFDIR || type == S_IFREG)
 		rs = (sb.st_mode & S_IFMT) == type;
-	else if (type == FSIZE_GZ)
+	else if (type == F_GZ)
 		rs = sb.st_size > (off_t)0;
+	else
+		rs = false;
+
+	return rs;
+}
+
+static bool
+ifstat2(const char *file1, const char *file2, int act)
+{
+	struct stat sb1, sb2;
+	bool rs;
+
+	if (file1 == NULL || *file1 == '\0')
+		return false;
+	if (file2 == NULL || *file2 == '\0')
+		return false;
+
+	if (stat(file1, &sb1) < 0)
+		return false;
+	if (stat(file2, &sb2) < 0)
+		return false;
+
+	if (act == F_OT)
+		rs = sb1.st_mtime < sb2.st_mtime;
+	else if (act == F_NT)
+		rs = sb1.st_mtime > sb2.st_mtime;
+	else if (act == F_EF)
+		rs = sb1.st_dev == sb2.st_dev && sb1.st_ino == sb2.st_ino;
 	else
 		rs = false;
 
