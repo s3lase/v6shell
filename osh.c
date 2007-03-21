@@ -151,7 +151,7 @@ OSH_RCSID("$Id$");
  * These are the initialization files used by osh.
  * The `_PATH_DOT_*' files are in the user's HOME directory.
  */
-#define	_PATH_SYSTEM_LOGIN	SYSCONFDIR "/osh.login"
+#define	_PATH_SYSTEM_LOGIN	SYSCONFDIR/**/"/osh.login"
 #define	_PATH_DOT_LOGIN		".osh.login"
 #define	_PATH_DOT_OSHRC		".oshrc"
 
@@ -1221,7 +1221,7 @@ execute(struct tnode *t, int *pin, int *pout)
 				return;
 			}
 			t->nflags |= FNOFORK;
-			t->nav     = &t->nav[1];
+			t->nav     = &t->nav[1];	/* never free()d */
 			(void)signal(SIGCHLD, SIG_IGN);
 		}
 		/*FALLTHROUGH*/
@@ -1581,9 +1581,9 @@ exec2(struct tnode *t, int *pin, int *pout)
 static void
 do_chdir(char **av)
 {
+	const char *emsg, *home;
 	int cwd;
 	static int pwd = -1;
-	const char *emsg, *home;
 
 	emsg = ERR_BADDIR;
 
@@ -1622,7 +1622,6 @@ do_chdir(char **av)
 			goto chdirerr;
 	}
 
-	/* success - clean up if needed and return */
 	if (cwd != -1) {
 		if (cwd < PWD && (pwd = dup2(cwd, PWD)) == PWD)
 			(void)fcntl(pwd, F_SETFD, FD_CLOEXEC);
@@ -1647,10 +1646,10 @@ do_sig(char **av)
 {
 	struct sigaction act, oact;
 	sigset_t new_mask, old_mask;
-	long lsigno;
-	static bool ignlst[NSIG], gotlst;
-	int i, sigerr, signo;
 	char *sigbad;
+	long lsigno;
+	int i, sigerr, signo;
+	static bool ignlst[NSIG], gotlst;
 
 	/* Temporarily block all signals in this function. */
 	(void)sigfillset(&new_mask);
@@ -2389,6 +2388,8 @@ fdtype(int fd, mode_t type)
 }
 
 typedef	unsigned char	UChar;
+#define	UCHAR(c)	((UChar)c)
+#define	EOS		UCHAR('\0')
 
 static	char		**gavp;	/* points to current gav position     */
 static	char		**gave;	/* points to current gav end          */
@@ -2533,9 +2534,6 @@ glob1(char **gav, char *as, int *pmc)
 	*gavp = NULL;
 	return gav;
 }
-
-#define	UCHAR(c)	((UChar)c)
-#define	EOS		UCHAR('\0')
 
 static bool
 glob2(const UChar *ename, const UChar *pattern)
