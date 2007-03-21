@@ -58,7 +58,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.TH IF 1 "March 5, 2007" "@OSH_VERSION@" "General Commands"
+.TH IF 1 "March 21, 2007" "@OSH_VERSION@" "General Commands"
 .SH NAME
 if \- conditional command
 .SH SYNOPSIS
@@ -77,6 +77,12 @@ Otherwise, a non-zero exit status is returned.
 The following primaries are used to construct
 .IR expr :
 .TP 10
+\fB{\fR \fIcommand\fR [\fIarg ...\fR] \fB}\fR
+The specified \fIcommand\fR is executed with the
+given arguments to obtain its exit status.
+A zero status is \fItrue\fR,
+and a non-zero status is \fIfalse\fR.
+.TP
 .BI \-d \ file
 True if \fIfile\fR exists and is a directory.
 .TP
@@ -100,7 +106,7 @@ True if the file whose file descriptor number is
 .I fildes
 is open and associated with a terminal device.
 .I Fildes
-must be a decimal digit (0 - 9).
+must be a decimal digit (0 \- 9).
 .TP
 .BI \-w \ file
 True if \fIfile\fR exists and is writable.
@@ -108,6 +114,20 @@ True if \fIfile\fR exists and is writable.
 .BI \-x \ file
 True if \fIfile\fR exists and is executable,
 or if \fIfile\fR is a searchable directory.
+.TP
+.IB file1 \ \-ef \ file2
+True if \fIfile1\fR and \fIfile2\fR both exist and refer
+to the same file (same device, same inode).
+.TP
+.IB file1 \ \-nt \ file2
+True if \fIfile1\fR and \fIfile2\fR both exist
+and last data-modification time of \fIfile1\fR
+is newer than that of \fIfile2\fR.
+.TP
+.IB file1 \ \-ot \ file2
+True if \fIfile1\fR and \fIfile2\fR both exist
+and last data-modification time of \fIfile1\fR
+is older than that of \fIfile2\fR.
 .TP
 .IB s1 \ = \ s2
 True if the strings
@@ -122,12 +142,6 @@ True if the strings
 and
 .I s2
 are not equal.
-.TP
-\fB{\fR \fIcommand\fR [\fIarg ...\fR] \fB}\fR
-The specified \fIcommand\fR is executed with the
-given arguments to obtain its exit status.
-A zero status is \fItrue\fR,
-and a non-zero status is \fIfalse\fR.
 .PP
 These primaries may also be combined
 with the following operators:
@@ -235,8 +249,11 @@ does not support the
 .BR \-h ,
 .BR \-s ,
 .BR \-t ,
+.BR \-x ,
+.BR \-ef ,
+.BR \-nt ,
 and
-.B \-x
+.B \-ot
 operators.
 .PP
 In addition to supporting the above operators,
