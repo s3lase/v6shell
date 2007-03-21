@@ -29,8 +29,8 @@ Osh is hereby distributed under the following license:
 ===
 
 ==================================================================
-Additionally, the original license for goto.1, goto.c, if.1, if.c,
-osh.1, osh.c, sh6.1, sh6.c, glob6.1, and glob6.c is as follows:
+Additionally, the original license for osh.1, osh.c, sh6.1, sh6.c,
+glob6.1, glob6.c, if.1, if.c, goto.1, and goto.c is as follows:
 
 /*-
  * Copyright (C) Caldera International Inc.  2001-2002.  All rights reserved.
@@ -102,4 +102,4 @@ of the NetBSD project.  The original license is as follows:
  */
 ===
 
-Jeffrey Allen Neitzel						2007/03/04
+Jeffrey Allen Neitzel						2007/03/21

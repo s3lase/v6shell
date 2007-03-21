@@ -3,8 +3,13 @@ code for the Sixth Edition (V6) Unix Thompson shell and global
 command in porting them to run on modern Unix systems.
 
 -------------------------------------------------------------------------------
-[osh-current]:
+[osh-20070321]:
 	* Imported the project into a local subversion repository.
+
+	* Changed the all of the code to "#include <stdbool.h>" and to use
+	  the "bool" data-type macro where appropriate.
+
+	* User-visible changes?  None.
 
 -------------------------------------------------------------------------------
 [osh-20070131]:

@@ -2,22 +2,43 @@ Changes that improve compatibility w/ the Sixth Edition Unix shell
 are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-current]:
+[osh-20070321]:
 	* Imported the project into a local subversion repository.
+
+	* Changed the all of the code to "#include <stdbool.h>" and to use
+	  the "bool" data-type macro where appropriate.
 
 Makefile:
 	* Added SYSCONFDIR and a new `man' target.
 
 osh.c:
-	* Defined _PATH_SYSTEM_LOGIN as `SYSCONFDIR "/osh.login"' instead of
-	  "/etc/osh.login" so that the user can use SYSCONFDIR (/etc by
+	* Defined _PATH_SYSTEM_LOGIN as `SYSCONFDIR/**/"/osh.login"' instead
+	  of "/etc/osh.login" so that the user can use SYSCONFDIR (/etc by
 	  default) at build-time to specify the directory where the shell
-	  searches for its system-wide initialization file.
+	  shall search for its system-wide initialization file.
 
 	* Added a new special parameter, $v, which makes the version of the
 	  osh package available as a read-only string.  The format is
 	  `osh-YYYYMMDD' for official releases and `osh-current (YYYYMMDD)'
-	  (interpreted as one word) for current development snapshots.
+	  (interpreted as one word) for development snapshots.
+
+	* Fixed a bug where interactive shells were no longer ignoring SIGTERM
+	  when invoked, as they are supposed to.  Now, SIGTERM is being ignored
+	  again upon invocation of all interactive shells.
+
+	* Fixed the output from doing a `sigign' so that it matches its
+	  documentation in osh.1: "..., a list is printed of those signals
+	  which are ignored by sigign in the current shell."
+
+	  Previously, the output from a `sigign' could be a little confusing.
+	  Now, its output only indicates those cases where a given signal is
+	  being ignored w/ the possibility that it can then be unignored
+	  (reset) in the current shell context.
+
+if.c:
+	* Added 3 new primaries: -ef (equal files - same device, same inode),
+	  -nt (newer than), -ot (older than).  See the if(1) manual page for
+	  full details.
 
 -------------------------------------------------------------------------------
 [osh-20070131]:
