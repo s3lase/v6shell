@@ -1,4 +1,4 @@
-# Makefile for osh-20070321
+# Makefile for osh-20070324
 
 #
 # Begin CONFIGURATION
@@ -56,10 +56,10 @@ MANMODE=	-m 0444
 # !!! =============== Developer stuff below... =============== !!!
 
 #
-# Compile 4-way universal binaries on Mac OS X 10.4.x (Tiger)?
+# Uncomment to compile 32-bit universal binaries for Mac OS X...
 #
-#CFLAGS+=	-arch i386 -arch x86_64 -arch ppc -arch ppc64
-#LDFLAGS+=	-arch i386 -arch x86_64 -arch ppc -arch ppc64
+#CFLAGS+=	-arch i386 -arch ppc
+#LDFLAGS+=	-arch i386 -arch ppc
 
 #
 # X/Open System Interfaces Extension (NOTES: POSIX, required)
@@ -71,7 +71,7 @@ XSIE=		-D_XOPEN_SOURCE=600
 #	osh-YYYYMMDD		== official release
 #	osh-current (YYYYMMDD)	== development snapshot
 #
-OSH_VERSION=	osh-20070321
+OSH_VERSION=	osh-20070324
 
 OSH=	osh
 SH6=	sh6 glob6

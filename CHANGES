@@ -2,6 +2,13 @@ Changes that improve compatibility w/ the Sixth Edition Unix shell
 are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
+[osh-20070324]:
+osh.c:
+	* In main(), changed when fdfree() is called so that it is in a more
+	  ideal sequence with other operations according to how the shell is
+	  invoked (e.g., interactive shell vs. non-interactive shell).
+
+-------------------------------------------------------------------------------
 [osh-20070321]:
 	* Imported the project into a local subversion repository.
 
