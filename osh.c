@@ -474,8 +474,10 @@ main(int argc, char **argv)
 			if (fdtype(FD0, S_IFDIR))
 				goto done;
 		}
+		fdfree();
 	} else {
 		chintr = 1;
+		fdfree();
 		if (isatty(FD0) != 0 && isatty(FD2) != 0) {
 			stype = INTERACTIVE;
 			(void)signal(SIGTERM, SIG_IGN);
@@ -490,7 +492,6 @@ main(int argc, char **argv)
 		if (signal(SIGQUIT, SIG_IGN) == SIG_DFL)
 			chintr |= CH_SIGQUIT;
 	}
-	fdfree();
 
 	if (STYPE(ONELINE))
 		(void)rpxline();
