@@ -42,7 +42,7 @@ CFLAGS+=	-Wall -W
 #
 PREFIX?=	/usr/local
 BINDIR?=	$(PREFIX)/bin
-MANDIR=		$(PREFIX)/man/man1
+MANDIR?=	$(PREFIX)/man/man1
 SYSCONFDIR?=	/etc
 #BINGRP=		-g bin
 BINMODE=	-m 0555
