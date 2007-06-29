@@ -1,4 +1,4 @@
-# Makefile for osh-20070324
+# Makefile for osh-20070630
 
 #
 # Begin CONFIGURATION
@@ -56,12 +56,6 @@ MANMODE=	-m 0444
 # !!! =============== Developer stuff below... =============== !!!
 
 #
-# Uncomment to compile 32-bit universal binaries for Mac OS X...
-#
-#CFLAGS+=	-arch i386 -arch ppc
-#LDFLAGS+=	-arch i386 -arch ppc
-
-#
 # X/Open System Interfaces Extension (NOTES: POSIX, required)
 #
 XSIE=		-D_XOPEN_SOURCE=600
@@ -71,7 +65,7 @@ XSIE=		-D_XOPEN_SOURCE=600
 #	osh-YYYYMMDD		== official release
 #	osh-current (YYYYMMDD)	== development snapshot
 #
-OSH_VERSION=	osh-20070324
+OSH_VERSION=	osh-20070630
 
 OSH=	osh
 SH6=	sh6 glob6
@@ -99,22 +93,27 @@ sh6all: $(SH6) utils man
 utils: $(UTILS)
 
 osh: rcsid.h $(PEXSRC) osh.c
-	@$(MAKE) $@bin
+	@test X'$(MOXSHELLARCH)' = X'$(MOXUTILSARCH)' || rm -f pexec.o
+	@$(MAKE) CFLAGS+='$(MOXSHELLARCH)' LDFLAGS+='$(MOXSHELLARCH)' $@bin
 
 sh6: rcsid.h $(PEXSRC) sh6.c
-	@$(MAKE) $@bin
+	@test X'$(MOXSHELLARCH)' = X'$(MOXUTILSARCH)' || rm -f pexec.o
+	@$(MAKE) CFLAGS+='$(MOXSHELLARCH)' LDFLAGS+='$(MOXSHELLARCH)' $@bin
 
 glob6: rcsid.h $(PEXSRC) glob6.c
-	@$(MAKE) $@bin
+	@test X'$(MOXSHELLARCH)' = X'$(MOXUTILSARCH)' || rm -f pexec.o
+	@$(MAKE) CFLAGS+='$(MOXSHELLARCH)' LDFLAGS+='$(MOXSHELLARCH)' $@bin
 
 if: rcsid.h $(PEXSRC) if.c
-	@$(MAKE) $@bin
+	@test X'$(MOXSHELLARCH)' = X'$(MOXUTILSARCH)' || rm -f pexec.o
+	@$(MAKE) CFLAGS+='$(MOXUTILSARCH)' LDFLAGS+='$(MOXUTILSARCH)' $@bin
 
 goto: rcsid.h goto.c
-	@$(MAKE) $@bin
+	@$(MAKE) CFLAGS+='$(MOXUTILSARCH)' LDFLAGS+='$(MOXUTILSARCH)' $@bin
 
 fd2: rcsid.h $(PEXSRC) fd2.c
-	@$(MAKE) $@bin
+	@test X'$(MOXSHELLARCH)' = X'$(MOXUTILSARCH)' || rm -f pexec.o
+	@$(MAKE) CFLAGS+='$(MOXUTILSARCH)' LDFLAGS+='$(MOXUTILSARCH)' $@bin
 
 $(OBJ): rcsid.h
 pexec.o: $(PEXSRC)
