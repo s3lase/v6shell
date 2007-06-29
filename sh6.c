@@ -1049,7 +1049,7 @@ execute(struct tnode *t, int *pin, int *pout)
 					err(": cannot open", FC_ERR);
 				}
 			}
-		} else if ((f & FINTR) == 0) {
+		} else {
 			if ((chintr & CH_SIGINT) != 0)
 				(void)signal(SIGINT, SIG_DFL);
 			if ((chintr & CH_SIGQUIT) != 0)
