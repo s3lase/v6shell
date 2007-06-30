@@ -143,9 +143,9 @@ OSH_RCSID("$Id$");
 /*
  * The following file descriptors are reserved for special use by osh.
  */
-#define	DUPFD0		7	/* used for input redirection w/ `<-' */
-#define	PWD		8	/* used in do_chdir()                 */
-#define	SAVFD0		9	/* used in do_source()                */
+#define	DUPFD0		10	/* used for input redirection w/ `<-' */
+#define	PWD		11	/* used in do_chdir()                 */
+#define	SAVFD0		12	/* used in do_source()                */
 
 /*
  * These are the initialization files used by osh.
@@ -1278,7 +1278,7 @@ exec1(struct tnode *t)
 
 	case SBICHDIR:
 		/*
-		 * Change the shell's working directory.
+		 * Change the shell's current working directory.
 		 */
 		do_chdir(t->nav);
 		return;
@@ -1570,11 +1570,11 @@ exec2(struct tnode *t, int *pin, int *pout)
 }
 
 /*
- * Change the shell's working directory.
+ * Change the shell's current working directory.
  *
- *	`chdir'		changes to user's home directory
- *	`chdir -'	changes to previous working directory
- *	`chdir dir'	changes to `dir'
+ *	`chdir'		Changes to the user's home directory.
+ *	`chdir -'	Changes to the previous working directory.
+ *	`chdir dir'	Changes to the directory specified by `dir'.
  *
  * NOTE: The user must have both read and search permission on
  *	 a directory in order for `chdir -' to be effective.
@@ -1591,9 +1591,6 @@ do_chdir(char **av)
 	cwd = open(".", O_RDONLY | O_NONBLOCK);
 
 	if (av[1] == NULL) {
-		/*
-		 * Change to the user's home directory.
-		 */
 		home = getenv("HOME");
 		if (home == NULL || *home == '\0') {
 			emsg = ERR_NOHOMEDIR;
@@ -1602,9 +1599,6 @@ do_chdir(char **av)
 		if (chdir(home) == -1)
 			goto chdirerr;
 	} else if (EQUAL(av[1], "-")) {
-		/*
-		 * Change to the previous working directory.
-		 */
 		if (pwd == -1) {
 			emsg = ERR_NOPWD;
 			goto chdirerr;
@@ -1615,19 +1609,18 @@ do_chdir(char **av)
 			goto chdirerr;
 		}
 	} else {
-		/*
-		 * Change to any other directory.
-		 */
 		atrim(av[1]);
 		if (chdir(av[1]) == -1)
 			goto chdirerr;
 	}
 
 	if (cwd != -1) {
-		if (cwd < PWD && (pwd = dup2(cwd, PWD)) == PWD)
+		if (cwd != PWD && (pwd = dup2(cwd, PWD)) == PWD)
 			(void)fcntl(pwd, F_SETFD, FD_CLOEXEC);
 		(void)close(cwd);
-	}
+	} else
+		if (close(pwd) != -1)
+			pwd = -1;
 	status = 0;
 	return;
 
@@ -1781,7 +1774,7 @@ do_source(char **av)
 		err(-1, FMT3S, av[0], av[1], ERR_OPEN);
 		return;
 	}
-	if (nfd == SAVFD0 || !fdtype(nfd, S_IFREG)) {
+	if (nfd >= SAVFD0 || !fdtype(nfd, S_IFREG)) {
 		(void)close(nfd);
 		err(-1, FMT3S, av[0], av[1], ERR_EXEC);
 		return;
