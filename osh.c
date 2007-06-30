@@ -1531,7 +1531,7 @@ exec2(struct tnode *t, int *pin, int *pout)
 			if (open("/dev/null", O_RDONLY) != FD0)
 				err(FC_ERR, FMT2S, "/dev/null", ERR_OPEN);
 		}
-	} else if ((f & FINTR) == 0) {
+	} else {
 		if ((sig_state & SS_SIGINT) == 0 && (chintr & CH_SIGINT) != 0)
 			(void)signal(SIGINT, SIG_DFL);
 		if ((sig_state & SS_SIGQUIT) == 0 && (chintr & CH_SIGQUIT) != 0)
