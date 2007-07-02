@@ -1,0 +1,108 @@
+Build and install instructions for osh-20070630!
+
+------------
+DEFINITIONS:
+
+	`% ' -	Indicates that the specified example command can
+		be run as a regular user in the normal case.
+
+	`# ' -	Indicates that the specified example command must
+		be run as the superuser in the normal case.
+
+--------
+DEFAULT:
+If the defaults satisfy your desires, you can build and install the
+osh package by simply doing the following.
+
+	% make
+	# make install
+
+...
+Otherwise, continue reading for full build and install details.
+See the EXAMPLES section at the end of this file for additional
+help if needed.
+
+---------
+SYNOPSIS:
+	make [variable=value ...] [target ...]
+
+----------
+VARIABLES:
+The Makefile defines the following configuration variables (default
+value listed).  The user can modify the default configuration by
+passing the desired variable=value pair(s) on the command line.
+
+	INSTALL		- Defaults to /usr/bin/install
+
+	PATH_LOGIN	- Defaults to /usr/bin/login
+
+	PATH_NEWGRP	- Unset by default
+
+	DESTDIR		- Unset by default
+
+	PREFIX		- Defaults to /usr/local
+
+	BINDIR		- Defaults to $(PREFIX)/bin
+
+	MANDIR		- Defaults to $(PREFIX)/man/man1
+
+	SYSCONFDIR	- Defaults to $(PREFIX)/etc
+
+	MOXARCH		- Unset by default (for Mac OS X)
+
+	MOXSHELLARCH	- Defaults to $(MOXARCH)
+
+	MOXUTILSARCH	- Defaults to $(MOXARCH)
+
+--------
+TARGETS:
+The following targets are available.
+
+	all		- Default target is the same as typing `make'.
+			  Compiles everything.
+
+	install		- Installs all binaries and manual pages.
+
+	oshall		- Compiles osh, if, goto, and fd2.
+
+	install-oshall	- Installs oshall binaries and manual pages.
+
+	sh6all		- Compiles sh6, glob6, if, goto, and fd2.
+
+	install-sh6all	- Installs sh6all binaries and manual pages.
+
+	clean-obj	- Removes all object files.
+
+	clean		- Removes all binaries, generated manual pages,
+			  and object files.
+
+---------
+EXAMPLES:
+
+The following example compiles everything, configuring the shell
+to use /etc/osh.login as its system-wide initialization file instead
+of the /usr/local/etc/osh.login default, and then installs the osh
+package into the default location.
+
+	% make SYSCONFDIR=/etc
+	# make install
+
+The following example compiles each program as a 2-way 32-bit
+universal binary for Mac OS X running on Intel and PowerPC Macs and
+then installs the osh package into the default location.
+
+	% make MOXARCH='-arch i386 -arch ppc'
+	# make install
+
+The following example compiles the shell components (osh, sh6,
+glob6) as 64-bit binaries and the utilities (if, goto, fd2) as
+32-bit binaries for Mac OS X running on 64-bit Intel Macs and then
+installs the osh package into the default location.
+
+This can provide a noticeable performance improvement for heavy
+shell scripting on 64-bit Intel Macs.
+
+	% make MOXSHELLARCH='-arch x86_64' MOXUTILSARCH='-arch i386'
+	# make install
+
+Jeffrey Allen Neitzel						2007/07/01
