@@ -16,44 +16,12 @@ Notice that this package also includes the following shell utilities:
 
 	goto(1) - transfer command (ported from Sixth Edition Unix)
 
-	fd2(1) - a utility to redirect file descriptor 2
+	fd2(1) - redirect file descriptor 2
 
---------
-INSTALL:
-Select the instructions under 1), 2), or 3) depending on which parts
-of the osh package you wish to install.
+-------
+See the INSTALL file for build and install instructions.
 
-1) To build and install everything:
-
-	a) Adjust the CONFIGURATION section in the Makefile to match
-	   your desires and/or the requirements of your system.
-
-	b) Type `make' to compile the binaries.
-
-	c) Type `make install' to install the binaries
-	   and manual pages.
-
-2) To build and install osh, if, goto, and fd2:
-
-	a) Adjust the CONFIGURATION section in the Makefile to match
-	   your desires and/or the requirements of your system.
-
-	b) Type `make oshall' to compile the binaries.
-
-	c) Type `make install-oshall' to install the binaries
-	   and manual pages.
-
-3) To build and install sh6, glob6, if, goto, and fd2:
-
-	a) Adjust the CONFIGURATION section in the Makefile to match
-	   your desires and/or the requirements of your system.
-
-	b) Type `make sh6all' to compile the binaries.
-
-	c) Type `make install-sh6all' to install the binaries
-	   and manual pages.
-
---------
+-------
 This software should build and work correctly on any POSIX-compliant
 Unix system.  In particular, it is currently developed, maintained,
 and tested by the developer on NetBSD, OpenBSD, and Mac OS X.  In
@@ -73,4 +41,4 @@ you to contact me via email.  Enjoy!
 
 Jeffrey Allen Neitzel
 jneitzel (at) sdf1 (dot) org
-http://jneitzel.sdf1.org/osh/
+http://jneitzel.sdf1.org/osh/					2007/06/30
