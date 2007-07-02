@@ -1,4 +1,4 @@
-Welcome to osh-20070630!
+Welcome to osh-20070707!
 
 Osh(1) is an enhanced, backward-compatible port of the Sixth Edition
 Thompson shell (circa 1975).  The original Thompson shell was
@@ -12,11 +12,11 @@ but without the obvious enhancements found in osh.
 
 Notice that this package also includes the following shell utilities:
 
-	if(1) - conditional command (ported from Sixth Edition Unix)
+	if(1)   - conditional command (ported from Sixth Edition Unix)
 
 	goto(1) - transfer command (ported from Sixth Edition Unix)
 
-	fd2(1) - redirect file descriptor 2
+	fd2(1)  - redirect file descriptor 2
 
 -------
 See the INSTALL file for build and install instructions.
@@ -41,4 +41,4 @@ you to contact me via email.  Enjoy!
 
 Jeffrey Allen Neitzel
 jneitzel (at) sdf1 (dot) org
-http://jneitzel.sdf1.org/osh/					2007/06/30
+http://jneitzel.sdf1.org/osh/					2007/07/02
