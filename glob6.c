@@ -171,8 +171,8 @@ gavnew(char **gav)
 	char **nav;
 
 	if (gavp == gave) {
-		gidx = gavp - gav;
-		siz  = (gidx + 1 + GAVNEW) * sizeof(char *);
+		gidx = (ptrdiff_t)(gavp - gav);
+		siz  = (size_t)((gidx + 1 + GAVNEW) * sizeof(char *));
 		if ((nav = realloc(gav, siz)) == NULL)
 			gerr("Out of memory\n");
 		gav  = nav;
@@ -260,7 +260,7 @@ glob1(char **gav, char *as, int *pmc)
 	}
 	if ((dirp = gopendir(*ds != '\0' ? ds : ".")) == NULL)
 		gerr("No directory\n");
-	gidx = gavp - gav;
+	gidx = (ptrdiff_t)(gavp - gav);
 	while ((entry = readdir(dirp)) != NULL) {
 		if (entry->d_name[0] == '.' && (*ps & ASCII) != '.')
 			continue;
