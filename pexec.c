@@ -139,7 +139,7 @@ pexec(const char *file, char *const *argv)
 			d = ".";
 			dlen = 1;
 		} else
-			dlen = up - d;
+			dlen = (size_t)(up - d);
 
 		/*
 		 * Complain if this path name for file would be too long.
