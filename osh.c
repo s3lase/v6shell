@@ -86,6 +86,7 @@ OSH_RCSID("$Id$");
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <pwd.h>
 #include <signal.h>
@@ -149,11 +150,11 @@ OSH_RCSID("$Id$");
 
 /*
  * These are the initialization files used by osh.
- * The `_PATH_DOT_*' files are in the user's HOME directory.
+ * The `PATH_DOT_*' files are in the user's HOME directory.
  */
-#define	_PATH_SYSTEM_LOGIN	SYSCONFDIR/**/"/osh.login"
-#define	_PATH_DOT_LOGIN		".osh.login"
-#define	_PATH_DOT_OSHRC		".oshrc"
+#define	PATH_SYSTEM_LOGIN	SYSCONFDIR/**/"/osh.login"
+#define	PATH_DOT_LOGIN		".osh.login"
+#define	PATH_DOT_OSHRC		".oshrc"
 
 /*
  * These are the nonstandard symbolic names for some of the type values
@@ -266,12 +267,12 @@ struct tnode {
 /*@null@*/struct tnode	 *nleft;	/* Pointer to left node.           */
 /*@null@*/struct tnode	 *nright;	/* Pointer to right node.          */
 /*@null@*/struct tnode	 *nsub;		/* Pointer to TSUBSHELL node.      */
-	  int		  ntype;	/* Node type (see below).          */
-	  int		  nflags;	/* Node/command flags (see below). */
-	  int		  nidx;		/* Node/command index (see sbi[]). */
 /*@null@*/char		**nav;		/* Argument vector for TCOMMAND.   */
 /*@null@*/char		 *nfin;		/* Pointer to input file (<).      */
 /*@null@*/char		 *nfout;	/* Pointer to output file (>, >>). */
+	  uint8_t	  ntype;	/* Node type (see below).          */
+	  uint8_t	  nflags;	/* Node/command flags (see below). */
+	  int8_t	  nidx;		/* Node/command index (see sbi[]). */
 };
 
 /*
@@ -400,7 +401,7 @@ static	void		xfree(/*@null@*/ /*@only@*/ void *);
 /*@null@*/ static
 	struct tnode	*syn3(char **, char **);
 static	bool		any(int, const char *);
-static	int		which(const char *);
+static	int8_t		which(const char *);
 static	bool		vtglob(char **);
 static	void		vtrim(char **);
 static	void		execute(/*@null@*/ struct tnode *,
@@ -839,12 +840,12 @@ talloc(void)
 	t->nleft  = NULL;
 	t->nright = NULL;
 	t->nsub   = NULL;
-	t->ntype  = 0;
-	t->nflags = 0;
-	t->nidx   = 0;
 	t->nav    = NULL;
 	t->nfin   = NULL;
 	t->nfout  = NULL;
+	t->ntype  = 0;
+	t->nflags = 0;
+	t->nidx   = 0;
 	return t;
 }
 
@@ -1007,7 +1008,8 @@ static struct tnode *
 syn3(char **p1, char **p2)
 {
 	struct tnode *t;
-	int ac, c, flags, n, subcnt;
+	uint8_t flags;
+	int ac, c, n, subcnt;
 	char **p, **lp, **rp;
 	char *fin, *fout;
 
@@ -1116,12 +1118,12 @@ any(int c, const char *as)
 /*
  * Determine whether cmd is a special built-in command.
  * If so, return its index value.  Otherwise, return -1
- * as name is either external, or not a command at all.
+ * as name is either external or not a command at all.
  */
-static int
+static int8_t
 which(const char *cmd)
 {
-	int i;
+	int8_t i;
 
 	for (i = 0; sbi[i] != NULL; i++)
 		if (EQUAL(cmd, sbi[i]))
@@ -1165,7 +1167,8 @@ execute(struct tnode *t, int *pin, int *pout)
 {
 	struct tnode *t1;
 	pid_t cpid;
-	int f, pfd[2];
+	uint8_t f;
+	int pfd[2];
 
 	if (t == NULL)
 		return;
@@ -1308,7 +1311,7 @@ exec1(struct tnode *t)
 		 * instance of login(1) or newgrp(1).
 		 */
 		if (PROMPT) {
-			p = (t->nidx == SBILOGIN) ? _PATH_LOGIN : _PATH_NEWGRP;
+			p = (t->nidx == SBILOGIN) ? PATH_LOGIN : PATH_NEWGRP;
 			vtrim(t->nav);
 			(void)signal(SIGINT, SIG_DFL);
 			(void)signal(SIGQUIT, SIG_DFL);
@@ -1461,7 +1464,8 @@ static void
 exec2(struct tnode *t, int *pin, int *pout)
 {
 	struct tnode *t1;
-	int f, i;
+	uint8_t f;
+	int i;
 	const char *cmd;
 	char **glob_av;
 
@@ -1688,7 +1692,7 @@ do_sig(char **av)
 				sigerr = i;
 				goto sigdone;
 			}
-			signo = lsigno;
+			signo = (int)lsigno;
 
 			/* Does anything need to be done? */
 			if (sigaction(signo, NULL, &oact) < 0 ||
@@ -1970,7 +1974,7 @@ fdfree(void)
 	fdmax = sysconf(_SC_OPEN_MAX);
 	if (fdmax < FDFREEMIN || fdmax > FDFREEMAX)
 		fdmax = FDFREEMIN;
-	for (fd = fdmax - 1; fd > DUPFD0; fd--)
+	for (fd = (int)fdmax - 1; fd > DUPFD0; fd--)
 		(void)close(fd);
 	for (fd--; fd > FD2; fd--)
 		(void)close(fd);
@@ -2024,14 +2028,14 @@ rcfile(int *rcflag)
 		*path = '\0';
 		switch (*rcflag) {
 		case 1:
-			file = _PATH_SYSTEM_LOGIN;
+			file = PATH_SYSTEM_LOGIN;
 			break;
 		case 2:
-			file = _PATH_DOT_LOGIN;
+			file = PATH_DOT_LOGIN;
 			/*FALLTHROUGH*/
 		case 3:
 			if (file == NULL)
-				file = _PATH_DOT_OSHRC;
+				file = PATH_DOT_OSHRC;
 			home = getenv("HOME");
 			if (home != NULL && *home != '\0') {
 				r = snprintf(path, sizeof(path),
@@ -2432,8 +2436,8 @@ gavnew(char **gav)
 	ptrdiff_t gidx;
 
 	if (gavp == gave) {
-		gidx = gavp - gav;
-		siz  = (gidx + 1 + GAVNEW) * sizeof(char *);
+		gidx = (ptrdiff_t)(gavp - gav);
+		siz  = (size_t)((gidx + 1 + GAVNEW) * sizeof(char *));
 		gav  = xrealloc(gav, siz);
 		gavp = gav + gidx;
 		gave = &gav[gidx + GAVNEW];
@@ -2513,7 +2517,7 @@ glob1(char **gav, char *as, int *pmc)
 	}
 	if (*ds != '\0')
 		ds = dirbuf;
-	gidx = gavp - gav;
+	gidx = (ptrdiff_t)(gavp - gav);
 	while ((entry = readdir(dirp)) != NULL) {
 		if (entry->d_name[0] == '.' && *ps != '.')
 			continue;
