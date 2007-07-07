@@ -1,45 +1,25 @@
-# Makefile for osh-20070630
+# Makefile for osh-20070707
 
 #
 # Begin CONFIGURATION
 #
-# Adjust the following variables as needed to match your desires
-# and/or the requirements of your system.
+# See the INSTALL file for build and install instructions.
 #
 
 #
-# If your system has a login(1) utility, what is its path name?
-# This is the utility used by the shell's `login' special command
-# to replace an interactive shell with an instance of login(1).
+# Specify the path name of the login(1) utility.
 #
 PATH_LOGIN?=	/usr/bin/login
 
 #
-# If your system has a newgrp(1) utility, what is its path name?
-# This is the utility used by the shell's `newgrp' special command
-# to replace an interactive shell with an instance of newgrp(1).
+# Specify the path name of the newgrp(1) utility.
 #
 PATH_NEWGRP?=
 
 #
-# Build utilities
-#
-#CC=		/usr/bin/cc
-INSTALL=	/usr/bin/install
-
-#
-# Compiler and linker flags
-#
-CFLAGS+=	-O2
-CFLAGS+=	-std=c99
-CFLAGS+=	-pedantic
-#CFLAGS+=	-g
-CFLAGS+=	-Wall -W
-#LDFLAGS+=	-static
-
-#
 # Choose where and how to install the binaries and manual pages.
 #
+DESTDIR?=
 PREFIX?=	/usr/local
 BINDIR?=	$(PREFIX)/bin
 MANDIR?=	$(PREFIX)/man/man1
@@ -50,10 +30,37 @@ BINMODE=	-m 0555
 MANMODE=	-m 0444
 
 #
+# Build utilities
+#
+#CC=		/usr/bin/cc
+INSTALL=	/usr/bin/install
+
+#
+# Compiler and linker flags
+#
+#CFLAGS+=	-g
+CFLAGS+=	-O2
+CFLAGS+=	-std=c99
+CFLAGS+=	-pedantic
+CFLAGS+=	-Wall -W
+#LDFLAGS+=	-static
+
+#
 # End CONFIGURATION
 #
 
-# !!! =============== Developer stuff below... =============== !!!
+# !!! ================= Developer stuff below... ================= !!!
+
+#
+# Further adjust CFLAGS and LDFLAGS as needed according to MOX*.
+#
+MOXARCH?=
+MOXSHELLARCH?=	$(MOXARCH)
+MOXUTILSARCH?=	$(MOXARCH)
+SCFLAGS=	$(CFLAGS)	$(MOXSHELLARCH)
+SLDFLAGS=	$(LDFLAGS)	$(MOXSHELLARCH)
+UCFLAGS=	$(CFLAGS)	$(MOXUTILSARCH)
+ULDFLAGS=	$(LDFLAGS)	$(MOXUTILSARCH)
 
 #
 # X/Open System Interfaces Extension (NOTES: POSIX, required)
@@ -65,7 +72,7 @@ XSIE=		-D_XOPEN_SOURCE=600
 #	osh-YYYYMMDD		== official release
 #	osh-current (YYYYMMDD)	== development snapshot
 #
-OSH_VERSION=	osh-20070630
+OSH_VERSION=	osh-20070707
 
 OSH=	osh
 SH6=	sh6 glob6
@@ -75,8 +82,8 @@ OBJ=	pexec.o osh.o sh6.o glob6.o if.o goto.o fd2.o
 MANSRC=	osh.1 sh6.1 glob6.1 if.1 goto.1 fd2.1
 MANDST=	osh.1.out sh6.1.out glob6.1.out if.1.out goto.1.out fd2.1.out
 
-DEFS=	-D_PATH_LOGIN='"$(PATH_LOGIN)"' -D_PATH_NEWGRP='"$(PATH_NEWGRP)"'
-DEFS+=	-DSYSCONFDIR='"$(SYSCONFDIR)"' -DOSH_VERSION='"$(OSH_VERSION)"'
+DEFS=	-DPATH_LOGIN='"$(PATH_LOGIN)"'	-DPATH_NEWGRP='"$(PATH_NEWGRP)"'
+DEFS+=	-DSYSCONFDIR='"$(SYSCONFDIR)"'	-DOSH_VERSION='"$(OSH_VERSION)"'
 
 .c.o:
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(XSIE) $(DEFS) $<
@@ -93,27 +100,27 @@ sh6all: $(SH6) utils man
 utils: $(UTILS)
 
 osh: rcsid.h $(PEXSRC) osh.c
-	@test X'$(MOXSHELLARCH)' = X'$(MOXUTILSARCH)' || rm -f pexec.o
-	@$(MAKE) CFLAGS+='$(MOXSHELLARCH)' LDFLAGS+='$(MOXSHELLARCH)' $@bin
+	@rm -f pexec.o
+	@$(MAKE) CFLAGS='$(SCFLAGS)' LDFLAGS='$(SLDFLAGS)' $@bin
 
 sh6: rcsid.h $(PEXSRC) sh6.c
-	@test X'$(MOXSHELLARCH)' = X'$(MOXUTILSARCH)' || rm -f pexec.o
-	@$(MAKE) CFLAGS+='$(MOXSHELLARCH)' LDFLAGS+='$(MOXSHELLARCH)' $@bin
+	@rm -f pexec.o
+	@$(MAKE) CFLAGS='$(SCFLAGS)' LDFLAGS='$(SLDFLAGS)' $@bin
 
 glob6: rcsid.h $(PEXSRC) glob6.c
-	@test X'$(MOXSHELLARCH)' = X'$(MOXUTILSARCH)' || rm -f pexec.o
-	@$(MAKE) CFLAGS+='$(MOXSHELLARCH)' LDFLAGS+='$(MOXSHELLARCH)' $@bin
+	@rm -f pexec.o
+	@$(MAKE) CFLAGS='$(SCFLAGS)' LDFLAGS='$(SLDFLAGS)' $@bin
 
 if: rcsid.h $(PEXSRC) if.c
-	@test X'$(MOXSHELLARCH)' = X'$(MOXUTILSARCH)' || rm -f pexec.o
-	@$(MAKE) CFLAGS+='$(MOXUTILSARCH)' LDFLAGS+='$(MOXUTILSARCH)' $@bin
+	@rm -f pexec.o
+	@$(MAKE) CFLAGS='$(UCFLAGS)' LDFLAGS='$(ULDFLAGS)' $@bin
 
 goto: rcsid.h goto.c
-	@$(MAKE) CFLAGS+='$(MOXUTILSARCH)' LDFLAGS+='$(MOXUTILSARCH)' $@bin
+	@$(MAKE) CFLAGS='$(UCFLAGS)' LDFLAGS='$(ULDFLAGS)' $@bin
 
 fd2: rcsid.h $(PEXSRC) fd2.c
-	@test X'$(MOXSHELLARCH)' = X'$(MOXUTILSARCH)' || rm -f pexec.o
-	@$(MAKE) CFLAGS+='$(MOXUTILSARCH)' LDFLAGS+='$(MOXUTILSARCH)' $@bin
+	@rm -f pexec.o
+	@$(MAKE) CFLAGS='$(UCFLAGS)' LDFLAGS='$(ULDFLAGS)' $@bin
 
 $(OBJ): rcsid.h
 pexec.o: $(PEXSRC)
