@@ -2,6 +2,31 @@ Changes that improve compatibility w/ the Sixth Edition Unix shell
 are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
+[osh-20070707]:
+	* Added a new file, INSTALL, which contains build and install
+	  instructions.  Made reference to INSTALL in Makefile and README.
+
+Makefile:
+	* Added 3 new variables, MOXARCH, MOXSHELLARCH, and MOXUTILSARCH, to
+	  simplify building universal binaries for Mac OS X.  These are unset
+	  by default.  See INSTALL for more info.
+
+	* Changed the default value for SYSCONFDIR from /etc to $(PREFIX)/etc.
+
+osh.c:
+	* Changed the reserved file descriptors from (7 - 9) to (10 - 12) in
+	  order to avoid fd conflict w/ rxvt-unicode (version 8.2).  This
+	  conflict prevented `chdir -' from functioning correctly, but this
+	  problem is now fixed.
+
+	  The problem was clearly visible when running an interactive instance
+	  of osh under the rxvt-unicode daemon (urxvtd) on Mac OS X.  However,
+	  I never saw this type of conflict when running under any other type
+	  of terminal emulator on any OS.  Thus, I do not know if this was
+	  only an osh problem, a urxvtd problem, a Mac OS X problem, or some
+	  combination of the 3...
+
+-------------------------------------------------------------------------------
 [osh-20070324]:
 osh.c:
 	* In main(), changed when fdfree() is called so that it is in a more

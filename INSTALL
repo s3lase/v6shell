@@ -1,0 +1,142 @@
+Build and install instructions for osh-20070707!
+
+SYNOPSIS
+	env [variable=value ...] make [target ...]
+	make [variable=value ...] [target ...]
+
+If the defaults described below match your desires and/or the
+requirements of your system, you can build and install the entire
+osh package simply by doing the following.
+
+	% make
+	# make install
+
+...
+Otherwise, continue reading for full build and install details.
+See the EXAMPLES section at the end of this file for additional
+help if needed.
+
+---------
+VARIABLES
+The Makefile defines the following configuration variables (default
+value listed).  The user can modify the default configuration by
+passing the desired variable=value pair(s) on the command line.
+
+	PATH_LOGIN	Defaults to /usr/bin/login.  The login(1)
+			utility is used by the shell's `login' special
+			command to replace an interactive shell with
+			an instance of login(1).
+
+	PATH_NEWGRP	Unset by default.  The newgrp(1) utility is
+			used by the shell's `newgrp' special command
+			to replace an interactive shell with an
+			instance of newgrp(1).
+
+	PREFIX		Defaults to /usr/local.  This is the target
+			directory where BINDIR, MANDIR, and SYSCONFDIR
+			are located by default.
+
+	BINDIR		Defaults to $(PREFIX)/bin.  This is the target
+			directory where the binaries are installed.
+
+	MANDIR		Defaults to $(PREFIX)/man/man1.  This is the
+			target directory where the manual pages are
+			installed.
+
+	SYSCONFDIR	Defaults to $(PREFIX)/etc.  This is the target
+			directory where the shell shall search for its
+			system-wide initialization file if such a file
+			is available on the system.  See:
+
+			http://jneitzel.sdf1.org/osh/initialization_files/
+
+			...
+			for example initialization files.
+
+	DESTDIR		Unset by default.  This may be used for
+			building binary packages if needed.
+
+	INSTALL		Defaults to /usr/bin/install.  The install(1)
+			utility is used to copy the resulting binaries
+			and manual pages to their final targets.
+
+Mac OS X only:
+The following configuration variables specify the desired target
+architecture(s) for compiling universal binaries and/or 64-bit
+binaries and/or 32-bit binaries for Mac OS X running on Intel and
+PowerPC Macs.
+
+	MOXARCH		Unset by default.  Possible value(s) may be
+			one or more of the following: -arch x86_64,
+			-arch ppc64, -arch i386, -arch ppc.
+			See also EXAMPLES.
+
+	MOXSHELLARCH	Defaults to $(MOXARCH).
+
+	MOXUTILSARCH	Defaults to $(MOXARCH).
+
+-------
+TARGETS
+The following targets are available.
+
+	all		Default target is the same as typing `make'.
+			Compiles everything.
+
+	install		Installs all binaries and manual pages.
+
+	oshall		Compiles osh, if, goto, and fd2.
+
+	install-oshall	Installs oshall binaries and manual pages.
+
+	sh6all		Compiles sh6, glob6, if, goto, and fd2.
+
+	install-sh6all	Installs sh6all binaries and manual pages.
+
+	clean-obj	Removes all object files.
+
+	clean		Removes all binaries, generated manual pages,
+			and object files.
+
+--------
+EXAMPLES
+The following example compiles osh, if, goto, and fd2 for /opt/local.
+It then installs these binaries and their manual pages into this
+location.  SYSCONFDIR is set to /opt/local/etc as well.
+
+	% make PREFIX=/opt/local oshall
+	# make PREFIX=/opt/local install-oshall
+
+The following example compiles sh6, glob6, if, goto, and fd2 for
+/usr/pkg.  It then installs these binaries and their manual pages
+into this location.  SYSCONFDIR is set to /usr/pkg/etc as well.
+
+	% make PREFIX=/usr/pkg sh6all
+	# make PREFIX=/usr/pkg install-sh6all
+
+The following example compiles everything, configuring the shell
+to use /etc/osh.login as its system-wide initialization file instead
+of the /usr/local/etc/osh.login default.  It then installs the
+entire osh package into the default location.
+
+	% make SYSCONFDIR=/etc
+	# make install
+
+The following example compiles each program as a 2-way 32-bit
+universal binary for Mac OS X running on Intel and PowerPC Macs.
+It then installs the entire osh package into the default location.
+
+	% make MOXARCH='-arch i386 -arch ppc'
+	# make install
+
+The following example compiles the shell components (osh, sh6,
+glob6) as 64-bit binaries and the utilities (if, goto, fd2) as
+32-bit binaries for Mac OS X running on 64-bit Intel Macs.  It
+then installs the entire osh package into the default location.
+
+This can provide a noticeable performance improvement for heavy
+shell scripting on 64-bit Intel Macs.
+
+	% make MOXSHELLARCH='-arch x86_64' MOXUTILSARCH='-arch i386'
+	# make install
+
+Jeffrey Allen Neitzel						2007/07/07

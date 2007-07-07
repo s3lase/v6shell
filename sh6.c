@@ -75,6 +75,7 @@ OSH_RCSID("$Id$");
 
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -143,11 +144,11 @@ struct tnode {
 /*@null@*/struct tnode	 *nleft;	/* Pointer to left node.           */
 /*@null@*/struct tnode	 *nright;	/* Pointer to right node.          */
 /*@null@*/struct tnode	 *nsub;		/* Pointer to TSUBSHELL node.      */
-	  int		  ntype;	/* Node type (see below).          */
-	  int		  nflags;	/* Node/command flags (see below). */
 /*@null@*/char		**nav;		/* Argument vector for TCOMMAND.   */
 /*@null@*/char		 *nfin;		/* Pointer to input file (<).      */
 /*@null@*/char		 *nfout;	/* Pointer to output file (>, >>). */
+	  uint8_t	  ntype;	/* Node type (see below).          */
+	  uint8_t	  nflags;	/* Node/command flags (see below). */
 };
 
 /*
@@ -548,11 +549,11 @@ talloc(void)
 	t->nleft  = NULL;
 	t->nright = NULL;
 	t->nsub   = NULL;
-	t->ntype  = 0;
-	t->nflags = 0;
 	t->nav    = NULL;
 	t->nfin   = NULL;
 	t->nfout  = NULL;
+	t->ntype  = 0;
+	t->nflags = 0;
 	return t;
 }
 
@@ -698,7 +699,8 @@ static struct tnode *
 syn3(char **p1, char **p2)
 {
 	struct tnode *t;
-	int ac, c, flags, n, subcnt;
+	uint8_t flags;
+	int ac, c, n, subcnt;
 	char **p, **lp, **rp;
 	char *fin, *fout;
 
@@ -865,7 +867,8 @@ execute(struct tnode *t, int *pin, int *pout)
 {
 	struct tnode *t1;
 	pid_t cpid;
-	int f, i, pfd[2];
+	uint8_t f;
+	int i, pfd[2];
 	const char **gav;
 	const char *cmd, *p;
 
@@ -934,7 +937,7 @@ execute(struct tnode *t, int *pin, int *pout)
 		}
 		if (EQUAL(cmd, "login") || EQUAL(cmd, "newgrp")) {
 			if (prompt != NULL) {
-				p = (*cmd == 'l') ? _PATH_LOGIN : _PATH_NEWGRP;
+				p = (*cmd == 'l') ? PATH_LOGIN : PATH_NEWGRP;
 				vscan(t->nav, trim);
 				(void)signal(SIGINT, SIG_DFL);
 				(void)signal(SIGQUIT, SIG_DFL);
@@ -1049,7 +1052,7 @@ execute(struct tnode *t, int *pin, int *pout)
 					err(": cannot open", FC_ERR);
 				}
 			}
-		} else if ((f & FINTR) == 0) {
+		} else {
 			if ((chintr & CH_SIGINT) != 0)
 				(void)signal(SIGINT, SIG_DFL);
 			if ((chintr & CH_SIGQUIT) != 0)
@@ -1259,7 +1262,7 @@ fdfree(void)
 	fdmax = sysconf(_SC_OPEN_MAX);
 	if (fdmax < FDFREEMIN || fdmax > FDFREEMAX)
 		fdmax = FDFREEMIN;
-	for (fd = fdmax - 1; fd > FD2; fd--)
+	for (fd = (int)fdmax - 1; fd > FD2; fd--)
 		(void)close(fd);
 }
 

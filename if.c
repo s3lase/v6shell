@@ -127,7 +127,7 @@ static	bool	ifstat2(/*@null@*/ const char *, /*@null@*/ const char *, int);
 int
 main(int argc, char **argv)
 {
-	bool re;	/* return value of expr() */
+	bool re;		/* return value of expr() */
 
 	ifpid = getpid();
 	ifeuid = geteuid();
@@ -146,7 +146,7 @@ main(int argc, char **argv)
 		if (re && ap < ac)
 			doex(!FORKED);
 	} else
-		re = 0;
+		re = false;
 
 	return re ? 0 : 1;
 }
