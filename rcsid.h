@@ -38,7 +38,7 @@
 #  define	ATTR	/* nothing */
 # endif
 #define	OSH_RCSID(string)	/*@unused@*/	\
-		static const char rcsid[] ATTR = "\100(#)" string
+		static const char rcsid[] ATTR = string
 #endif	/* !OSH_RCSID */
 
 #endif	/* RCSID_H */
