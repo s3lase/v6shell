@@ -66,7 +66,7 @@
 
 #ifndef	lint
 #include "rcsid.h"
-OSH_RCSID("$Id$");
+OSH_RCSID("@(#)$Id$");
 #endif	/* !lint */
 
 #include <stdbool.h>
