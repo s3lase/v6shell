@@ -72,7 +72,7 @@ XSIE=		-D_XOPEN_SOURCE=600
 #	osh-YYYYMMDD		== official release
 #	osh-current (YYYYMMDD)	== development snapshot
 #
-OSH_VERSION=	osh-20070707
+OSH_VERSION=	osh-current (20071028)
 
 OSH=	osh
 SH6=	sh6 glob6
