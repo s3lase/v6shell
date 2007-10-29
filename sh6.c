@@ -66,7 +66,7 @@
 
 #ifndef	lint
 #include "rcsid.h"
-OSH_RCSID("$Id$");
+OSH_RCSID("@(#)$Id$");
 #endif	/* !lint */
 
 #include <sys/types.h>
@@ -212,14 +212,14 @@ static	char		peekc;		/* just-read, pushed-back character */
 	const char	*prompt;	/* interactive-shell prompt pointer */
 static	pid_t		spid;		/* shell process ID                 */
 static	int		status;		/* shell exit status                */
-static	char		*words[WORDMAX];/* argument/word pointer array      */
+static	char		*word[WORDMAX];	/* argument/word pointer array      */
 static	char		**wordp;
 
 /*
  * Function prototypes
  */
-static	void		main1(void);
-static	void		word(void);
+static	void		rpxline(void);
+static	void		getword(void);
 static	char		xgetc(bool);
 static	char		readc(void);
 static	struct tnode	*talloc(void);
@@ -313,7 +313,7 @@ main(int argc, char **argv)
 loop:
 	if (prompt != NULL)
 		prs(prompt);
-	main1();
+	rpxline();
 	goto loop;
 
 done:
@@ -324,26 +324,26 @@ done:
  * Read, parse, and execute a command line.
  */
 static void
-main1(void)
+rpxline(void)
 {
 	struct tnode *t;
 	sigset_t nmask, omask;
 	char *wp;
 
 	linep = line;
-	wordp = words;
+	wordp = word;
 	error = false;
 	nulcnt = 0;
 	do {
 		wp = linep;
-		word();
+		getword();
 	} while (*wp != '\n');
 
-	if (!error && wordp - words > 1) {
+	if (!error && wordp - word > 1) {
 		(void)sigfillset(&nmask);
 		(void)sigprocmask(SIG_SETMASK, &nmask, &omask);
 		t = NULL;
-		t = syntax(words, wordp);
+		t = syntax(word, wordp);
 		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 		if (error)
 			err("syntax error", SH_ERR);
@@ -360,7 +360,7 @@ main1(void)
  * in line as an individual `\0'-terminated string.
  */
 static void
-word(void)
+getword(void)
 {
 	char c, c1;
 
@@ -453,7 +453,7 @@ xgetc(bool dolsub)
 		return c;
 	}
 
-	if (wordp >= &words[WORDMAX - 2]) {
+	if (wordp >= &word[WORDMAX - 2]) {
 		wordp -= 4;
 		while (xgetc(!DOLSUB) != '\n')
 			;	/* nothing */
