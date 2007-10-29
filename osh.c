@@ -76,7 +76,7 @@
 
 #ifndef	lint
 #include "rcsid.h"
-OSH_RCSID("$Id$");
+OSH_RCSID("@(#)$Id$");
 #endif	/* !lint */
 
 #include <sys/types.h>
@@ -376,7 +376,7 @@ static	int		stype;		/* shell type (determines behavior) */
 	char		*tty;		/* $t - terminal name               */
 /*@null@*/ /*@only@*/ static
 	char		*user;		/* $u - effective user name         */
-static	char		*words[WORDMAX];/* argument/word pointer array      */
+static	char		*word[WORDMAX];	/* argument/word pointer array      */
 static	char		**wordp;
 
 /*
@@ -549,7 +549,7 @@ rpxline(void)
 	char *wp;
 
 	linep = line;
-	wordp = words;
+	wordp = word;
 	error = false;
 	nulcnt = 0;
 	do {
@@ -558,12 +558,12 @@ rpxline(void)
 			return EOF;
 	} while (*wp != '\n');
 
-	if (!error && wordp - words > 1) {
+	if (!error && wordp - word > 1) {
 		(void)sigfillset(&nmask);
 		(void)sigprocmask(SIG_SETMASK, &nmask, &omask);
 		t = treep;
 		treep = NULL;
-		treep = syntax(words, wordp);
+		treep = syntax(word, wordp);
 		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 		if (error)
 			err(-1, FMT1S, ERR_SYNTAX);
@@ -693,7 +693,7 @@ xgetc(bool dolsub)
 		return c;
 	}
 
-	if (wordp >= &words[WORDMAX - 2]) {
+	if (wordp >= &word[WORDMAX - 2]) {
 		wordp -= 4;
 		while ((c = xgetc(!DOLSUB)) != EOF && c != '\n')
 			;	/* nothing */
@@ -1770,6 +1770,7 @@ sigflags(void (*act)(int), int s)
 static void
 do_source(char **av)
 {
+	const char *sname;
 	char *const *sdolv;
 	int nfd, sfd, sdolc;
 	static int cnt;
@@ -1797,18 +1798,21 @@ do_source(char **av)
 	if (!STYPE(SOURCE))
 		stype |= SOURCE;
 
-	/* Save and initialize any positional parameters if needed. */
+	/* Save and initialize any positional parameters. */
+	sname = name;
 	sdolv = dolv;
 	sdolc = dolc;
-	if (av[2] != NULL)
-		for (dolv = &av[1], dolc = 2; dolv[dolc] != NULL; dolc++)
-			;	/* nothing */
+	name  = av[1];
+	dolv = &av[1];
+	for (dolc = 0; dolv[dolc] != NULL; dolc++)
+		;	/* nothing */
 
 	cnt++;
 	cmd_loop(HALT);
 	cnt--;
 
 	/* Restore any saved positional parameters. */
+	name = sname;
 	dolv = sdolv;
 	dolc = sdolc;
 
