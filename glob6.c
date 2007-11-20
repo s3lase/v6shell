@@ -108,13 +108,13 @@ static	size_t		gavtot;	/* total bytes used for all arguments */
 
 static	char		**gavnew(/*@only@*/ char **);
 static	char		*gcat(const char *, const char *);
-/*@noreturn@*/ static
-	void		gerr(const char *);
+/*@noreturn@*/
+static	void		gerr(const char *);
 static	char		**glob1(/*@only@*/ char **, char *, int *);
 static	bool		glob2(const UChar *, const UChar *);
 static	void		gsort(char **);
-/*@null@*/ static
-	DIR		*gopendir(const char *);
+/*@null@*/
+static	DIR		*gopendir(const char *);
 
 /*
  * NAME

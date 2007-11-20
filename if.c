@@ -99,20 +99,20 @@ static	char	**av;
 static	uid_t	ifeuid;
 static	pid_t	ifpid;
 
-/*@noreturn@*/ static
-	void	doex(bool);
+/*@noreturn@*/
+static	void	doex(bool);
 static	bool	e1(void);
 static	bool	e2(void);
 static	bool	e3(void);
 static	bool	equal(/*@null@*/ const char *, /*@null@*/ const char *);
-/*@noreturn@*/ static
-	void	error(int, /*@null@*/ const char *, const char *);
+/*@noreturn@*/
+static	void	error(int, /*@null@*/ const char *, const char *);
 static	bool	expr(void);
 static	bool	ifaccess(/*@null@*/ const char *, int);
 static	bool	ifstat1(/*@null@*/ const char *, mode_t);
 static	bool	ifstat2(/*@null@*/ const char *, /*@null@*/ const char *, int);
-/*@null@*/ static
-	char	*nxtarg(bool);
+/*@null@*/
+static	char	*nxtarg(bool);
 
 /*
  * NAME

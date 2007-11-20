@@ -52,11 +52,11 @@ OSH_RCSID("@(#)$Id$");
 
 #define	FD2_ERR	124
 
-/*@noreturn@*/ static
-	void	error(int, /*@null@*/ const char *, const char *);
+/*@noreturn@*/
+static	void	error(int, /*@null@*/ const char *, const char *);
 static	bool	fdisopen(int);
-/*@noreturn@*/ static
-	void	usage(void);
+/*@noreturn@*/
+static	void	usage(void);
 
 /*
  * NAME

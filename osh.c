@@ -349,13 +349,13 @@ static const char *const sbi[] = {
 	NULL
 };
 
-/*@null@*/ static
-	const char	*arginp;	/* string for `-c' option           */
+/*@null@*/
+static	const char	*arginp;	/* string for `-c' option           */
 static	int		chintr;		/* SIGINT / SIGQUIT flag for child  */
 static	char		dolbuf[32];	/* dollar buffer for $$, $n, $s, $v */
 static	int		dolc;		/* $N dollar-argument count         */
-/*@null@*/ /*@only@*/ static
-	const char	*dolp;		/* $ dollar-value pointer           */
+/*@null@*/ /*@only@*/
+static	const char	*dolp;		/* $ dollar-value pointer           */
 static	char	*const	*dolv;		/* $N dollar-argument value array   */
 static	int		dupfd0;		/* duplicate of the standard input  */
 static	bool		error;		/* error flag for read/parse errors */
@@ -370,12 +370,12 @@ static	int		sig_state;	/* SIGINT / SIGQUIT / SIGTERM state */
 static	pid_t		spid;		/* shell process ID                 */
 static	int		status;		/* shell exit status                */
 static	int		stype;		/* shell type (determines behavior) */
-/*@only@*/ static
-	struct tnode	*treep;		/* shell command-tree pointer       */
-/*@null@*/ /*@only@*/ static
-	char		*tty;		/* $t - terminal name               */
-/*@null@*/ /*@only@*/ static
-	char		*user;		/* $u - effective user name         */
+/*@only@*/
+static	struct tnode	*treep;		/* shell command-tree pointer       */
+/*@null@*/ /*@only@*/
+static	char		*tty;		/* $t - terminal name               */
+/*@null@*/ /*@only@*/
+static	char		*user;		/* $u - effective user name         */
 static	char		*word[WORDMAX];	/* argument/word pointer array      */
 static	char		**wordp;
 
@@ -386,20 +386,20 @@ static	void		cmd_loop(bool);
 static	int		rpxline(void);
 static	int		getword(void);
 static	int		xgetc(bool);
-/*@null@*/ /*@only@*/ static
-	const char	*getdolp(int);
+/*@null@*/ /*@only@*/
+static	const char	*getdolp(int);
 static	int		readc(void);
 static	struct tnode	*talloc(void);
 static	void		tfree(/*@null@*/ /*@only@*/ struct tnode *);
 static	void		xfree(/*@null@*/ /*@only@*/ void *);
-/*@null@*/ static
-	struct tnode	*syntax(char **, char **);
-/*@null@*/ static
-	struct tnode	*syn1(char **, char **);
-/*@null@*/ static
-	struct tnode	*syn2(char **, char **);
-/*@null@*/ static
-	struct tnode	*syn3(char **, char **);
+/*@null@*/
+static	struct tnode	*syntax(char **, char **);
+/*@null@*/
+static	struct tnode	*syn1(char **, char **);
+/*@null@*/
+static	struct tnode	*syn2(char **, char **);
+/*@null@*/
+static	struct tnode	*syn3(char **, char **);
 static	bool		any(int, const char *);
 static	int8_t		which(const char *);
 static	bool		vtglob(char **);
@@ -422,12 +422,12 @@ static	void		rcfile(int *);
 static	void		atrim(char *);
 static	char		*gchar(/*@returned@*/ const char *);
 static	char		*gtrim(/*@returned@*/ char *);
-/*@out@*/ static
-	void		*xmalloc(size_t);
+/*@out@*/
+static	void		*xmalloc(size_t);
 static	void		*xrealloc(/*@only@*/ void *, size_t);
 static	char		*xstrdup(const char *);
-/*@maynotreturn@*/ static
-	void		err(int, /*@null@*/ const char *, /*@printflike@*/ ...);
+/*@maynotreturn@*/
+static	void		err(int, /*@null@*/ const char *, /*@printflike@*/ ...);
 static	void		fdprint(int, const char *, /*@printflike@*/ ...);
 static	void		omsg(int, const char *, va_list);
 static	bool		fdtype(int, mode_t);
@@ -2402,8 +2402,8 @@ static	char		*gcat(const char *, const char *, bool);
 static	char		**glob1(/*@only@*/ char **, char *, int *);
 static	bool		glob2(const UChar *, const UChar *);
 static	void		gsort(char **);
-/*@null@*/ static
-	DIR		*gopendir(/*@out@*/ char *, const char *);
+/*@null@*/
+static	DIR		*gopendir(/*@out@*/ char *, const char *);
 
 /*
  * Attempt to generate file-name arguments which match the given

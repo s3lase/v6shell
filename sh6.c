@@ -193,12 +193,12 @@ static	const char *const sig[XNSIG] = {
 };
 
 static	char		apid[6];	/* $$ - ASCII shell process ID      */
-/*@null@*/ static
-	const char	*arginp;	/* string for `-c' option           */
+/*@null@*/
+static	const char	*arginp;	/* string for `-c' option           */
 static	int		chintr;		/* SIGINT / SIGQUIT flag for child  */
 static	int		dolc;		/* $N dollar-argument count         */
-/*@null@*/ static
-	const char	*dolp;		/* $N and $$ dollar-value pointer   */
+/*@null@*/
+static	const char	*dolp;		/* $N and $$ dollar-value pointer   */
 static	char	*const	*dolv;		/* $N dollar-argument value array   */
 static	bool		error;		/* error flag for read/parse errors */
 static	bool		globit;		/* glob flag for `*', `?', `['      */
@@ -208,8 +208,8 @@ static	const char	*name;		/* $0 - shell command name          */
 static	int		nulcnt;		/* `\0'-character count (per line)  */
 static	int		olnflg;		/* one-line flag for `-t' option    */
 static	char		peekc;		/* just-read, pushed-back character */
-/*@null@*/ /*@observer@*/ static
-	const char	*prompt;	/* interactive-shell prompt pointer */
+/*@null@*/ /*@observer@*/
+static	const char	*prompt;	/* interactive-shell prompt pointer */
 static	pid_t		spid;		/* shell process ID                 */
 static	int		status;		/* shell exit status                */
 static	char		*word[WORDMAX];	/* argument/word pointer array      */
@@ -224,14 +224,14 @@ static	char		xgetc(bool);
 static	char		readc(void);
 static	struct tnode	*talloc(void);
 static	void		tfree(/*@null@*/ /*@only@*/ struct tnode *);
-/*@null@*/ static
-	struct tnode	*syntax(char **, char **);
-/*@null@*/ static
-	struct tnode	*syn1(char **, char **);
-/*@null@*/ static
-	struct tnode	*syn2(char **, char **);
-/*@null@*/ static
-	struct tnode	*syn3(char **, char **);
+/*@null@*/
+static	struct tnode	*syntax(char **, char **);
+/*@null@*/
+static	struct tnode	*syn1(char **, char **);
+/*@null@*/
+static	struct tnode	*syn2(char **, char **);
+/*@null@*/
+static	struct tnode	*syn3(char **, char **);
 static	void		vscan(/*@null@*/ char **, int (*)(int));
 static	void		ascan(/*@null@*/ char *, int (*)(int));
 static	int		tglob(int);
@@ -239,8 +239,8 @@ static	int		trim(int);
 static	bool		any(int, const char *);
 static	void		execute(/*@null@*/ struct tnode *,
 				/*@null@*/ int *, /*@null@*/ int *);
-/*@maynotreturn@*/ static
-	void		err(/*@null@*/ const char *, int);
+/*@maynotreturn@*/
+static	void		err(/*@null@*/ const char *, int);
 static	void		prn(int);
 static	void		prs(/*@null@*/ const char *);
 static	void		xputc(int);
@@ -249,8 +249,8 @@ static	void		sh_init(void);
 static	void		fdfree(void);
 static	bool		fdisdir(int);
 static	void		sh_magic(void);
-/*@out@*/ static
-	void		*xmalloc(size_t);
+/*@out@*/
+static	void		*xmalloc(size_t);
 
 /*
  * NAME
