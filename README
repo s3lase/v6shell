@@ -1,8 +1,8 @@
-Welcome to osh-20070707!
+Welcome to osh-current (20071125)!
 
-Osh(1) is an enhanced, backward-compatible port of the Sixth Edition
-Thompson shell (circa 1975).  The original Thompson shell was
-principally written by Ken Thompson of Bell Labs.
+Osh(1) is an enhanced, backward-compatible port of the Sixth Edition (V6)
+Unix shell (circa 1975), also known as the Thompson shell.  The original
+Thompson shell was principally written by Ken Thompson of Bell Labs.
 
 Sh6(1) (a port of the original shell) and glob6(1) (a port of the
 global command) are also included in this package.  Together, they

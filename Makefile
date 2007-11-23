@@ -1,4 +1,4 @@
-# Makefile for osh-20070707
+# Makefile for osh-current (20071125)
 
 #
 # Begin CONFIGURATION
@@ -72,15 +72,15 @@ XSIE=		-D_XOPEN_SOURCE=600
 #	osh-YYYYMMDD		== official release
 #	osh-current (YYYYMMDD)	== development snapshot
 #
-OSH_VERSION=	osh-current (20071028)
+OSH_VERSION=	osh-current (20071125)
 
 OSH=	osh
 SH6=	sh6 glob6
 UTILS=	if goto fd2
 PEXSRC=	pexec.h pexec.c
 OBJ=	pexec.o osh.o sh6.o glob6.o if.o goto.o fd2.o
-MANSRC=	osh.1 sh6.1 glob6.1 if.1 goto.1 fd2.1
-MANDST=	osh.1.out sh6.1.out glob6.1.out if.1.out goto.1.out fd2.1.out
+MANSRC=	osh.1.in sh6.1.in glob6.1.in if.1.in goto.1.in fd2.1.in
+MANDST=	osh.1 sh6.1 glob6.1 if.1 goto.1 fd2.1
 
 DEFS=	-DPATH_LOGIN='"$(PATH_LOGIN)"'	-DPATH_NEWGRP='"$(PATH_NEWGRP)"'
 DEFS+=	-DSYSCONFDIR='"$(SYSCONFDIR)"'	-DOSH_VERSION='"$(OSH_VERSION)"'
@@ -152,7 +152,7 @@ $(MANDST): $(MANSRC)
 	@for file in $(MANSRC) ; do \
 		sed -e 's,@OSH_VERSION@,$(OSH_VERSION),' \
 			-e 's,@SYSCONFDIR@,$(SYSCONFDIR),' \
-				<$$file >$${file}.out ; \
+				<$$file >$${file%.in} ; \
 	done
 
 #
@@ -165,28 +165,22 @@ install-oshall: $(OSH) utils man install-osh install-utils
 install-sh6all: $(SH6) utils man install-sh6 install-utils
 
 install-osh: $(OSH) man install-dest
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) osh         $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) osh.1.out   \
-		$(DESTDIR)$(MANDIR)/osh.1
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) osh     $(DESTDIR)$(BINDIR)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) osh.1   $(DESTDIR)$(MANDIR)
 
 install-sh6: $(SH6) man install-dest
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) sh6         $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) sh6.1.out   \
-		$(DESTDIR)$(MANDIR)/sh6.1
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) glob6       $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) glob6.1.out \
-		$(DESTDIR)$(MANDIR)/glob6.1
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) sh6     $(DESTDIR)$(BINDIR)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) sh6.1   $(DESTDIR)$(MANDIR)
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) glob6   $(DESTDIR)$(BINDIR)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) glob6.1 $(DESTDIR)$(MANDIR)
 
 install-utils: utils man install-dest
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) if          $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) if.1.out    \
-		$(DESTDIR)$(MANDIR)/if.1
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) goto        $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) goto.1.out  \
-		$(DESTDIR)$(MANDIR)/goto.1
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) fd2         $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) fd2.1.out   \
-		$(DESTDIR)$(MANDIR)/fd2.1
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) if      $(DESTDIR)$(BINDIR)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) if.1    $(DESTDIR)$(MANDIR)
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) goto    $(DESTDIR)$(BINDIR)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) goto.1  $(DESTDIR)$(MANDIR)
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) fd2     $(DESTDIR)$(BINDIR)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) fd2.1   $(DESTDIR)$(MANDIR)
 
 install-dest:
 	test -d $(DESTDIR)$(BINDIR) || { \
