@@ -96,7 +96,7 @@ OSH_RCSID("@(#)$Id$");
 #else
 #define	FDFREEMIN	20	/* Value is the same as _POSIX_OPEN_MAX.  */
 #endif
-#define	FDFREEMAX	65536	/* Arbitrary maximum value for fdfree().  */
+#define	FDFREEMAX	65536	/* Arbitrary maximum value for fd_free(). */
 #define	PIDMAX		99999	/* Maximum value for both prn() and apid. */
 
 #define	FD0		STDIN_FILENO
@@ -218,8 +218,8 @@ static	char		**wordp;
 /*
  * Function prototypes
  */
-static	void		rpxline(void);
-static	void		getword(void);
+static	void		rpx_line(void);
+static	void		get_word(void);
 static	char		xgetc(bool);
 static	char		readc(void);
 static	struct tnode	*talloc(void);
@@ -246,9 +246,9 @@ static	void		prs(/*@null@*/ const char *);
 static	void		xputc(int);
 static	void		pwait(pid_t);
 static	void		sh_init(void);
-static	void		fdfree(void);
-static	bool		fdisdir(int);
 static	void		sh_magic(void);
+static	void		fd_free(void);
+static	bool		fd_isdir(int);
 /*@out@*/
 static	void		*xmalloc(size_t);
 
@@ -269,7 +269,7 @@ main(int argc, char **argv)
 	sh_init();
 	if (argv[0] == NULL || *argv[0] == '\0')
 		err("Invalid argument list", SH_ERR);
-	if (fdisdir(FD0))
+	if (fd_isdir(FD0))
 		goto done;
 
 	if (argc > 1) {
@@ -290,7 +290,7 @@ main(int argc, char **argv)
 				prs(argv[1]);
 				err(": cannot open", SH_ERR);
 			}
-			if (fdisdir(FD0))
+			if (fd_isdir(FD0))
 				goto done;
 		}
 	} else {
@@ -307,13 +307,13 @@ main(int argc, char **argv)
 		if (signal(SIGQUIT, SIG_IGN) == SIG_DFL)
 			chintr |= CH_SIGQUIT;
 	}
-	fdfree();
+	fd_free();
 	sh_magic();
 
 loop:
 	if (prompt != NULL)
 		prs(prompt);
-	rpxline();
+	rpx_line();
 	goto loop;
 
 done:
@@ -324,7 +324,7 @@ done:
  * Read, parse, and execute a command line.
  */
 static void
-rpxline(void)
+rpx_line(void)
 {
 	struct tnode *t;
 	sigset_t nmask, omask;
@@ -336,7 +336,7 @@ rpxline(void)
 	nulcnt = 0;
 	do {
 		wp = linep;
-		getword();
+		get_word();
 	} while (*wp != '\n');
 
 	if (!error && wordp - word > 1) {
@@ -360,7 +360,7 @@ rpxline(void)
  * in line as an individual `\0'-terminated string.
  */
 static void
-getword(void)
+get_word(void)
 {
 	char c, c1;
 
@@ -1249,36 +1249,6 @@ sh_init(void)
 }
 
 /*
- * Attempt to free or release all of the file descriptors in the
- * range from (fdmax - 1) through (FD2 + 1); the value of fdmax
- * may fall between FDFREEMIN and FDFREEMAX, inclusive.
- */
-static void
-fdfree(void)
-{
-	long fdmax;
-	int fd;
-
-	fdmax = sysconf(_SC_OPEN_MAX);
-	if (fdmax < FDFREEMIN || fdmax > FDFREEMAX)
-		fdmax = FDFREEMIN;
-	for (fd = (int)fdmax - 1; fd > FD2; fd--)
-		(void)close(fd);
-}
-
-/*
- * Return true (1) if the file descriptor fd refers to an open file
- * which is a directory.  Otherwise, return false (0).
- */
-static bool
-fdisdir(int fd)
-{
-	struct stat sb;
-
-	return fstat(fd, &sb) == 0 && S_ISDIR(sb.st_mode);
-}
-
-/*
  * Ignore any `#!shell' sequence as the first line of a regular file.
  * The length of this line is limited to (LINEMAX - 1) characters.
  */
@@ -1299,6 +1269,36 @@ sh_magic(void)
 		}
 		(void)lseek(FD0, (off_t)0, SEEK_SET);
 	}
+}
+
+/*
+ * Attempt to free or release all of the file descriptors in the
+ * range from (fd_max - 1) through (FD2 + 1); the value of fd_max
+ * may fall between FDFREEMIN and FDFREEMAX, inclusive.
+ */
+static void
+fd_free(void)
+{
+	long fd_max;
+	int fd;
+
+	fd_max = sysconf(_SC_OPEN_MAX);
+	if (fd_max < FDFREEMIN || fd_max > FDFREEMAX)
+		fd_max = FDFREEMIN;
+	for (fd = (int)fd_max - 1; fd > FD2; fd--)
+		(void)close(fd);
+}
+
+/*
+ * Return true (1) if the file descriptor fd refers to an open file
+ * which is a directory.  Otherwise, return false (0).
+ */
+static bool
+fd_isdir(int fd)
+{
+	struct stat sb;
+
+	return fstat(fd, &sb) == 0 && S_ISDIR(sb.st_mode);
 }
 
 /*

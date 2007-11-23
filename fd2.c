@@ -53,8 +53,8 @@ OSH_RCSID("@(#)$Id$");
 #define	FD2_ERR	124
 
 /*@noreturn@*/
-static	void	error(int, /*@null@*/ const char *, const char *);
-static	bool	fdisopen(int);
+static	void	err(int, /*@null@*/ const char *, const char *);
+static	bool	fd_isopen(int);
 /*@noreturn@*/
 static	void	usage(void);
 
@@ -78,13 +78,13 @@ main(int argc, char **argv)
 	 * Set-ID execution is not supported.
 	 */
 	if (geteuid() != getuid() || getegid() != getgid())
-		error(FD2_ERR, NULL, "Set-ID execution denied");
+		err(FD2_ERR, NULL, "Set-ID execution denied");
 
 	/*
 	 * File descriptors 0, 1, and 2 must be open.
 	 */
-	if (!fdisopen(FD0) || !fdisopen(FD1) || !fdisopen(FD2))
-		error(FD2_ERR, NULL, strerror(errno));
+	if (!fd_isopen(FD0) || !fd_isopen(FD1) || !fd_isopen(FD2))
+		err(FD2_ERR, NULL, strerror(errno));
 
 	/*
 	 * If the `-f' option is specified, file descriptor 2 is
@@ -108,29 +108,29 @@ main(int argc, char **argv)
 
 	if (file != NULL) {
 		if ((nfd = open(file, O_WRONLY|O_APPEND|O_CREAT, 0666)) == -1)
-			error(FD2_ERR, file, "cannot create");
+			err(FD2_ERR, file, "cannot create");
 		if (dup2(nfd, FD2) == -1)
-			error(FD2_ERR, NULL, strerror(errno));
+			err(FD2_ERR, NULL, strerror(errno));
 		(void)close(nfd);
 	} else
 		if (dup2(FD1, FD2) == -1)
-			error(FD2_ERR, NULL, strerror(errno));
+			err(FD2_ERR, NULL, strerror(errno));
 
 	/*
 	 * Try to execute the specified command.
 	 */
 	(void)pexec(argv[0], argv);
 	if (errno == ENOEXEC)
-		error(125, argv[0], "No shell!");
+		err(125, argv[0], "No shell!");
 	if (errno != ENOENT && errno != ENOTDIR)
-		error(126, argv[0], "cannot execute");
-	error(127, argv[0], "not found");
+		err(126, argv[0], "cannot execute");
+	err(127, argv[0], "not found");
 	/*NOTREACHED*/
 	return FD2_ERR;
 }
 
 static void
-error(int es, const char *msg1, const char *msg2)
+err(int es, const char *msg1, const char *msg2)
 {
 
 	if (msg1 != NULL)
@@ -141,7 +141,7 @@ error(int es, const char *msg1, const char *msg2)
 }
 
 static bool
-fdisopen(int fd)
+fd_isopen(int fd)
 {
 	struct stat sb;
 

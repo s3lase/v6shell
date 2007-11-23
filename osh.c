@@ -106,13 +106,6 @@ OSH_RCSID("@(#)$Id$");
 #define	LINEMAX		2048	/* 1000 in the original Sixth Edition shell */
 #define	WORDMAX		1024	/*   50 ...                                 */
 
-#ifdef	ARG_MAX
-#define	GAVMAX		ARG_MAX
-#else
-#define	GAVMAX		1048576
-#endif
-#define	GAVNEW		128	/* # of new arguments per gav allocation */
-
 #ifdef	PATH_MAX
 #define	PATHMAX		PATH_MAX
 #else
@@ -129,9 +122,9 @@ OSH_RCSID("@(#)$Id$");
 #ifdef	_POSIX_OPEN_MAX
 #define	FDFREEMIN	_POSIX_OPEN_MAX
 #else
-#define	FDFREEMIN	20	/* Value is the same as _POSIX_OPEN_MAX. */
+#define	FDFREEMIN	20	/* Value is the same as _POSIX_OPEN_MAX.  */
 #endif
-#define	FDFREEMAX	65536	/* Arbitrary maximum value for fdfree(). */
+#define	FDFREEMAX	65536	/* Arbitrary maximum value for fd_free(). */
 
 /*
  * Following standard conventions, file descriptors 0, 1, and 2 are used
@@ -152,16 +145,21 @@ OSH_RCSID("@(#)$Id$");
  * These are the initialization files used by osh.
  * The `PATH_DOT_*' files are in the user's HOME directory.
  */
+#define	DO_SYSTEM_LOGIN		1
 #define	PATH_SYSTEM_LOGIN	SYSCONFDIR/**/"/osh.login"
+#define	DO_DOT_LOGIN		2
 #define	PATH_DOT_LOGIN		".osh.login"
+#define	DO_DOT_OSHRC		3
 #define	PATH_DOT_OSHRC		".oshrc"
 
 /*
- * These are the nonstandard symbolic names for some of the type values
- * used by the fdtype() function.
+ * These are the symbolic names for the types checked by fd_type().
  */
-#define	FD_OPEN		1	/* Is descriptor any type of open file? */
-#define	FD_DIROK	2	/* Is descriptor an existent directory? */
+#define	FD_TMASK	S_IFMT	/* file descriptor (FD) type mask          */
+#define	FD_ISOPEN	01	/* Does FD refer to an open file?          */
+#define	FD_ISDIROK	02	/* Does FD refer to an existent directory? */
+#define	FD_ISDIR	S_IFDIR	/* Does FD refer to a directory?           */
+#define	FD_ISREG	S_IFREG	/* Does FD refer to a regular file?        */
 
 /*
  * Child interrupt flags (see chintr)
@@ -186,10 +184,10 @@ OSH_RCSID("@(#)$Id$");
 /*
  * Shell type flags (see stype)
  */
-#define	ONELINE		001
-#define	COMMANDFILE	002
+#define	ONE_LINE	001
+#define	COMMAND_FILE	002
 #define	INTERACTIVE	004
-#define	RCFILE		010
+#define	RC_FILE		010
 #define	SOURCE		020
 
 /*
@@ -383,15 +381,14 @@ static	char		**wordp;
  * Function prototypes
  */
 static	void		cmd_loop(bool);
-static	int		rpxline(void);
-static	int		getword(void);
+static	int		rpx_line(void);
+static	int		get_word(void);
 static	int		xgetc(bool);
 /*@null@*/ /*@only@*/
-static	const char	*getdolp(int);
+static	const char	*get_dolp(int);
 static	int		readc(void);
 static	struct tnode	*talloc(void);
 static	void		tfree(/*@null@*/ /*@only@*/ struct tnode *);
-static	void		xfree(/*@null@*/ /*@only@*/ void *);
 /*@null@*/
 static	struct tnode	*syntax(char **, char **);
 /*@null@*/
@@ -410,27 +407,28 @@ static	void		exec1(struct tnode *);
 static	void		exec2(struct tnode *,
 			      /*@null@*/ int *, /*@null@*/ int *);
 static	void		do_chdir(char **);
-static	void		do_sig(char **);
-static	void		sigflags(void (*)(int), int);
+static	void		do_sigign(char **);
+static	void		set_ss_flags(void (*)(int), int);
 static	void		do_source(char **);
 static	void		pwait(pid_t);
 static	int		prsig(int, pid_t, pid_t);
 static	void		sh_init(void);
-static	void		fdfree(void);
 static	void		sh_magic(void);
-static	void		rcfile(int *);
+static	void		rc_file(int *);
+static	void		omsg(int, const char *, va_list);
+static	void		err(int, /*@null@*/ const char *, /*@printflike@*/ ...);
+static	void		fd_free(void);
+static	void		fd_print(int, const char *, /*@printflike@*/ ...);
+static	bool		fd_type(int, mode_t);
 static	void		atrim(char *);
-static	char		*gchar(/*@returned@*/ const char *);
 static	char		*gtrim(/*@returned@*/ char *);
+static	char		*gchar(/*@returned@*/ const char *);
+static	void		xfree(/*@null@*/ /*@only@*/ void *);
 /*@out@*/
 static	void		*xmalloc(size_t);
 static	void		*xrealloc(/*@only@*/ void *, size_t);
 static	char		*xstrdup(const char *);
 /*@maynotreturn@*/
-static	void		err(int, /*@null@*/ const char *, /*@printflike@*/ ...);
-static	void		fdprint(int, const char *, /*@printflike@*/ ...);
-static	void		omsg(int, const char *, va_list);
-static	bool		fdtype(int, mode_t);
 static	char		**glob(char **);
 
 /*
@@ -446,12 +444,12 @@ static	char		**glob(char **);
 int
 main(int argc, char **argv)
 {
-	int rcflag = 0;
+	int rc_flag = 0;
 
 	sh_init();
 	if (argv[0] == NULL || *argv[0] == '\0')
 		err(SH_ERR, FMT1S, ERR_ALINVAL);
-	if (fdtype(FD0, S_IFDIR))
+	if (fd_type(FD0, FD_ISDIR))
 		goto done;
 
 	if (argc > 1) {
@@ -461,29 +459,27 @@ main(int argc, char **argv)
 		if (*argv[1] == '-') {
 			chintr = 1;
 			if (argv[1][1] == 'c' && argc > 2) {
-				stype  = ONELINE;
+				stype  = ONE_LINE;
 				dolv  += 1;
 				dolc  -= 1;
 				arginp = argv[2];
 			} else if (argv[1][1] == 't')
-				stype = ONELINE;
+				stype = ONE_LINE;
 		} else {
-			stype = COMMANDFILE;
+			stype = COMMAND_FILE;
 			(void)close(FD0);
 			if (open(argv[1], O_RDONLY) != FD0)
 				err(SH_ERR, FMT2S, argv[1], ERR_OPEN);
-			if (fdtype(FD0, S_IFDIR))
+			if (fd_type(FD0, FD_ISDIR))
 				goto done;
 		}
-		fdfree();
+		fd_free();
 	} else {
 		chintr = 1;
-		fdfree();
+		fd_free();
 		if (isatty(FD0) != 0 && isatty(FD2) != 0) {
 			stype = INTERACTIVE;
 			(void)signal(SIGTERM, SIG_IGN);
-			rcflag = (*argv[0] == '-') ? 1 : 3;
-			rcfile(&rcflag);
 		}
 	}
 	if (chintr != 0) {
@@ -492,14 +488,21 @@ main(int argc, char **argv)
 			chintr |= CH_SIGINT;
 		if (signal(SIGQUIT, SIG_IGN) == SIG_DFL)
 			chintr |= CH_SIGQUIT;
+		if (PROMPT) {
+			if (*argv[0] == '-')
+				rc_flag = DO_SYSTEM_LOGIN;
+			else
+				rc_flag = DO_DOT_OSHRC;
+			rc_file(&rc_flag);
+		}
 	}
 
-	if (STYPE(ONELINE))
-		(void)rpxline();
+	if (STYPE(ONE_LINE))
+		(void)rpx_line();
 	else {
-		while (STYPE(RCFILE)) {
+		while (STYPE(RC_FILE)) {
 			cmd_loop(!HALT);
-			rcfile(&rcflag);
+			rc_file(&rc_flag);
 		}
 		cmd_loop(!HALT);
 	}
@@ -527,7 +530,7 @@ cmd_loop(bool halt)
 	for (err_source = gz = false; ; ) {
 		if (PROMPT)
 			(void)write(FD2, (euid != 0) ? "% " : "# ", (size_t)2);
-		if (rpxline() == EOF) {
+		if (rpx_line() == EOF) {
 			if (!gz)
 				status = 0;
 			break;
@@ -542,7 +545,7 @@ cmd_loop(bool halt)
  * Read, parse, and execute a command line.
  */
 static int
-rpxline(void)
+rpx_line(void)
 {
 	struct tnode *t;
 	sigset_t nmask, omask;
@@ -554,7 +557,7 @@ rpxline(void)
 	nulcnt = 0;
 	do {
 		wp = linep;
-		if (getword() == EOF)
+		if (get_word() == EOF)
 			return EOF;
 	} while (*wp != '\n');
 
@@ -582,7 +585,7 @@ rpxline(void)
  * in line as an individual `\0'-terminated string.
  */
 static int
-getword(void)
+get_word(void)
 {
 	int c, c1;
 
@@ -720,7 +723,7 @@ getd:
 	c = readc();
 	if (c == '$' && dolsub) {
 		c = readc();
-		if ((dolp = getdolp(c)) != NULL)
+		if ((dolp = get_dolp(c)) != NULL)
 			goto getd;
 	}
 	while (c == '\0') {
@@ -742,7 +745,7 @@ geterr:
  * Return a NULL pointer on error.
  */
 static const char *
-getdolp(int c)
+get_dolp(int c)
 {
 	int n, r;
 	const char *v;
@@ -881,14 +884,6 @@ tfree(struct tnode *t)
 		break;
 	}
 	xfree(t);
-}
-
-static void
-xfree(void *p)
-{
-
-	if (p != NULL)
-		free(p);
 }
 
 /*
@@ -1243,7 +1238,7 @@ execute(struct tnode *t, int *pin, int *pout)
 				(void)close(pin[1]);
 			}
 			if ((f & FPRS) != 0)
-				fdprint(FD2, "%u", (unsigned)cpid);
+				fd_print(FD2, "%u", (unsigned)cpid);
 			if ((f & FAND) != 0)
 				return;
 			if ((f & FPOUT) == 0)
@@ -1268,7 +1263,7 @@ exec1(struct tnode *t)
 
 	if (t->nav == NULL || t->nav[0] == NULL) {
 		/* should never be true */
-		err(-1, "execute: Invalid command");
+		err(-1, "exec1: Invalid command");
 		return;
 	}
 	switch (t->nidx) {
@@ -1296,7 +1291,7 @@ exec1(struct tnode *t)
 		 * exiting the shell only if the file is not being sourced).
 		 */
 		if (!PROMPT) {
-			if (STYPE(ONELINE|RCFILE) && !STYPE(SOURCE))
+			if (STYPE(ONE_LINE|RC_FILE) && !STYPE(SOURCE))
 				EXIT(status);
 			(void)lseek(FD0, (off_t)0, SEEK_END);
 			if (!STYPE(SOURCE))
@@ -1354,7 +1349,7 @@ exec1(struct tnode *t)
 		 * usage: sigign [+ | - signal_number ...]
 		 */
 		vtrim(t->nav);
-		do_sig(t->nav);
+		do_sigign(t->nav);
 		return;
 
 	case SBISETENV:
@@ -1421,7 +1416,7 @@ exec1(struct tnode *t)
 		}
 		if (t->nav[1] == NULL) {
 			(void)umask(m = umask(0));
-			fdprint(FD1, "%04o", (unsigned)m);
+			fd_print(FD1, "%04o", (unsigned)m);
 		} else {
 			atrim(t->nav[1]);
 			for (m = 0, p = t->nav[1]; *p >= '0' && *p <= '7'; p++)
@@ -1551,7 +1546,7 @@ exec2(struct tnode *t, int *pin, int *pout)
 	}
 	if (t->nav == NULL || t->nav[0] == NULL) {
 		/* should never be true */
-		err(FC_ERR, "execute: Invalid command");
+		err(FC_ERR, "exec2: Invalid command");
 		/*NOTREACHED*/
 	}
 	if (vtglob(t->nav)) {
@@ -1607,7 +1602,7 @@ do_chdir(char **av)
 			emsg = ERR_NOPWD;
 			goto chdirerr;
 		}
-		if (!fdtype(pwd, FD_DIROK) || fchdir(pwd) == -1) {
+		if (!fd_type(pwd, FD_ISDIROK) || fchdir(pwd) == -1) {
 			if (close(pwd) != -1)
 				pwd = -1;
 			goto chdirerr;
@@ -1640,7 +1635,7 @@ chdirerr:
  * of `sigign' in the current shell.
  */
 static void
-do_sig(char **av)
+do_sigign(char **av)
 {
 	struct sigaction act, oact;
 	sigset_t new_mask, old_mask;
@@ -1701,7 +1696,7 @@ do_sig(char **av)
 				continue;
 
 			if (ignlst[signo - 1]) {
-				sigflags(act.sa_handler, signo);
+				set_ss_flags(act.sa_handler, signo);
 				continue;
 			}
 
@@ -1714,7 +1709,7 @@ do_sig(char **av)
 			    sigaction(signo, &act, NULL) < 0)
 				continue;
 
-			sigflags(act.sa_handler, signo);
+			set_ss_flags(act.sa_handler, signo);
 		}
 	} else {
 		/* Print signals currently ignored because of `sigign'. */
@@ -1726,7 +1721,7 @@ do_sig(char **av)
 			    ((i == SIGINT && (sig_state & SS_SIGINT) != 0) ||
 			    (i == SIGQUIT && (sig_state & SS_SIGQUIT) != 0) ||
 			    (i == SIGTERM && (sig_state & SS_SIGTERM) != 0))))
-				fdprint(FD1, "%s + %u", av[0], (unsigned)i);
+				fd_print(FD1, "%s + %u", av[0], (unsigned)i);
 		}
 	}
 
@@ -1740,8 +1735,11 @@ sigdone:
 		err(-1, FMT3S, av[0], av[sigerr], ERR_BADSIGNAL);
 }
 
+/*
+ * Set global sig_state flags according to action act and signal s.
+ */
 static void
-sigflags(void (*act)(int), int s)
+set_ss_flags(void (*act)(int), int s)
 {
 
 	if (act == SIG_IGN) {
@@ -1779,7 +1777,7 @@ do_source(char **av)
 		err(-1, FMT3S, av[0], av[1], ERR_OPEN);
 		return;
 	}
-	if (nfd >= SAVFD0 || !fdtype(nfd, S_IFREG)) {
+	if (nfd >= SAVFD0 || !fd_type(nfd, FD_ISREG)) {
 		(void)close(nfd);
 		err(-1, FMT3S, av[0], av[1], ERR_EXEC);
 		return;
@@ -1829,7 +1827,7 @@ do_source(char **av)
 				err(SH_ERR,FMT3S,av[0],av[1],strerror(errno));
 			(void)close(SAVFD0);
 			stype &= ~SOURCE;
-			if (!STYPE(RCFILE))
+			if (!STYPE(RC_FILE))
 				err(0, NULL);
 			return;
 		}
@@ -1910,11 +1908,11 @@ prsig(int s, pid_t tp, pid_t cp)
 		if (WCOREDUMP(s))
 			c = " -- Core dumped";
 		if (tp != cp)
-			fdprint(FD2, "%u: %s%s", (unsigned)tp, m, c);
+			fd_print(FD2, "%u: %s%s", (unsigned)tp, m, c);
 		else
-			fdprint(FD2, "%s%s", m, c);
+			fd_print(FD2, "%s%s", m, c);
 	} else
-		fdprint(FD2, "");
+		fd_print(FD2, "");
 	return 128 + e;
 }
 
@@ -1942,7 +1940,7 @@ sh_init(void)
 	 * or if dupfd0 cannot be set up properly.
 	 */
 	for (fd = 0; fd < 3; fd++)
-		if (!fdtype(fd, FD_OPEN))
+		if (!fd_type(fd, FD_ISOPEN))
 			err(SH_ERR, "%u: %s", (unsigned)fd, strerror(errno));
 	if ((dupfd0 = dup2(FD0, DUPFD0)) == -1 ||
 	    fcntl(dupfd0, F_SETFD, FD_CLOEXEC) == -1)
@@ -1965,26 +1963,6 @@ sh_init(void)
 }
 
 /*
- * Attempt to free or release all of the file descriptors in the range
- * from (fdmax - 1) through (FD2 + 1), skipping DUPFD0; the value of
- * fdmax may fall between FDFREEMIN and FDFREEMAX, inclusive.
- */
-static void
-fdfree(void)
-{
-	long fdmax;
-	int fd;
-
-	fdmax = sysconf(_SC_OPEN_MAX);
-	if (fdmax < FDFREEMIN || fdmax > FDFREEMAX)
-		fdmax = FDFREEMIN;
-	for (fd = (int)fdmax - 1; fd > DUPFD0; fd--)
-		(void)close(fd);
-	for (fd--; fd > FD2; fd--)
-		(void)close(fd);
-}
-
-/*
  * Ignore any `#!shell' sequence as the first line of a regular file.
  * The length of this line is limited to (LINEMAX - 1) characters.
  */
@@ -1994,7 +1972,7 @@ sh_magic(void)
 	size_t len;
 	int c;
 
-	if (fdtype(FD0, S_IFREG) && lseek(FD0, (off_t)0, SEEK_CUR) == 0) {
+	if (fd_type(FD0, FD_ISREG) && lseek(FD0, (off_t)0, SEEK_CUR) == 0) {
 		if (readc() == '#' && readc() == '!') {
 			for (len = 2; len < LINEMAX; len++)
 				if ((c = readc()) == EOF || c == '\n')
@@ -2018,7 +1996,7 @@ sh_magic(void)
  *	 a legitimate reason to do so.
  */
 static void
-rcfile(int *rcflag)
+rc_file(int *rc_flag)
 {
 	int nfd, r;
 	char path[PATHMAX];
@@ -2027,17 +2005,17 @@ rcfile(int *rcflag)
 	/*
 	 * Try each rc file in turn.
 	 */
-	while (*rcflag < 4) {
+	while (*rc_flag < 4) {
 		file = NULL;
 		*path = '\0';
-		switch (*rcflag) {
-		case 1:
+		switch (*rc_flag) {
+		case DO_SYSTEM_LOGIN:
 			file = PATH_SYSTEM_LOGIN;
 			break;
-		case 2:
+		case DO_DOT_LOGIN:
 			file = PATH_DOT_LOGIN;
 			/*FALLTHROUGH*/
-		case 3:
+		case DO_DOT_OSHRC:
 			if (file == NULL)
 				file = PATH_DOT_OSHRC;
 			home = getenv("HOME");
@@ -2053,35 +2031,164 @@ rcfile(int *rcflag)
 			file = path;
 			break;
 		}
-		(*rcflag)++;
+		(*rc_flag)++;
 		if (file == NULL || *file == '\0')
 			continue;
 		if ((nfd = open(file, O_RDONLY | O_NONBLOCK)) == -1)
 			continue;
 
 		/* It must be a regular file (or a link to a regular file). */
-		if (!fdtype(nfd, S_IFREG)) {
+		if (!fd_type(nfd, FD_ISREG)) {
 			err(-1, FMT2S, file, ERR_EXEC);
 			(void)close(nfd);
 			continue;
 		}
-
 		if (dup2(nfd, FD0) == -1 ||
 		    fcntl(FD0, F_SETFL, O_RDONLY & ~O_NONBLOCK) == -1)
 			err(SH_ERR, FMT2S, file, strerror(errno));
 
 		/* success - clean up, return, and execute the rc file */
 		(void)close(nfd);
-		stype |= RCFILE;
+		stype |= RC_FILE;
 		return;
 	}
-	stype &= ~RCFILE;
+	stype &= ~RC_FILE;
 
 	/*
 	 * Restore original standard input or die trying.
 	 */
 	if (dup2(dupfd0, FD0) == -1)
 		err(SH_ERR, FMT1S, strerror(errno));
+}
+
+/*
+ * Create and output the message specified by err() or fd_print() to
+ * the file descriptor ofd.  The resulting message is terminated by
+ * a newline on success.  A diagnostic is written to FD2 on error.
+ */
+static void
+omsg(int ofd, const char *msgfmt, va_list va)
+{
+	int r;
+	char fmt[FMTSIZE];
+	char msg[MSGSIZE];
+	const char *e;
+
+	e = "omsg: Internal error\n";
+	r = snprintf(fmt, sizeof(fmt), "%s\n", msgfmt);
+	if (r > 0 && r < (int)sizeof(fmt)) {
+		r = vsnprintf(msg, sizeof(msg), fmt, va);
+		if (r > 0 && r < (int)sizeof(msg)) {
+			if (write(ofd, msg, strlen(msg)) == -1)
+				(void)write(FD2, e, strlen(e));
+		} else
+			(void)write(FD2, e, strlen(e));
+	} else
+		(void)write(FD2, e, strlen(e));
+}
+
+/*
+ * Handle all errors detected by the shell.  This includes printing any
+ * specified message to the standard error and setting the exit status.
+ * This function may or may not return depending on the context of the
+ * call, the value of es, and the value of the global variable stype.
+ */
+static void
+err(int es, const char *msgfmt, ...)
+{
+	va_list va;
+
+	if (msgfmt != NULL) {
+		va_start(va, msgfmt);
+		omsg(FD2, msgfmt, va);
+		va_end(va);
+	}
+	switch (es) {
+	case -1:
+		status = SH_ERR;
+		/*FALLTHROUGH*/
+	case 0:
+		if (STYPE(SOURCE)) {
+			(void)lseek(FD0, (off_t)0, SEEK_END);
+			err_source = true;
+			return;
+		}
+		if (STYPE(RC_FILE) && (status == 130 || status == 131)) {
+			(void)lseek(FD0, (off_t)0, SEEK_END);
+			return;
+		}
+		if (!STYPE(INTERACTIVE)) {
+			if (!STYPE(ONE_LINE))
+				(void)lseek(FD0, (off_t)0, SEEK_END);
+			break;
+		}
+		return;
+	default:
+		status = es;
+	}
+	EXIT(status);
+}
+
+/*
+ * Attempt to free or release all of the file descriptors in the range
+ * from (fd_max - 1) through (FD2 + 1), skipping DUPFD0; the value of
+ * fd_max may fall between FDFREEMIN and FDFREEMAX, inclusive.
+ */
+static void
+fd_free(void)
+{
+	long fd_max;
+	int fd;
+
+	fd_max = sysconf(_SC_OPEN_MAX);
+	if (fd_max < FDFREEMIN || fd_max > FDFREEMAX)
+		fd_max = FDFREEMIN;
+	for (fd = (int)fd_max - 1; fd > DUPFD0; fd--)
+		(void)close(fd);
+	for (fd--; fd > FD2; fd--)
+		(void)close(fd);
+}
+
+/*
+ * Print any specified message to the file descriptor pfd.
+ */
+static void
+fd_print(int pfd, const char *msgfmt, ...)
+{
+	va_list va;
+
+	va_start(va, msgfmt);
+	omsg(pfd, msgfmt, va);
+	va_end(va);
+}
+
+/*
+ * Check if the file descriptor fd refers to an open file
+ * of the specified type; return true (1) or false (0).
+ */
+static bool
+fd_type(int fd, mode_t type)
+{
+	struct stat sb;
+	bool rv = false;
+
+	if (fstat(fd, &sb) < 0)
+		return rv;
+
+	switch (type) {
+	case FD_ISOPEN:
+		rv = true;
+		break;
+	case FD_ISDIROK:
+		if (S_ISDIR(sb.st_mode))
+			rv = sb.st_nlink > 0;
+		break;
+	case FD_ISDIR:
+	case FD_ISREG:
+		rv = (sb.st_mode & FD_TMASK) == type;
+		break;
+	}
+	return rv;
 }
 
 /*
@@ -2125,37 +2232,6 @@ atrim(char *ap)
 
 aterr:
 	err(ESTATUS, "%s %s", ERR_TRIM, ap);
-}
-
-/*
- * Return a pointer to the first unquoted glob character (`*', `?', `[')
- * in the argument pointed to by ap.  Otherwise, return a NULL pointer on
- * error or if the argument contains no glob characters.
- */
-static char *
-gchar(const char *ap)
-{
-	char c;
-	const char *a;
-
-	for (a = ap; *a != '\0'; a++)
-		switch (*a) {
-		case '"':
-		case '\'':
-			for (c = *a++; *a != c; a++)
-				if (*a == '\0')
-					return NULL;
-			continue;
-		case '\\':
-			if (*++a == '\0')
-				return NULL;
-			continue;
-		case '*':
-		case '?':
-		case '[':
-			return (char *)a;
-		}
-	return NULL;
 }
 
 /*
@@ -2227,6 +2303,48 @@ gterr:
 }
 
 /*
+ * Return a pointer to the first unquoted glob character (`*', `?', `[')
+ * in the argument pointed to by ap.  Otherwise, return a NULL pointer on
+ * error or if the argument contains no glob characters.
+ */
+static char *
+gchar(const char *ap)
+{
+	char c;
+	const char *a;
+
+	for (a = ap; *a != '\0'; a++)
+		switch (*a) {
+		case '"':
+		case '\'':
+			for (c = *a++; *a != c; a++)
+				if (*a == '\0')
+					return NULL;
+			continue;
+		case '\\':
+			if (*++a == '\0')
+				return NULL;
+			continue;
+		case '*':
+		case '?':
+		case '[':
+			return (char *)a;
+		}
+	return NULL;
+}
+
+/*
+ * Deallocate the memory allocation pointed to by p.
+ */
+static void
+xfree(void *p)
+{
+
+	if (p != NULL)
+		free(p);
+}
+
+/*
  * Allocate memory, and check for error.
  * Return a pointer to the allocated space on success.
  * Do not return on error (ENOMEM).
@@ -2277,117 +2395,12 @@ xstrdup(const char *src)
 	return dst;
 }
 
-/*
- * Handle all errors detected by the shell.  This includes printing any
- * specified message to the standard error and setting the exit status.
- * This function may or may not return depending on the context of the
- * call, the value of es, and the value of the global variable stype.
- */
-static void
-err(int es, const char *msgfmt, ...)
-{
-	va_list va;
-
-	if (msgfmt != NULL) {
-		va_start(va, msgfmt);
-		omsg(FD2, msgfmt, va);
-		va_end(va);
-	}
-	switch (es) {
-	case -1:
-		status = SH_ERR;
-		/*FALLTHROUGH*/
-	case 0:
-		if (STYPE(SOURCE)) {
-			(void)lseek(FD0, (off_t)0, SEEK_END);
-			err_source = true;
-			return;
-		}
-		if (STYPE(RCFILE) && (status == 130 || status == 131)) {
-			(void)lseek(FD0, (off_t)0, SEEK_END);
-			return;
-		}
-		if (!STYPE(INTERACTIVE)) {
-			if (!STYPE(ONELINE))
-				(void)lseek(FD0, (off_t)0, SEEK_END);
-			break;
-		}
-		return;
-	default:
-		status = es;
-	}
-	EXIT(status);
-}
-
-/*
- * Print any specified message to the file descriptor pfd.
- */
-static void
-fdprint(int pfd, const char *msgfmt, ...)
-{
-	va_list va;
-
-	va_start(va, msgfmt);
-	omsg(pfd, msgfmt, va);
-	va_end(va);
-}
-
-/*
- * Create and output the message specified by err() or fdprint() to
- * the file descriptor ofd.  The resulting message is terminated by
- * a newline on success.  A diagnostic is written to FD2 on error.
- */
-static void
-omsg(int ofd, const char *msgfmt, va_list va)
-{
-	int r;
-	char fmt[FMTSIZE];
-	char msg[MSGSIZE];
-	const char *e;
-
-	e = "omsg: Internal error\n";
-	r = snprintf(fmt, sizeof(fmt), "%s\n", msgfmt);
-	if (r > 0 && r < (int)sizeof(fmt)) {
-		r = vsnprintf(msg, sizeof(msg), fmt, va);
-		if (r > 0 && r < (int)sizeof(msg)) {
-			if (write(ofd, msg, strlen(msg)) == -1)
-				(void)write(FD2, e, strlen(e));
-		} else
-			(void)write(FD2, e, strlen(e));
-	} else
-		(void)write(FD2, e, strlen(e));
-}
-
-/*
- * Check if the file descriptor fd refers to an open file
- * of the specified type; return true (1) or false (0).
- */
-static bool
-fdtype(int fd, mode_t type)
-{
-	struct stat sb;
-	bool rv = false;
-
-	if (fstat(fd, &sb) < 0)
-		return rv;
-
-	switch (type) {
-	case FD_OPEN:
-		/* Descriptor refers to any type of open file. */
-		rv = true;
-		break;
-	case FD_DIROK:
-		/* Does descriptor refer to an existent directory? */
-		if (S_ISDIR(sb.st_mode))
-			rv = sb.st_nlink > 0;
-		break;
-	case S_IFDIR:
-	case S_IFREG:
-		rv = (sb.st_mode & S_IFMT) == type;
-		break;
-	}
-	return rv;
-}
+#ifdef	ARG_MAX
+#define	GAVMAX		ARG_MAX
+#else
+#define	GAVMAX		1048576
+#endif
+#define	GAVNEW		128	/* # of new arguments per gav allocation */
 
 typedef	unsigned char	UChar;
 #define	UCHAR(c)	((UChar)c)

@@ -106,7 +106,7 @@ static	bool	e2(void);
 static	bool	e3(void);
 static	bool	equal(/*@null@*/ const char *, /*@null@*/ const char *);
 /*@noreturn@*/
-static	void	error(int, /*@null@*/ const char *, const char *);
+static	void	err(int, /*@null@*/ const char *, const char *);
 static	bool	expr(void);
 static	bool	ifaccess(/*@null@*/ const char *, int);
 static	bool	ifstat1(/*@null@*/ const char *, mode_t);
@@ -136,7 +136,7 @@ main(int argc, char **argv)
 	 * Set-ID execution is not supported.
 	 */
 	if (ifeuid != getuid() || getegid() != getgid())
-		error(IF_ERR, NULL, "Set-ID execution denied");
+		err(IF_ERR, NULL, "Set-ID execution denied");
 
 	if (argc > 1) {
 		ac = argc;
@@ -198,7 +198,7 @@ e3(void)
 	char *a, *b;
 
 	if ((a = nxtarg(RETERR)) == NULL)
-		error(IF_ERR, av[ap - 2], "expression expected");
+		err(IF_ERR, av[ap - 2], "expression expected");
 
 	/*
 	 * Deal w/ parentheses for grouping.
@@ -206,7 +206,7 @@ e3(void)
 	if (equal(a, "(")) {
 		re = expr();
 		if (!equal(nxtarg(RETERR), ")"))
-			error(IF_ERR, a, ") expected");
+			err(IF_ERR, a, ") expected");
 		return re;
 	}
 
@@ -215,7 +215,7 @@ e3(void)
 	 */
 	if (equal(a, "{")) {
 		if ((cpid = fork()) == -1)
-			error(IF_ERR, NULL, "Cannot fork - try again");
+			err(IF_ERR, NULL, "Cannot fork - try again");
 		if (cpid == 0)
 			/**** Child! ****/
 			doex(FORKED);
@@ -257,20 +257,20 @@ e3(void)
 		/* Does the descriptor refer to a terminal device? */
 		b = nxtarg(RETERR);
 		if (b == NULL || *b == '\0')
-			error(IF_ERR, a, "digit expected");
+			err(IF_ERR, a, "digit expected");
 		if (*b >= '0' && *b <= '9' && *(b + 1) == '\0') {
 			d = *b - '0';
 			if (d >= 0 && d <= 9 && "0123456789"[d % 10] == *b)
 				return isatty(d) != 0;
 		}
-		error(IF_ERR, b, "not a digit");
+		err(IF_ERR, b, "not a digit");
 	}
 
 	/*
 	 * binary comparisons
 	 */
 	if ((b = nxtarg(RETERR)) == NULL)
-		error(IF_ERR, a, "operator expected");
+		err(IF_ERR, a, "operator expected");
 	if (equal(b,  "="))
 		return  equal(a, nxtarg(!RETERR));
 	if (equal(b, "!="))
@@ -281,7 +281,7 @@ e3(void)
 		return ifstat2(a, nxtarg(!RETERR), F_NT);
 	if (equal(b, "-ef"))
 		return ifstat2(a, nxtarg(!RETERR), F_EF);
-	error(IF_ERR, b, "unknown operator");
+	err(IF_ERR, b, "unknown operator");
 	/*NOTREACHED*/
 	return false;
 }
@@ -292,7 +292,7 @@ doex(bool forked)
 	char **xap, **xav;
 
 	if (ap < 2 || ap > ac)	/* should never be true */
-		error(IF_ERR, NULL, "Invalid argv index");
+		err(IF_ERR, NULL, "Invalid argv index");
 
 	xav = xap = &av[ap];
 	while (*xap != NULL) {
@@ -301,10 +301,10 @@ doex(bool forked)
 		xap++;
 	}
 	if (forked && xap - xav > 0 && !equal(*xap, "}"))
-		error(IF_ERR, av[ap - 1], "} expected");
+		err(IF_ERR, av[ap - 1], "} expected");
 	*xap = NULL;
 	if (xav[0] == NULL)
-		error(IF_ERR, forked ? av[ap - 1] : NULL, "command expected");
+		err(IF_ERR, forked ? av[ap - 1] : NULL, "command expected");
 
 	/* Use a built-in exit since there is no external exit utility. */
 	if (equal(xav[0], "exit")) {
@@ -314,10 +314,10 @@ doex(bool forked)
 
 	(void)pexec(xav[0], xav);
 	if (errno == ENOEXEC)
-		error(125, xav[0], "No shell!");
+		err(125, xav[0], "No shell!");
 	if (errno != ENOENT && errno != ENOTDIR)
-		error(126, xav[0], "cannot execute");
-	error(127, xav[0], "not found");
+		err(126, xav[0], "cannot execute");
+	err(127, xav[0], "not found");
 }
 
 /*
@@ -411,14 +411,14 @@ nxtarg(bool reterr)
 	char *nap;
 
 	if (ap < 1 || ap > ac)	/* should never be true */
-		error(IF_ERR, NULL, "Invalid argv index");
+		err(IF_ERR, NULL, "Invalid argv index");
 
 	if (ap == ac) {
 		if (reterr) {
 			ap++;
 			return NULL;
 		}
-		error(IF_ERR, av[ap - 1], "argument expected");
+		err(IF_ERR, av[ap - 1], "argument expected");
 	}
 	nap = av[ap];
 	ap++;
@@ -435,7 +435,7 @@ equal(const char *a, const char *b)
 }
 
 static void
-error(int es, const char *msg1, const char *msg2)
+err(int es, const char *msg1, const char *msg2)
 {
 
 	if (msg1 != NULL)
