@@ -69,6 +69,8 @@
 OSH_RCSID("@(#)$Id$");
 #endif	/* !lint */
 
+#include "config.h"
+
 #include <dirent.h>
 #include <errno.h>
 #include <limits.h>

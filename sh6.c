@@ -69,6 +69,8 @@
 OSH_RCSID("@(#)$Id$");
 #endif	/* !lint */
 
+#include "config.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -119,23 +121,6 @@ OSH_RCSID("@(#)$Id$");
 #define	DOLSUB		true
 #define	EQUAL(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
 #define	EXIT(s)		((getpid() == spid) ? exit((s)) : _exit((s)))
-
-/*
- * WCOREDUMP may be undefined when compiled w/ -D_XOPEN_SOURCE=600.
- */
-#ifndef	WCOREDUMP
-# if defined(_W_INT)
-#  define	SH_W_INT(s)	_W_INT(s)	/* [FNO]..*BSD, Mac OS X */
-# elif defined(__WAIT_INT)
-#  define	SH_W_INT(s)	__WAIT_INT(s)	/* GNU/Linux w/ glibc */
-# else
-#  define	SH_W_INT(s)	(s)		/* default to int */
-# endif
-# ifndef	WCOREFLAG
-#  define	WCOREFLAG	0200
-# endif
-#define		WCOREDUMP(s)	((SH_W_INT(s) & WCOREFLAG) != 0)
-#endif	/* !WCOREDUMP */
 
 /*
  * Shell command-tree structure
