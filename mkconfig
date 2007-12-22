@@ -25,9 +25,9 @@ fi
 cat <<EOI >$CONFIG_H
 /*
  * _XOPEN_SOURCE must be defined with a value of 600 on GNU/Linux systems.
- * _BSD_SOURCE   must also be defined on GNU/Linux systems.  These feature
- * test macros should not be required on any other known system.  A known
- * system is one where the osh package is already known to compile.
+ * In addition, _BSD_SOURCE must be defined on GNU/Linux systems.  However,
+ * these feature test macros should not be required on other systems where
+ * the osh package is already known to compile.
  *
  *	Configured for $UNAME_SRM .
  */
