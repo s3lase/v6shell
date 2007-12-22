@@ -66,6 +66,10 @@
 OSH_RCSID("@(#)$Id$");
 #endif	/* !lint */
 
+#include "config.h"
+
+#include <sys/uio.h>
+
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -147,9 +151,15 @@ pexec(const char *file, char *const *argv)
 		 * path name for file.  Then, attempt to execve(2) it.
 		 */
 		if (dlen + flen + 1 >= sizeof(path)) {
-			(void)write(FD2, "pexec: ", (size_t)7);
-			(void)write(FD2, d, dlen);
-			(void)write(FD2, ": path too long\n", (size_t)16);
+			struct iovec msg[3];
+
+			msg[0].iov_base = "pexec: ";
+			msg[0].iov_len  = (size_t)7;
+			msg[1].iov_base = (char *)d;
+			msg[1].iov_len  = dlen;
+			msg[2].iov_base = ": path too long\n";
+			msg[2].iov_len  = (size_t)16;
+			(void)writev(FD2, msg, 3);
 			continue;
 		}
 		(void)memcpy(path, d, dlen);

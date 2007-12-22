@@ -95,4 +95,4 @@
 
 int	pexec(/*@null@*/ const char *, /*@null@*/ char *const *);
 
-#endif	/* PEXEC_H */
+#endif	/* !PEXEC_H */
