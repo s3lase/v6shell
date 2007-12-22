@@ -34,6 +34,7 @@ MANMODE=	-m 0444
 #
 #CC=		/usr/bin/cc
 INSTALL=	/usr/bin/install
+SHELL=		/bin/sh
 
 #
 # Compiler and linker flags
@@ -63,16 +64,11 @@ UCFLAGS=	$(CFLAGS)	$(MOXUTILSARCH)
 ULDFLAGS=	$(LDFLAGS)	$(MOXUTILSARCH)
 
 #
-# X/Open System Interfaces Extension (NOTES: POSIX, required)
-#
-XSIE=		-D_XOPEN_SOURCE=600
-
-#
 # The following specifies the osh version:
 #	osh-YYYYMMDD		== official release
 #	osh-current (YYYYMMDD)	== development snapshot
 #
-OSH_VERSION=	osh-current (20071125)
+OSH_VERSION=	osh-current (20071228)
 
 OSH=	osh
 SH6=	sh6 glob6
@@ -86,7 +82,7 @@ DEFS=	-DPATH_LOGIN='"$(PATH_LOGIN)"'	-DPATH_NEWGRP='"$(PATH_NEWGRP)"'
 DEFS+=	-DSYSCONFDIR='"$(SYSCONFDIR)"'	-DOSH_VERSION='"$(OSH_VERSION)"'
 
 .c.o:
-	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(XSIE) $(DEFS) $<
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(DEFS) $<
 
 #
 # Build targets
@@ -99,32 +95,35 @@ sh6all: $(SH6) utils man
 
 utils: $(UTILS)
 
-osh: rcsid.h $(PEXSRC) osh.c
+osh: config.h rcsid.h $(PEXSRC) osh.c
 	@rm -f pexec.o
 	@$(MAKE) CFLAGS='$(SCFLAGS)' LDFLAGS='$(SLDFLAGS)' $@bin
 
-sh6: rcsid.h $(PEXSRC) sh6.c
+sh6: config.h rcsid.h $(PEXSRC) sh6.c
 	@rm -f pexec.o
 	@$(MAKE) CFLAGS='$(SCFLAGS)' LDFLAGS='$(SLDFLAGS)' $@bin
 
-glob6: rcsid.h $(PEXSRC) glob6.c
+glob6: config.h rcsid.h $(PEXSRC) glob6.c
 	@rm -f pexec.o
 	@$(MAKE) CFLAGS='$(SCFLAGS)' LDFLAGS='$(SLDFLAGS)' $@bin
 
-if: rcsid.h $(PEXSRC) if.c
+if: config.h rcsid.h $(PEXSRC) if.c
 	@rm -f pexec.o
 	@$(MAKE) CFLAGS='$(UCFLAGS)' LDFLAGS='$(ULDFLAGS)' $@bin
 
-goto: rcsid.h goto.c
+goto: config.h rcsid.h goto.c
 	@$(MAKE) CFLAGS='$(UCFLAGS)' LDFLAGS='$(ULDFLAGS)' $@bin
 
-fd2: rcsid.h $(PEXSRC) fd2.c
+fd2: config.h rcsid.h $(PEXSRC) fd2.c
 	@rm -f pexec.o
 	@$(MAKE) CFLAGS='$(UCFLAGS)' LDFLAGS='$(ULDFLAGS)' $@bin
 
-$(OBJ): rcsid.h
+$(OBJ): config.h rcsid.h
 pexec.o: $(PEXSRC)
 osh.o sh6.o glob6.o if.o fd2.o: pexec.h
+
+config.h: mkconfig
+	$(SHELL) ./mkconfig
 
 oshbin: pexec.o osh.o
 	$(CC) $(LDFLAGS) -o osh osh.o pexec.o $(LIBS)
@@ -197,4 +196,4 @@ clean-obj:
 	rm -f $(OBJ)
 
 clean: clean-obj
-	rm -f $(OSH) $(SH6) $(UTILS) $(MANDST)
+	rm -f $(OSH) $(SH6) $(UTILS) $(MANDST) config.h
