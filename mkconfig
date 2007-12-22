@@ -1,0 +1,66 @@
+#!/bin/sh -
+#
+# Make "config.h" according to the output from uname(1).
+#
+# Exit w/ a status of 0 on success.
+# Exit w/ a status of 1 on error.
+# -- 
+# Jeffrey Allen Neitzel
+#
+
+CONFIG_H=config.h
+rm -f $CONFIG_H
+trap 'status=$? ; rm -f $CONFIG_H ; exit $status' HUP INT QUIT TERM
+
+UNAME_S="`uname -s`"
+UNAME_SRM="`uname -srm`"
+PROGNAME="`basename $0`"
+if test X"$UNAME_S" = X -o X"$UNAME_SRM" = X ; then
+	echo "$PROGNAME: Fatal uname(1) error" >&2
+	exit 1
+fi
+
+cat <<EOI >$CONFIG_H
+/*
+ * _XOPEN_SOURCE must be defined with a value of 600 on GNU/Linux systems.
+ * _BSD_SOURCE   must also be defined on GNU/Linux systems.  These feature
+ * test macros should not be required on any other known system.  A known
+ * system is one where the osh package is already known to compile.
+ *
+ *	Configured for $UNAME_SRM .
+ */
+
+#ifndef	CONFIG_H
+#define	CONFIG_H
+
+EOI
+
+case "$UNAME_S" in
+*BSD|Darwin)
+	echo '/* Define nothing in this case. */' >>$CONFIG_H
+	;;
+Linux)
+	echo '#define	_XOPEN_SOURCE	600' >>$CONFIG_H
+	echo '#define	_BSD_SOURCE'         >>$CONFIG_H
+	;;
+*)
+	#
+	# This may or may not cause a compilation error.
+	# Try it to see if there are any errors or warnings.
+	#
+	echo "$PROGNAME: WARNING: Check \"$CONFIG_H\" if compilation fails." >&2
+	cat <<EOI >>$CONFIG_H
+/*
+ * WARNING: $UNAME_SRM: Unknown system
+ *
+ * Please notify the developer by emailing the following
+ * uname(1) output to jneitzel@sdf1.org if possible.
+ *
+ *	$UNAME_SRM
+ */
+EOI
+	;;
+esac
+
+echo >>$CONFIG_H
+echo '#endif	/* !CONFIG_H */' >>$CONFIG_H
