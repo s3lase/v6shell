@@ -1,5 +1,7 @@
 #!/bin/sh -
 #
+# @(#)$Id$
+#
 # Make "config.h" according to the output from uname(1).
 #
 # Exit w/ a status of 0 on success.
