@@ -1,4 +1,4 @@
-Welcome to osh-current (20071125)!
+Welcome to osh-current (20071228)!
 
 Osh(1) is an enhanced, backward-compatible port of the Sixth Edition (V6)
 Unix shell (circa 1975), also known as the Thompson shell.  The original
@@ -23,10 +23,9 @@ See the INSTALL file for build and install instructions.
 
 -------
 This software should build and work correctly on any POSIX-compliant
-Unix system.  In particular, it is currently developed, maintained,
-and tested by the developer on NetBSD, OpenBSD, and Mac OS X.  In
-the past, it has also been successfully tested on FreeBSD and on
-various distributions of GNU/Linux.
+Unix system.  It is currently developed, maintained, and tested by
+the developer on Mac OS X, NetBSD, OpenBSD, and GNU/Linux.  It is
+also known to build and work correctly on FreeBSD.
 
 If you think you may have found a bug, before reporting it, please
 try to reproduce it with the latest version of the code.  With bug
@@ -41,4 +40,6 @@ you to contact me via email.  Enjoy!
 
 Jeffrey Allen Neitzel
 jneitzel (at) sdf1 (dot) org
-http://jneitzel.sdf1.org/osh/					2007/07/07
+http://jneitzel.sdf1.org/osh/					2007/12/22
+
+@(#)$Id$

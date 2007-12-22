@@ -2,6 +2,9 @@ Changes that improve compatibility w/ the Sixth Edition Unix shell
 are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
+[osh-current]:
+
+-------------------------------------------------------------------------------
 [osh-20070707]:
 	* Added a new file, INSTALL, which contains build and install
 	  instructions.  Made reference to INSTALL in Makefile and README.
@@ -1163,3 +1166,7 @@ goto.c:
 [osh-020214]:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
+
+Jeffrey Allen Neitzel						2007/12/22
+
+@(#)$Id$

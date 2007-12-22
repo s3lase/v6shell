@@ -3,6 +3,9 @@ code for the Sixth Edition (V6) Unix Thompson shell and global
 command in porting them to run on modern Unix systems.
 
 -------------------------------------------------------------------------------
+[osh-current]:
+
+-------------------------------------------------------------------------------
 [osh-20070707]:
 	* No user-visible changes.
 
@@ -286,3 +289,7 @@ glob.c:
     What: Original source code for the Sixth Edition (V6) Unix global command
     Date: May 14, 1975
     From: Sixth Edition Unix /usr/source/s1/glob.c
+
+Jeffrey Allen Neitzel						2007/12/22
+
+@(#)$Id$

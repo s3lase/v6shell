@@ -1,5 +1,6 @@
-# Makefile for osh-current (20071125)
-
+# Makefile for osh-current (20071228)
+#
+# @(#)$Id$
 #
 # Begin CONFIGURATION
 #
@@ -49,7 +50,6 @@ CFLAGS+=	-Wall -W
 #
 # End CONFIGURATION
 #
-
 # !!! ================= Developer stuff below... ================= !!!
 
 #
