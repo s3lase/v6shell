@@ -41,4 +41,4 @@
 		static const char rcsid[] ATTR = string
 #endif	/* !OSH_RCSID */
 
-#endif	/* RCSID_H */
+#endif	/* !RCSID_H */
