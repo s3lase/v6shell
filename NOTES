@@ -85,7 +85,7 @@ Further details regarding some of the known differences:
    user convenience in the face of conflicting shell languages.
 
 3) The original implementation of the shell does shell accounting
-   in order to record command execution data; this one does not.
+   in order to record command execution data; this port does not.
 
 --------
 Compatibility notes for sh6(1):
