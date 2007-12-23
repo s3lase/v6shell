@@ -3,6 +3,8 @@
 # @(#)$Id$
 #
 # Make "config.h" according to the output from uname(1).
+# This script is invoked automatically from the Makefile
+# by make; the user does not need to run it manually.
 #
 # Exit w/ a status of 0 on success.
 # Exit w/ a status of 1 on error.
@@ -14,12 +16,30 @@ CONFIG_H=config.h
 rm -f $CONFIG_H
 trap 'status=$? ; rm -f $CONFIG_H ; exit $status' HUP INT QUIT TERM
 
+#
+# This function searches for the pathname of utility $2 and
+# defines constant $1 w/ the resulting value.  If $2 cannot
+# be found, constant $1 is defined as the empty string.
+#
+definePathnameConstant()
+{
+	dirlist="/bin /sbin /usr/bin /usr/sbin /usr/libexec /usr/games"
+	for dir in $dirlist ; do
+		value=""
+		if test -f "$dir/$2" -a -x "$dir/$2" ; then
+			value="$dir/$2" ; break
+		fi
+	done
+	echo "#define	$1	\"$value\""
+}
+
 UNAME_S="`uname -s`"
 UNAME_SRM="`uname -srm`"
 PROGNAME="`basename $0`"
+
+if test $# -ne 0 ; then echo 'usage: $(SHELL) ./'"$PROGNAME" >&2 ; exit 1 ; fi
 if test X"$UNAME_S" = X -o X"$UNAME_SRM" = X ; then
-	echo "$PROGNAME: Fatal uname(1) error" >&2
-	exit 1
+	echo "$PROGNAME: Fatal uname(1) error" >&2 ; exit 1
 fi
 
 cat <<EOI >$CONFIG_H
@@ -36,6 +56,10 @@ cat <<EOI >$CONFIG_H
 #define	CONFIG_H
 
 EOI
+
+definePathnameConstant PATH_LOGIN  login  >>$CONFIG_H
+definePathnameConstant PATH_NEWGRP newgrp >>$CONFIG_H
+echo >>$CONFIG_H
 
 case "$UNAME_S" in
 *BSD|Darwin)

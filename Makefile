@@ -8,16 +8,6 @@
 #
 
 #
-# Specify the path name of the login(1) utility.
-#
-PATH_LOGIN?=	/usr/bin/login
-
-#
-# Specify the path name of the newgrp(1) utility.
-#
-PATH_NEWGRP?=
-
-#
 # Choose where and how to install the binaries and manual pages.
 #
 DESTDIR?=
@@ -31,7 +21,7 @@ BINMODE=	-m 0555
 MANMODE=	-m 0444
 
 #
-# Build utilities
+# Build utilities (SHELL must be POSIX-compliant)
 #
 #CC=		/usr/bin/cc
 INSTALL=	/usr/bin/install
@@ -78,8 +68,7 @@ OBJ=	pexec.o osh.o sh6.o glob6.o if.o goto.o fd2.o
 MANSRC=	osh.1.in sh6.1.in glob6.1.in if.1.in goto.1.in fd2.1.in
 MANDST=	osh.1 sh6.1 glob6.1 if.1 goto.1 fd2.1
 
-DEFS=	-DPATH_LOGIN='"$(PATH_LOGIN)"'	-DPATH_NEWGRP='"$(PATH_NEWGRP)"'
-DEFS+=	-DSYSCONFDIR='"$(SYSCONFDIR)"'	-DOSH_VERSION='"$(OSH_VERSION)"'
+DEFS=	-DOSH_VERSION='"$(OSH_VERSION)"' -DSYSCONFDIR='"$(SYSCONFDIR)"'
 
 .c.o:
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(DEFS) $<
@@ -96,26 +85,26 @@ sh6all: $(SH6) utils man
 utils: $(UTILS)
 
 osh: config.h rcsid.h $(PEXSRC) osh.c
-	@rm -f pexec.o
+	@if test X"$(MOXSHELLARCH)" != X"$(MOXUTILSARCH)";then rm -f pexec.o;fi
 	@$(MAKE) CFLAGS='$(SCFLAGS)' LDFLAGS='$(SLDFLAGS)' $@bin
 
 sh6: config.h rcsid.h $(PEXSRC) sh6.c
-	@rm -f pexec.o
+	@if test X"$(MOXSHELLARCH)" != X"$(MOXUTILSARCH)";then rm -f pexec.o;fi
 	@$(MAKE) CFLAGS='$(SCFLAGS)' LDFLAGS='$(SLDFLAGS)' $@bin
 
 glob6: config.h rcsid.h $(PEXSRC) glob6.c
-	@rm -f pexec.o
+	@if test X"$(MOXSHELLARCH)" != X"$(MOXUTILSARCH)";then rm -f pexec.o;fi
 	@$(MAKE) CFLAGS='$(SCFLAGS)' LDFLAGS='$(SLDFLAGS)' $@bin
 
 if: config.h rcsid.h $(PEXSRC) if.c
-	@rm -f pexec.o
+	@if test X"$(MOXSHELLARCH)" != X"$(MOXUTILSARCH)";then rm -f pexec.o;fi
 	@$(MAKE) CFLAGS='$(UCFLAGS)' LDFLAGS='$(ULDFLAGS)' $@bin
 
 goto: config.h rcsid.h goto.c
 	@$(MAKE) CFLAGS='$(UCFLAGS)' LDFLAGS='$(ULDFLAGS)' $@bin
 
 fd2: config.h rcsid.h $(PEXSRC) fd2.c
-	@rm -f pexec.o
+	@if test X"$(MOXSHELLARCH)" != X"$(MOXUTILSARCH)";then rm -f pexec.o;fi
 	@$(MAKE) CFLAGS='$(UCFLAGS)' LDFLAGS='$(ULDFLAGS)' $@bin
 
 $(OBJ): config.h rcsid.h

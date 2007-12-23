@@ -22,10 +22,15 @@ Notice that this package also includes the following shell utilities:
 See the INSTALL file for build and install instructions.
 
 -------
-This software should build and work correctly on any POSIX-compliant
+The osh package should build successfully on any POSIX-compliant
 Unix system.  It is currently developed, maintained, and tested by
 the developer on Mac OS X, NetBSD, OpenBSD, and GNU/Linux.  It is
-also known to build and work correctly on FreeBSD.
+also known to build successfully on FreeBSD.
+
+If your system is not mentioned above, simply try to build the osh
+package to see if it works or not.  In either case, please consider
+reporting the results to the developer.  The resulting "config.h"
+file and the compiler name/version is most helpful.
 
 If you think you may have found a bug, before reporting it, please
 try to reproduce it with the latest version of the code.  With bug
@@ -36,10 +41,10 @@ following email address:
 	jneitzel (at) sdf1 (dot) org
 
 If you have any comments or questions about this software, I encourage
-you to contact me via email.  Enjoy!
+you to contact me via email.  Thanks & Enjoy!
 
 Jeffrey Allen Neitzel
 jneitzel (at) sdf1 (dot) org
-http://jneitzel.sdf1.org/osh/					2007/12/22
+http://jneitzel.sdf1.org/osh/					2007/12/23
 
 @(#)$Id$
