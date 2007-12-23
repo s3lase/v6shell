@@ -29,8 +29,8 @@ also known to build successfully on FreeBSD.
 
 If your system is not mentioned above, simply try to build the osh
 package to see if it works or not.  In either case, please consider
-reporting the results to the developer.  The resulting "config.h"
-file and the compiler name/version is most helpful.
+reporting the results to the developer if possible.  The resulting
+"config.h" file and the compiler name/version is most helpful.
 
 If you think you may have found a bug, before reporting it, please
 try to reproduce it with the latest version of the code.  With bug

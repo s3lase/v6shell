@@ -36,7 +36,6 @@ definePathnameConstant()
 UNAME_S="`uname -s`"
 UNAME_SRM="`uname -srm`"
 PROGNAME="`basename $0`"
-
 if test $# -ne 0 ; then echo 'usage: $(SHELL) ./'"$PROGNAME" >&2 ; exit 1 ; fi
 if test X"$UNAME_S" = X -o X"$UNAME_SRM" = X ; then
 	echo "$PROGNAME: Fatal uname(1) error" >&2 ; exit 1
@@ -72,17 +71,14 @@ Linux)
 *)
 	#
 	# This may or may not cause a compilation error.
-	# Try it to see if there are any errors or warnings.
+	# Simply try it to see if it works or not.
 	#
 	echo "$PROGNAME: WARNING: Check \"$CONFIG_H\" if compilation fails." >&2
 	cat <<EOI >>$CONFIG_H
 /*
  * WARNING: $UNAME_SRM: Unknown system
  *
- * Please notify the developer by emailing the following
- * uname(1) output to jneitzel@sdf1.org if possible.
- *
- *	$UNAME_SRM
+ * Please consider reporting this result to the developer if possible.
  */
 EOI
 	;;
