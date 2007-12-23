@@ -22,16 +22,6 @@ The Makefile defines the following configuration variables (default
 value listed).  The user can modify the default configuration by
 passing the desired variable=value pair(s) on the command line.
 
-	PATH_LOGIN	Defaults to /usr/bin/login.  The login(1)
-			utility is used by the shell's `login' special
-			command to replace an interactive shell with
-			an instance of login(1).
-
-	PATH_NEWGRP	Unset by default.  The newgrp(1) utility is
-			used by the shell's `newgrp' special command
-			to replace an interactive shell with an
-			instance of newgrp(1).
-
 	PREFIX		Defaults to /usr/local.  This is the target
 			directory where BINDIR, MANDIR, and SYSCONFDIR
 			are located by default.
