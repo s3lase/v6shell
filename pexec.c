@@ -68,6 +68,7 @@ OSH_RCSID("@(#)$Id$");
 
 #include "config.h"
 
+#include <sys/types.h>
 #include <sys/uio.h>
 
 #include <errno.h>
@@ -94,8 +95,8 @@ pexec(const char *file, char *const *argv)
 	const char **esh_argv;
 	size_t dlen, flen;
 	int cnt, eacces = 0;
-	const char *d, *esh, *f, *pp, *up;
-	char path[PATHMAX];
+	const char *d, *esh, *f, *pnp, *upp;
+	char pnbuf[PATHMAX];
 
 	/*
 	 * Fail if the value of file, argv, or argv[0] is invalid.
@@ -115,44 +116,43 @@ pexec(const char *file, char *const *argv)
 	 */
 	for (f = file; *f != '\0'; f++)
 		if (*f == '/') {
-			pp = file;
-			up = "";
-			goto got_path;
+			pnp = file;
+			upp = "";
+			goto exec_pathname;
 		}
-	*path = '\0';
-	pp = path;
+	*pnbuf = '\0';
+	pnp = pnbuf;
 
 	/*
 	 * Get the user's PATH.  Fail if PATH is unset or is
 	 * set to the empty string, as no PATH search shall be
 	 * performed in such a case.
 	 */
-	up = getenv("PATH");
-	if (up == NULL || *up == '\0')
+	upp = getenv("PATH");
+	if (upp == NULL || *upp == '\0')
 		goto fail;
 
 	do {
 		/* Find the end of this PATH element. */
-		for (d = up; *up != ':' && *up != '\0'; up++)
+		for (d = upp; *upp != ':' && *upp != '\0'; upp++)
 			;	/* nothing */
 		/*
 		 * Since this is a shell PATH, double, leading, and/or
 		 * trailing colons indicate the current directory.
 		 */
-		if (d == up) {
+		if (d == upp) {
 			d = ".";
 			dlen = 1;
 		} else
-			dlen = (size_t)(up - d);
+			dlen = (size_t)(upp - d);
 
 		/*
 		 * Complain if this path name for file would be too long.
 		 * Otherwise, use this PATH element to build a possible
 		 * path name for file.  Then, attempt to execve(2) it.
 		 */
-		if (dlen + flen + 1 >= sizeof(path)) {
+		if (dlen + flen + 1 >= sizeof(pnbuf)) {
 			struct iovec msg[3];
-
 			msg[0].iov_base = "pexec: ";
 			msg[0].iov_len  = (size_t)7;
 			msg[1].iov_base = (char *)d;
@@ -162,13 +162,13 @@ pexec(const char *file, char *const *argv)
 			(void)writev(FD2, msg, 3);
 			continue;
 		}
-		(void)memcpy(path, d, dlen);
-		path[dlen] = '/';
-		(void)memcpy(path + dlen + 1, file, flen);
-		path[dlen + flen + 1] = '\0';
+		(void)memcpy(pnbuf, d, dlen);
+		pnbuf[dlen] = '/';
+		(void)memcpy(pnbuf + dlen + 1, file, flen);
+		pnbuf[dlen + flen + 1] = '\0';
 
-got_path:
-		(void)execve(pp, argv, environ);
+exec_pathname:
+		(void)execve(pnp, argv, environ);
 		switch (errno) {
 		case EACCES:
 #if defined(__OpenBSD__)
@@ -187,7 +187,7 @@ got_path:
 			 * Fail if it is unset or is set to an unusable value.
 			 */
 			esh = getenv("EXECSHELL");
-			if (esh==NULL||*esh=='\0'||strlen(esh)>=sizeof(path))
+			if (esh==NULL||*esh=='\0'||strlen(esh)>=sizeof(pnbuf))
 				goto fail;
 			for (cnt = 0; argv[cnt] != NULL; cnt++)
 				;	/* nothing */
@@ -195,7 +195,7 @@ got_path:
 			if (esh_argv == NULL)
 				goto fail;
 			esh_argv[0] = esh;
-			esh_argv[1] = pp;
+			esh_argv[1] = pnp;
 			(void)memcpy(&esh_argv[2],&argv[1],cnt*sizeof(char *));
 			(void)execve(esh, (char *const *)esh_argv, environ);
 			free(esh_argv);
@@ -204,7 +204,7 @@ got_path:
 		default:
 			goto fail;
 		}
-	} while (*up++ == ':');		/* Otherwise, *up was NUL. */
+	} while (*upp++ == ':');	/* Otherwise, *upp was NUL. */
 	if (eacces != 0)
 		errno = EACCES;
 
