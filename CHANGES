@@ -3,6 +3,30 @@ are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
 [osh-current]:
+	* New file:  mkconfig  (see below)
+
+Build/Install Changes:
+	* Stopped defining _XOPEN_SOURCE when compiling on Mac OS X, NetBSD,
+	  and OpenBSD.  It is simply not necessary.  However, _XOPEN_SOURCE
+	  and _BSD_SOURCE are necessary on GNU/Linux systems.
+
+	* Added a simple configure script, mkconfig.  It is automatically
+	  invoked from the Makefile to write out an appropriate "config.h"
+	  file according to the osh package's needs on the given system.  It
+	  simply sets PATH_LOGIN, PATH_NEWGRP, _XOPEN_SOURCE, and _BSD_SOURCE
+	  as needed so that the user does not need to bother w/ doing it
+	  manually at build time.
+
+osh.c:
+	* Fixed a bug in do_source() where the value of the $0 parameter is
+	  not getting set to the correct value in all cases.  This results
+	  in a string value of "0" instead of the expected value, which
+	  should have been "" (the empty string) in such a case.
+
+	  This fix changes the source command's parameter-substitution behavior
+	  so that $0 always results in the name of the command file, not the
+	  empty string.  This makes the parameter-substitution behavior of
+	  sourced command files just like any other osh command file.
 
 -------------------------------------------------------------------------------
 [osh-20070707]:
@@ -1167,6 +1191,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2007/12/22
+Jeffrey Allen Neitzel						2007/12/24
 
 @(#)$Id$

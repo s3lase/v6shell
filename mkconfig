@@ -2,9 +2,9 @@
 #
 # @(#)$Id$
 #
-# Make "config.h" according to the output from uname(1).
-# This script is invoked automatically from the Makefile
-# by make; the user does not need to run it manually.
+# Write out an appropriate "config.h" file.
+# This script is invoked automatically from the Makefile.
+# The user does not need to run it manually.
 #
 # Exit w/ a status of 0 on success.
 # Exit w/ a status of 1 on error.
