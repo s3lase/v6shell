@@ -757,7 +757,7 @@ getdolp(int c)
 	case '5': case '6': case '7': case '8': case '9':
 		n = c - '0';
 		if (DOLDIGIT(n, c) && n < dolc)
-			v = (n > 0) ? dolv[n] : (name != NULL) ? name : dolbuf;
+			v = (n > 0) ? dolv[n] : name;
 		else
 			v = dolbuf;
 		break;
@@ -1800,9 +1800,9 @@ do_source(char **av)
 	/* Save and initialize any positional parameters if needed. */
 	sdolv = dolv;
 	sdolc = dolc;
-	dolv = &av[1];
-	for (dolc = 0; dolv[dolc] != NULL; dolc++)
-		;	/* nothing */
+	if (av[2] != NULL)
+		for (dolv = &av[1], dolc = 2; dolv[dolc] != NULL; dolc++)
+			;	/* nothing */
 
 	cnt++;
 	cmd_loop(HALT);
