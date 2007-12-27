@@ -3,7 +3,10 @@ are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
 [osh-current]:
-	* New file:  mkconfig  (see below)
+	* New file:  mkconfig  (see Build/Install Changes)
+
+	* Moved files:	Moved manual pages from *.1 to *.1.in to make their
+			generation and installation in the Makefile simpler.
 
 Build/Install Changes:
 	* Stopped defining _XOPEN_SOURCE when compiling on Mac OS X, NetBSD,
@@ -18,15 +21,39 @@ Build/Install Changes:
 	  manually at build time.
 
 osh.c:
-	* Fixed a bug in do_source() where the value of the $0 parameter is
-	  not getting set to the correct value in all cases.  This results
-	  in a string value of "0" instead of the expected value, which
-	  should have been "" (the empty string) in such a case.
+	* Patched the code to fix a "$0" parameter-substitution problem w/
+	  the `source' command in the following interactive context:
 
-	  This fix changes the source command's parameter-substitution behavior
-	  so that $0 always results in the name of the command file, not the
-	  empty string.  This makes the parameter-substitution behavior of
-	  sourced command files just like any other osh command file.
+		% cat >file
+		echo \$0 == \"$0\"
+		echo \$1 == \"$1\"
+		^D
+		% source file ;		: ... gives correct value for "$0".
+		$0 == ""
+		$1 == ""
+		% source file arg ;	: ... gives incorrect value for "$0".
+		$0 == "0"
+		$1 == "arg"
+
+	  getdolp() indirectly caused the problem by returning a NULL pointer
+	  when the intended result was a pointer to the empty string.  This
+	  problem was not fatal, as the shell handles NULL pointers from
+	  getdolp() anyway.  However, NULL is supposed to indicate an
+	  error where the specified parameter means nothing to the shell...
+	  For example:
+
+		% echo \$Z == \"$Z\"
+		$Z == "Z"
+
+	* Changed the source command's parameter-substitution behavior so
+	  that $0 always results in the name of the sourced command file,
+	  not the name inherited from the main shell context.  This makes
+	  the parameter-substitution behavior of sourced command files
+	  just like that of any other osh command file.  Plus, this is
+	  the documented behavior.
+
+osh.1.in, sh6.1.in:
+	* Revised some wording to remove some cases of possible ambiguity.
 
 -------------------------------------------------------------------------------
 [osh-20070707]:
@@ -1191,6 +1218,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2007/12/24
+Jeffrey Allen Neitzel						2007/12/27
 
 @(#)$Id$
