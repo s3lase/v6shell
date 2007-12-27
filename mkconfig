@@ -62,7 +62,7 @@ echo >>$CONFIG_H
 
 case "$UNAME_S" in
 *BSD|Darwin)
-	echo '/* Define nothing in this case. */' >>$CONFIG_H
+	echo '/* Do not define _XOPEN_SOURCE or _BSD_SOURCE. */' >>$CONFIG_H
 	;;
 Linux)
 	echo '#define	_XOPEN_SOURCE	600' >>$CONFIG_H
