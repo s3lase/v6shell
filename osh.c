@@ -346,6 +346,7 @@ static	bool		err_source;	/* error flag for `source' command  */
 static	uid_t		euid;		/* effective shell user ID          */
 static	char		line[LINEMAX];	/* command-line buffer              */
 static	char		*linep;
+/*@observer@*/
 static	const char	*name;		/* $0 - shell command name          */
 static	int		nulcnt;		/* `\0'-character count (per line)  */
 static	int		peekc;		/* just-read, pushed-back character */
@@ -466,6 +467,8 @@ main(int argc, char **argv)
 			stype = INTERACTIVE;
 			(void)signal(SIGTERM, SIG_IGN);
 		}
+		name = "";
+		dolc = 1;
 	}
 	if (chintr != 0) {
 		chintr = 0;
@@ -1782,11 +1785,8 @@ do_source(char **av)
 		stype |= SOURCE;
 
 	/* Save and initialize any positional parameters. */
-	sname = name;
-	sdolv = dolv;
-	sdolc = dolc;
-	name  = av[1];
-	dolv = &av[1];
+	sname = name, sdolv = dolv, sdolc = dolc;
+	name  = av[1], dolv = &av[1];
 	for (dolc = 0; dolv[dolc] != NULL; dolc++)
 		;	/* nothing */
 
@@ -1795,9 +1795,7 @@ do_source(char **av)
 	cnt--;
 
 	/* Restore any saved positional parameters. */
-	name = sname;
-	dolv = sdolv;
-	dolc = sdolc;
+	name = sname, dolv = sdolv, dolc = sdolc;
 
 	if (err_source) {
 		/*
