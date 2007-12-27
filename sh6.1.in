@@ -58,7 +58,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.TH SH6 1 "March 5, 2007" "@OSH_VERSION@" "General Commands"
+.TH SH6 1 "December 27, 2007" "@OSH_VERSION@" "General Commands"
 .SH NAME
 sh6 \- shell (command interpreter)
 .SH SYNOPSIS
@@ -96,14 +96,15 @@ executes it as a command line,
 and exits.
 .PP
 The shell may also be invoked non-interactively
-to interpret an ASCII command file,
-which is specified by
+to read, interpret, and execute an ASCII command file.
+The specified
 .I file
-and optionally followed by any number of
-positional parameters
+and any arguments
+are treated as positional parameters
 (see
 .I "Parameter substitution"
-below).
+below)
+during execution of the command file.
 .PP
 Otherwise,
 if no arguments are specified and if both
@@ -278,15 +279,15 @@ If such characters are quoted,
 they represent themselves and may be passed
 as part of arguments.
 .PP
-A
+An individual
 .I backslash
 (\\) quotes,
 or
 .IR escapes ,
 the next individual character.
 A backslash followed by a newline is a special case
-which allows the continuation of commands
-onto more than one line.
+which allows continuation of command-line input
+onto the next line.
 Each backslash-newline sequence in the input
 is translated into a blank.
 .PP
@@ -522,6 +523,7 @@ Changes the shell's current working directory to
 .TP
 .B exit
 Causes the shell to cease execution of a file.
+This means exit has no effect in an interactive shell.
 .TP
 \fBlogin\fR [\fIarg ...\fR]
 Replaces the current interactive shell with

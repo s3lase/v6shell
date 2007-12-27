@@ -58,7 +58,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.TH OSH 1 "March 5, 2007" "@OSH_VERSION@" "General Commands"
+.TH OSH 1 "December 27, 2007" "@OSH_VERSION@" "General Commands"
 .SH NAME
 osh \- old shell (command interpreter)
 .SH SYNOPSIS
@@ -92,19 +92,22 @@ The shell executes
 as a command line and exits.
 .TP
 .B \-t
-The shell reads a single line from the standard input,
-executes it as a command line,
+(+)
+The shell reads a single command line
+from the standard input,
+executes it,
 and exits.
 .PP
 The shell may also be invoked non-interactively
-to interpret a command file,
-which is specified by
+to read, interpret, and execute a command file.
+The specified
 .I file
-and optionally followed by any number of
-positional parameters
+and any arguments
+are treated as positional parameters
 (see
 .I "Parameter substitution"
-below).
+below)
+during execution of the command file.
 .PP
 Otherwise,
 if no arguments are specified and if both
@@ -292,15 +295,15 @@ If such characters are quoted,
 they represent themselves and may be passed
 as part of arguments.
 .PP
-A
+An individual
 .I backslash
 (\\) quotes,
 or
 .IR escapes ,
 the next individual character.
 A backslash followed by a newline is a special case
-which allows the continuation of commands
-onto more than one line.
+which allows continuation of command-line input
+onto the next line.
 Each backslash-newline sequence in the input
 is translated into a blank.
 .PP
@@ -641,6 +644,8 @@ Pipes and I/O redirection are permitted.
 .TP
 .B exit
 Causes the shell to cease execution of a file.
+This means exit has no effect in an interactive shell
+when its standard input is connected to a terminal.
 .TP
 \fBlogin\fR [\fIarg ...\fR]
 Replaces the current interactive shell with
@@ -674,16 +679,17 @@ the shell was invoked,
 it can never be reset with \fB-\fR.
 If no arguments are specified,
 a list is printed of those signals which
-.\" are ignored because of a previous invocation
-.\" of sigign in the current shell.
 are ignored by sigign in the current shell.
 .TP
 \fBsource\fR \fIfile\fR [\fIarg1 ...\fR] (+)
 Causes the shell to read and execute commands
 from \fIfile\fR and return.
-Any specified arguments are treated as
-positional parameters during execution
-of the file.
+The specified file and any arguments
+are treated as positional parameters
+(see
+.I "Parameter substitution"
+above)
+during execution of the file.
 The source command may be nested.
 As with command files,
 most shell-detected errors cause the shell
