@@ -6,7 +6,7 @@ are marked w/ a `C:' in the details below.
 	* New file:  mkconfig  (see Build/Install Changes)
 
 	* Moved files:	Moved manual pages from *.1 to *.1.in to make their
-			generation and installation in the Makefile simpler.
+			generation and installation simpler in the Makefile.
 
 Build/Install Changes:
 	* Stopped defining _XOPEN_SOURCE when compiling on Mac OS X, NetBSD,
@@ -1218,6 +1218,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2007/12/27
+Jeffrey Allen Neitzel						2007/12/28
 
 @(#)$Id$

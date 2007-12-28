@@ -17,20 +17,24 @@ rm -f $CONFIG_H
 trap 'status=$? ; rm -f $CONFIG_H ; exit $status' HUP INT QUIT TERM
 
 #
-# This function searches for the pathname of utility $2 and
-# defines constant $1 w/ the resulting value.  If $2 cannot
-# be found, constant $1 is defined as the empty string.
+# This function searches for the pathname of utility and defines
+# constant w/ the resulting value.  If utility cannot be found,
+# constant is defined as the empty string.
+#
+# usage: definePathnameConstant constant utility
 #
 definePathnameConstant()
 {
+	constant="$1"
+	utility="$2"
 	dirlist="/bin /sbin /usr/bin /usr/sbin /usr/libexec /usr/games"
 	for dir in $dirlist ; do
-		value=""
-		if test -f "$dir/$2" -a -x "$dir/$2" ; then
-			value="$dir/$2" ; break
+		pathname=""
+		if test -f "$dir/$utility" -a -x "$dir/$utility" ; then
+			pathname="$dir/$utility" ; break
 		fi
 	done
-	echo "#define	$1	\"$value\""
+	echo "#define	$constant	\"$pathname\""
 }
 
 UNAME_S="`uname -s`"
@@ -43,26 +47,26 @@ fi
 
 cat <<EOI >$CONFIG_H
 /*
- * _XOPEN_SOURCE must be defined with a value of 600 on GNU/Linux systems.
- * In addition, _BSD_SOURCE must be defined on GNU/Linux systems.  However,
- * these feature test macros should not be required on other systems where
- * the osh package is already known to compile.
+ * Compiling the osh package on GNU/Linux systems requires defining
+ * _XOPEN_SOURCE with a value of 600 and also defining _BSD_SOURCE.
+ * However, these feature test macros should not be needed on other
+ * systems where the osh package is already known to compile.
  *
- *	Configured for $UNAME_SRM .
+ *	Configured for: $UNAME_SRM
  */
 
 #ifndef	CONFIG_H
 #define	CONFIG_H
 
-EOI
+`definePathnameConstant PATH_LOGIN  login`
+`definePathnameConstant PATH_NEWGRP newgrp`
 
-definePathnameConstant PATH_LOGIN  login  >>$CONFIG_H
-definePathnameConstant PATH_NEWGRP newgrp >>$CONFIG_H
-echo >>$CONFIG_H
+EOI
 
 case "$UNAME_S" in
 *BSD|Darwin)
-	echo '/* Do not define _XOPEN_SOURCE or _BSD_SOURCE. */' >>$CONFIG_H
+	echo "/* $UNAME_S: No need for _XOPEN_SOURCE or _BSD_SOURCE */" \
+		>>$CONFIG_H
 	;;
 Linux)
 	echo '#define	_XOPEN_SOURCE	600' >>$CONFIG_H
