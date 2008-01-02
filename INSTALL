@@ -1,4 +1,4 @@
-Build and install instructions for osh-current (20071228)!
+Build and install instructions for osh-current (20080102)!
 
 SYNOPSIS
 	env [variable=value ...] make [target ...]
@@ -131,6 +131,6 @@ shell scripting on 64-bit Intel Macs.
 	% make MOXSHELLARCH='-arch x86_64' MOXUTILSARCH='-arch i386'
 	# make install
 
-Jeffrey Allen Neitzel						2007/12/28
+Jeffrey Allen Neitzel						2008/01/02
 
 @(#)$Id$
