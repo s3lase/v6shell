@@ -12,7 +12,7 @@
 # Jeffrey Allen Neitzel
 #
 
-CONFIG_H=config.h
+CONFIG_H="config.h"
 rm -f $CONFIG_H
 trap 'status=$? ; rm -f $CONFIG_H ; exit $status' HUP INT QUIT TERM
 
