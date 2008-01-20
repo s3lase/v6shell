@@ -1,6 +1,6 @@
 .\"
 .\" Copyright (c) 2003-2008
-.\"	Jeffrey Allen Neitzel <jneitzel (at) sdf1 (dot) org>.
+.\"	Jeffrey Allen Neitzel <jneitzel (at) v6shell (dot) org>.
 .\"	All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -661,7 +661,7 @@ osh(1),
 sed(1)
 .PP
 Osh home page:
-http://jneitzel.sdf1.org/osh/
+http://www.v6shell.org/
 .SH AUTHORS
 This port of the Thompson shell is derived from
 Sixth Edition Unix /usr/source/s2/sh.c,
@@ -694,7 +694,7 @@ in Seventh Edition Unix.
 See either the LICENSE file which is distributed with
 .I osh
 or
-http://jneitzel.sdf1.org/osh/license/
+http://www.v6shell.org/license/
 for full details.
 .SH NOTES
 Since

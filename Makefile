@@ -1,4 +1,4 @@
-# Makefile for osh-20080109
+# Makefile for osh-current (20080120)
 #
 # @(#)$Id$
 #
@@ -58,7 +58,7 @@ ULDFLAGS=	$(LDFLAGS)	$(MOXUTILSARCH)
 #	osh-YYYYMMDD		== official release
 #	osh-current (YYYYMMDD)	== development snapshot
 #
-OSH_VERSION=	osh-20080109
+OSH_VERSION=	osh-current (20080120)
 
 OSH=	osh
 SH6=	sh6 glob6

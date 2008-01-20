@@ -1,4 +1,4 @@
-Welcome to osh-20080109!
+Welcome to osh-current (20080120)!
 
 Osh(1) is an enhanced, backward-compatible port of the Sixth Edition (V6)
 Unix shell (circa 1975), also known as the Thompson shell.  The original
@@ -38,13 +38,13 @@ reports, please try to ensure that enough information to reproduce
 the problem is enclosed.  Also, if a known fix for it exists then
 please include that as well.  All bug reports should be sent to the
 following email address:
-	jneitzel (at) sdf1 (dot) org
+	jneitzel (at) v6shell (dot) org
 
 If you have any comments or questions about this software, I encourage
 you to contact me via email.  Thanks & Enjoy!
 
 Jeffrey Allen Neitzel
-jneitzel (at) sdf1 (dot) org
-http://jneitzel.sdf1.org/osh/					2008/01/05
+jneitzel (at) v6shell (dot) org
+http://www.v6shell.org/						2008/01/20
 
 @(#)$Id$

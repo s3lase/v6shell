@@ -1,6 +1,6 @@
 .\"
 .\" Copyright (c) 2006-2008
-.\"	Jeffrey Allen Neitzel <jneitzel (at) sdf1 (dot) org>.
+.\"	Jeffrey Allen Neitzel <jneitzel (at) v6shell (dot) org>.
 .\"	All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -171,7 +171,7 @@ not PATH.
 sh6(1)
 .PP
 Osh home page:
-http://jneitzel.sdf1.org/osh/
+http://www.v6shell.org/
 .SH HISTORY
 A
 .I glob
@@ -183,5 +183,5 @@ in First Edition Unix.
 See either the LICENSE file which is distributed with
 .I osh
 or
-http://jneitzel.sdf1.org/osh/license/
+http://www.v6shell.org/license/
 for full details.
