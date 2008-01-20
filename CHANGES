@@ -2,6 +2,12 @@ Changes that improve compatibility w/ the Sixth Edition Unix shell
 are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
+[osh-current]:
+	* Replaced all instances of "sdf1" w/ "v6shell" in all files since
+	  the osh project website has a new URL, http://www.v6shell.org/,
+	  as of Wednesday, 2008-01-16.
+
+-------------------------------------------------------------------------------
 [osh-20080109]:
 	* New file:  mkconfig  (see Build/Install Changes)
 
@@ -9,9 +15,9 @@ are marked w/ a `C:' in the details below.
 			generation and installation simpler in the Makefile.
 
 Build/Install Changes:
-	* Stopped defining _XOPEN_SOURCE when compiling on Mac OS X, NetBSD,
-	  and OpenBSD.  It is simply not necessary.  However, _XOPEN_SOURCE
-	  and _BSD_SOURCE are necessary on GNU/Linux systems.
+	* Stopped defining _XOPEN_SOURCE when compiling on Mac OS X, FreeBSD,
+	  NetBSD, and OpenBSD.  It is simply not necessary.  However, both
+	  _XOPEN_SOURCE and _BSD_SOURCE are necessary on GNU/Linux systems.
 
 	* Added a simple configure script, mkconfig.  It is automatically
 	  invoked from the Makefile to write out an appropriate "config.h"
@@ -1218,6 +1224,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2008/01/05
+Jeffrey Allen Neitzel						2008/01/20
 
 @(#)$Id$
