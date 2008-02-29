@@ -152,9 +152,8 @@ getlabel(char *buf, int fc, size_t siz)
 			continue;
 
 		/*
-		 * Copy possible label (first word only) to buf.
-		 * However, if it is too long, abort the copy,
-		 * and simply ignore it.
+		 * Try to copy possible label (first word only)
+		 * to buf, ignoring it if it becomes too long.
 		 */
 		b = buf;
 		do {
@@ -181,10 +180,17 @@ getlabel(char *buf, int fc, size_t siz)
 	return false;
 }
 
+/*
+ * If not at end-of-file, return the next character from the standard
+ * input as an unsigned char converted to an int while incrementing
+ * the global offset.  Otherwise, return EOF at end-of-file.
+ */
 static int
 xgetc(void)
 {
+	int nc;
 
 	offset++;
-	return getchar();
+	nc = getchar();
+	return (nc != EOF) ? nc & 0377 : EOF;
 }
