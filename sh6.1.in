@@ -58,7 +58,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.TH SH6 1 "January 9, 2008" "@OSH_VERSION@" "General Commands"
+.TH SH6 1 "February 29, 2008" "@OSH_VERSION@" "General Commands"
 .SH NAME
 sh6 \- shell (command interpreter)
 .SH SYNOPSIS
@@ -208,6 +208,7 @@ termination messages:
 	Bus error
 	Memory fault
 	Bad system call
+	(+) Broken pipe
 .fi
 .PP
 For an asynchronous process,
