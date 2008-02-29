@@ -370,9 +370,9 @@ static	void		cmd_loop(bool);
 static	int		rpx_line(void);
 static	int		get_word(void);
 static	int		xgetc(bool);
+static	int		readc(void);
 /*@null@*/ /*@only@*/
 static	const char	*get_dolp(int);
-static	int		readc(void);
 static	struct tnode	*talloc(void);
 static	void		tfree(/*@null@*/ /*@only@*/ struct tnode *);
 /*@null@*/
@@ -714,18 +714,43 @@ getd:
 		if ((dolp = get_dolp(c)) != NULL)
 			goto getd;
 	}
-	while (c == '\0') {
+	/* Ignore all NUL characters. */
+	if (c == '\0') do {
 		if (++nulcnt >= LINEMAX) {
 			err(-1, FMT1S, ERR_TMCHARS);
 			goto geterr;
 		}
 		c = readc();
-	}
+	} while (c == '\0');
 	return c;
 
 geterr:
 	error = true;
 	return '\n';
+}
+
+/*
+ * Read and return a character from the string pointed to by
+ * arginp or from the standard input.  When reading from arginp,
+ * return the character or `\n' at end-of-string.  When reading
+ * from the standard input, return the character or EOF.  EOF is
+ * returned both on end-of-file and on read(2) error.
+ */
+static int
+readc(void)
+{
+	unsigned char c;
+
+	if (arginp != NULL) {
+		if ((c = (*arginp++ & 0377)) == '\0') {
+			arginp = NULL;
+			c = '\n';
+		}
+		return c;
+	}
+	if (read(FD0, &c, (size_t)1) != 1)
+		return EOF;
+	return c;
 }
 
 /*
@@ -791,30 +816,6 @@ get_dolp(int c)
 		v = NULL;
 	}
 	return v;
-}
-
-/*
- * Read and return a character from the string pointed to by
- * arginp or from the standard input.  When reading from arginp,
- * return the character or `\n' at end-of-string.  When reading
- * from the standard input, return the character or EOF.  EOF is
- * returned both on end-of-file and on read(2) error.
- */
-static int
-readc(void)
-{
-	unsigned char c;
-
-	if (arginp != NULL) {
-		if ((c = (*arginp++ & 0377)) == '\0') {
-			arginp = NULL;
-			c = '\n';
-		}
-		return c;
-	}
-	if (read(FD0, &c, (size_t)1) != 1)
-		return EOF;
-	return c;
 }
 
 /*

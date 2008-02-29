@@ -476,13 +476,14 @@ getd:
 			goto getd;
 		}
 	}
-	while (c == '\0') {
+	/* Ignore all NUL characters. */
+	if (c == '\0') do {
 		if (++nulcnt >= LINEMAX) {
 			err("Too many characters", SH_ERR);
 			goto geterr;
 		}
 		c = readc();
-	}
+	} while (c == '\0');
 	return c;
 
 geterr:
