@@ -174,7 +174,7 @@ static	const char *const sig[XNSIG] = {
 	"Bus error",
 	"Memory fault",
 	"Bad system call",
-	"Broken pipe"
+	NULL
 };
 
 static	char		apid[6];	/* $$ - ASCII shell process ID      */
