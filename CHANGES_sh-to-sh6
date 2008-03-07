@@ -7,15 +7,6 @@ command in porting them to run on modern Unix systems.
 sh6.c:
 	* Refactor the NUL-ignoring code in the xgetc() function.
 
-	* Add a "Broken pipe" termination message for the SIGPIPE signal.
-
-	  Notice that the original shell did not print a termination message
-	  for this signal, but it can be useful for debugging exceptional
-	  command file problems.
-
-sh6.1.in:
-	* Add "(+) Broken pipe" to "Termination reporting" subsection.
-
 -------------------------------------------------------------------------------
 [osh-20080109]:
 	* No user-visible changes.
@@ -305,6 +296,6 @@ glob.c:
     Date: May 14, 1975
     From: Sixth Edition Unix /usr/source/s1/glob.c
 
-Jeffrey Allen Neitzel						2008/02/29
+Jeffrey Allen Neitzel						2008/03/07
 
 @(#)$Id$
