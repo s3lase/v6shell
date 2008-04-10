@@ -5,7 +5,7 @@ command in porting them to run on modern Unix systems.
 -------------------------------------------------------------------------------
 [osh-current]:
 sh6.c:
-	* Refactor the NUL-ignoring code in the xgetc() function.
+	* Refactored the NUL-ignoring code in the xgetc() function.
 
 -------------------------------------------------------------------------------
 [osh-20080109]:
@@ -296,6 +296,6 @@ glob.c:
     Date: May 14, 1975
     From: Sixth Edition Unix /usr/source/s1/glob.c
 
-Jeffrey Allen Neitzel						2008/03/07
+Jeffrey Allen Neitzel						2008/04/10
 
 @(#)$Id$

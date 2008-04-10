@@ -8,19 +8,18 @@ are marked w/ a `C:' in the details below.
 	  as of Wednesday, 2008-01-16.
 
 osh.c:
-	* Refactor the NUL-ignoring code in the xgetc() function.
+	* Refactored the NUL-ignoring code in the xgetc() function.
 
-	* Add a "Broken pipe" termination message for the SIGPIPE signal.
+	* Added a "Broken pipe" termination message for the SIGPIPE signal.
 
 	  Notice that the original shell did not print a termination message
-	  for this signal, but it can be useful for debugging exceptional
-	  command file problems.
+	  for this signal, but it can be quite useful for debugging purposes.
 
 goto.c:
-	* Comment the xgetc() function.
+	* Commented the xgetc() function.
 
 osh.1.in:
-	* Add "(+) Broken pipe" to "Termination reporting" subsection.
+	* Added "(+) Broken pipe" to "Termination reporting" subsection.
 
 -------------------------------------------------------------------------------
 [osh-20080109]:
@@ -1239,6 +1238,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2008/02/29
+Jeffrey Allen Neitzel						2008/04/10
 
 @(#)$Id$
