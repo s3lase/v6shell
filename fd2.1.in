@@ -25,7 +25,7 @@
 .\"
 .\"	@(#)$Id$
 .\"
-.TH FD2 1 "January 9, 2008" "@OSH_VERSION@" "General Commands"
+.TH FD2 1 "@OSH_DATE@" "@OSH_VERSION@" "General Commands"
 .SH NAME
 fd2 \- redirect file descriptor 2
 .SH SYNOPSIS

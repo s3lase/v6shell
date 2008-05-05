@@ -58,7 +58,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.TH GOTO 1 "January 9, 2008" "@OSH_VERSION@" "General Commands"
+.TH GOTO 1 "@OSH_DATE@" "@OSH_VERSION@" "General Commands"
 .SH NAME
 goto \- transfer command
 .SH SYNOPSIS
