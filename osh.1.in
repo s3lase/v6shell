@@ -58,11 +58,12 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.TH OSH 1 "February 29, 2008" "@OSH_VERSION@" "General Commands"
+.TH OSH 1 "@OSH_DATE@" "@OSH_VERSION@" "General Commands"
 .SH NAME
 osh \- old shell (command interpreter)
 .SH SYNOPSIS
 .B osh
+[\fB\-v\fR]
 [\fB\-\fR | \fB\-c\fR \fIstring\fR | \fB\-t\fR | \fIfile\fR [\fIarg1 ...\fR]]
 .SH DESCRIPTION
 .I Osh
@@ -97,6 +98,14 @@ The shell reads a single command line
 from the standard input,
 executes it,
 and exits.
+.TP
+.B \-v
+(+)
+The shell verbosely prints the words
+of each command line to the standard error
+after performing parameter substitution
+and word splitting,
+but before executing the resulting command line.
 .PP
 The shell may also be invoked non-interactively
 to read, interpret, and execute a command file.
