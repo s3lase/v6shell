@@ -227,9 +227,9 @@ OSH_RCSID("@(#)$Id$");
 #define	ERR_NOARGS	"no args"
 #define	ERR_NOTFOUND	"not found"
 #define	ERR_SYNTAX	"syntax error"
-#define	FMT1S		"%s"
-#define	FMT2S		"%s: %s"
-#define	FMT3S		"%s: %s: %s"
+#define	FMT1S		"%s\n"
+#define	FMT2S		"%s: %s\n"
+#define	FMT3S		"%s: %s: %s\n"
 
 /*
  * Macros
@@ -302,7 +302,7 @@ static	const char *const sig[XNSIG] = {
 /*
  * Special built-in commands
  */
-static const char *const sbi[] = {
+static	const char *const sbi[] = {
 #define	SBINULL		0
 	":",
 #define	SBICHDIR	1
@@ -342,7 +342,9 @@ static	const char	*dolp;		/* $ dollar-value pointer           */
 static	char	*const	*dolv;		/* $N dollar-argument value array   */
 static	int		dupfd0;		/* duplicate of the standard input  */
 static	bool		error;		/* error flag for read/parse errors */
-static	bool		err_source;	/* error flag for `source' command  */
+/*@observer@*/
+static	const char	*error_message;	/* error message for read errors    */
+static	bool		error_source;	/* error flag for `source' command  */
 static	uid_t		euid;		/* effective shell user ID          */
 static	char		line[LINEMAX];	/* command-line buffer              */
 static	char		*linep;
@@ -360,6 +362,7 @@ static	struct tnode	*treep;		/* shell command-tree pointer       */
 static	char		*tty;		/* $t - terminal name               */
 /*@null@*/ /*@only@*/
 static	char		*user;		/* $u - effective user name         */
+static	bool		verbose_flag;	/* verbose flag for `-v' option     */
 static	char		*word[WORDMAX];	/* argument/word pointer array      */
 static	char		**wordp;
 
@@ -367,6 +370,7 @@ static	char		**wordp;
  * Function prototypes
  */
 static	void		cmd_loop(bool);
+static	void		cmd_verbose(void);
 static	int		rpx_line(void);
 static	int		get_word(void);
 static	int		xgetc(bool);
@@ -430,6 +434,7 @@ static	char		**glob(char **);
 int
 main(int argc, char **argv)
 {
+	char *argv0p;
 	int rc_flag = 0;
 
 	sh_init();
@@ -437,6 +442,12 @@ main(int argc, char **argv)
 		err(SH_ERR, FMT1S, ERR_ALINVAL);
 	if (fd_type(FD0, FD_ISDIR))
 		goto done;
+
+	if (argc > 1 && *argv[1] == '-' && argv[1][1] == 'v') {
+		verbose_flag = true;
+		argv0p = argv[0], argv = &argv[1], argv[0] = argv0p;
+		argc--;
+	}
 
 	if (argc > 1) {
 		name = argv[1];
@@ -506,7 +517,7 @@ done:
 /*
  * Read and execute command lines forever, or until one of the
  * following conditions is true.  If halt == true, return on EOF
- * or when err_source == true.  If halt == false, return on EOF.
+ * or when error_source == true.  If halt == false, return on EOF.
  */
 static void
 cmd_loop(bool halt)
@@ -515,7 +526,7 @@ cmd_loop(bool halt)
 
 	sh_magic();
 
-	for (err_source = gz = false; ; ) {
+	for (error_source = gz = false; ; ) {
 		if (PROMPT)
 			(void)write(FD2, (euid != 0) ? "% " : "# ", (size_t)2);
 		if (rpx_line() == EOF) {
@@ -523,9 +534,30 @@ cmd_loop(bool halt)
 				status = 0;
 			break;
 		}
-		if (halt && err_source)
+		if (halt && error_source)
 			break;
 		gz = true;
+	}
+}
+
+/*
+ * If verbose_flag == true, print each argument/word in the word
+ * pointer array to the standard error.  Otherwise, do nothing.
+ */
+static void
+cmd_verbose(void)
+{
+	char **vp;
+
+	if (verbose_flag) {
+		vp = word;
+		while (**vp != '\n') {
+			fd_print(FD2, "%s", *vp);
+			vp++;
+			if (**vp != '\n')
+				fd_print(FD2, " ");
+		}
+		fd_print(FD2, "\n");
 	}
 }
 
@@ -549,7 +581,14 @@ rpx_line(void)
 			return EOF;
 	} while (*wp != '\n');
 
-	if (!error && wordp - word > 1) {
+	cmd_verbose();
+
+	if (error) {
+		err(-1, FMT1S, error_message);
+		return 1;
+	}
+
+	if (wordp - word > 1) {
 		(void)sigfillset(&nmask);
 		(void)sigprocmask(SIG_SETMASK, &nmask, &omask);
 		t = treep;
@@ -597,7 +636,7 @@ get_word(void)
 					return EOF;
 				if (c == '\n') {
 					if (!error)
-						err(-1, FMT1S, ERR_SYNTAX);
+						error_message = ERR_SYNTAX;
 					peekc = c;
 					*linep++ = '\0';
 					error = true;
@@ -689,7 +728,7 @@ xgetc(bool dolsub)
 		while ((c = xgetc(!DOLSUB)) != EOF && c != '\n')
 			;	/* nothing */
 		wordp += 4;
-		err(-1, FMT1S, ERR_TMARGS);
+		error_message = ERR_TMARGS;
 		goto geterr;
 	}
 	if (linep >= &line[LINEMAX - 5]) {
@@ -697,7 +736,7 @@ xgetc(bool dolsub)
 		while ((c = xgetc(!DOLSUB)) != EOF && c != '\n')
 			;	/* nothing */
 		linep += 10;
-		err(-1, FMT1S, ERR_TMCHARS);
+		error_message = ERR_TMCHARS;
 		goto geterr;
 	}
 
@@ -717,7 +756,7 @@ getd:
 	/* Ignore all NUL characters. */
 	if (c == '\0') do {
 		if (++nulcnt >= LINEMAX) {
-			err(-1, FMT1S, ERR_TMCHARS);
+			error_message = ERR_TMCHARS;
 			goto geterr;
 		}
 		c = readc();
@@ -1227,7 +1266,7 @@ execute(struct tnode *t, int *pin, int *pout)
 				(void)close(pin[1]);
 			}
 			if ((f & FPRS) != 0)
-				fd_print(FD2, "%u", (unsigned)cpid);
+				fd_print(FD2, "%u\n", (unsigned)cpid);
 			if ((f & FAND) != 0)
 				return;
 			if ((f & FPOUT) == 0)
@@ -1405,7 +1444,7 @@ exec1(struct tnode *t)
 		}
 		if (t->nav[1] == NULL) {
 			(void)umask(m = umask(0));
-			fd_print(FD1, "%04o", (unsigned)m);
+			fd_print(FD1, "%04o\n", (unsigned)m);
 		} else {
 			atrim(t->nav[1]);
 			for (m = 0, p = t->nav[1]; *p >= '0' && *p <= '7'; p++)
@@ -1710,7 +1749,7 @@ do_sigign(char **av)
 			    ((i == SIGINT && (sig_state & SS_SIGINT) != 0) ||
 			    (i == SIGQUIT && (sig_state & SS_SIGQUIT) != 0) ||
 			    (i == SIGTERM && (sig_state & SS_SIGTERM) != 0))))
-				fd_print(FD1, "%s + %u", av[0], (unsigned)i);
+				fd_print(FD1, "%s + %u\n", av[0], (unsigned)i);
 		}
 	}
 
@@ -1798,7 +1837,7 @@ do_source(char **av)
 	/* Restore any saved positional parameters. */
 	name = sname, dolv = sdolv, dolc = sdolc;
 
-	if (err_source) {
+	if (error_source) {
 		/*
 		 * The shell has detected an error (e.g., syntax error).
 		 * Terminate any and all source commands (nested or not).
@@ -1892,11 +1931,11 @@ prsig(int s, pid_t tp, pid_t cp)
 		if (WCOREDUMP(s))
 			c = " -- Core dumped";
 		if (tp != cp)
-			fd_print(FD2, "%u: %s%s", (unsigned)tp, m, c);
+			fd_print(FD2, "%u: %s%s\n", (unsigned)tp, m, c);
 		else
-			fd_print(FD2, "%s%s", m, c);
+			fd_print(FD2, "%s%s\n", m, c);
 	} else
-		fd_print(FD2, "");
+		fd_print(FD2, "\n");
 	return 128 + e;
 }
 
@@ -2047,8 +2086,7 @@ rc_file(int *rc_flag)
 
 /*
  * Create and output the message specified by err() or fd_print() to
- * the file descriptor ofd.  The resulting message is terminated by
- * a newline on success.  A diagnostic is written to FD2 on error.
+ * the file descriptor ofd.  A diagnostic is written to FD2 on error.
  */
 static void
 omsg(int ofd, const char *msgfmt, va_list va)
@@ -2059,7 +2097,7 @@ omsg(int ofd, const char *msgfmt, va_list va)
 	const char *e;
 
 	e = "omsg: Internal error\n";
-	r = snprintf(fmt, sizeof(fmt), "%s\n", msgfmt);
+	r = snprintf(fmt, sizeof(fmt), "%s", msgfmt);
 	if (r > 0 && r < (int)sizeof(fmt)) {
 		r = vsnprintf(msg, sizeof(msg), fmt, va);
 		if (r > 0 && r < (int)sizeof(msg)) {
@@ -2094,7 +2132,7 @@ err(int es, const char *msgfmt, ...)
 	case 0:
 		if (STYPE(SOURCE)) {
 			(void)lseek(FD0, (off_t)0, SEEK_END);
-			err_source = true;
+			error_source = true;
 			return;
 		}
 		if (STYPE(RC_FILE) && (status == 130 || status == 131)) {
