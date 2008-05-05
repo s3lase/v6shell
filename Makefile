@@ -1,4 +1,4 @@
-# Makefile for osh-current (20080307)
+# Makefile for osh-current (20080505)
 #
 # @(#)$Id$
 #
@@ -58,7 +58,8 @@ ULDFLAGS=	$(LDFLAGS)	$(MOXUTILSARCH)
 #	osh-YYYYMMDD		== official release
 #	osh-current (YYYYMMDD)	== development snapshot
 #
-OSH_VERSION=	osh-current (20080307)
+OSH_DATE=	May 5, 2008
+OSH_VERSION=	osh-current (20080505)
 
 OSH=	osh
 SH6=	sh6 glob6
@@ -138,9 +139,10 @@ fd2bin: pexec.o fd2.o
 man: $(MANDST)
 $(MANDST): $(MANSRC)
 	@for file in $(MANSRC) ; do \
-		sed -e 's,@OSH_VERSION@,$(OSH_VERSION),' \
-			-e 's,@SYSCONFDIR@,$(SYSCONFDIR),' \
-				<$$file >$${file%.in} ; \
+		sed -e 's|@OSH_DATE@|$(OSH_DATE)|' \
+			-e 's|@OSH_VERSION@|$(OSH_VERSION)|' \
+				-e 's|@SYSCONFDIR@|$(SYSCONFDIR)|' \
+					<$$file >$${file%.in} ; \
 	done
 
 #
@@ -148,9 +150,9 @@ $(MANDST): $(MANSRC)
 #
 install: install-oshall install-sh6all
 
-install-oshall: $(OSH) utils man install-osh install-utils
+install-oshall: oshall install-osh install-utils
 
-install-sh6all: $(SH6) utils man install-sh6 install-utils
+install-sh6all: sh6all install-sh6 install-utils
 
 install-osh: $(OSH) man install-dest
 	$(INSTALL) -c -s $(BINGRP) $(BINMODE) osh     $(DESTDIR)$(BINDIR)
