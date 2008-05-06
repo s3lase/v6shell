@@ -186,6 +186,7 @@ static	int		dolc;		/* $N dollar-argument count         */
 static	const char	*dolp;		/* $N and $$ dollar-value pointer   */
 static	char	*const	*dolv;		/* $N dollar-argument value array   */
 static	bool		error;		/* error flag for read/parse errors */
+static	const char	*error_message;	/* error message for read errors    */
 static	bool		glob_flag;	/* glob flag for `*', `?', `['      */
 static	char		line[LINEMAX];	/* command-line buffer              */
 static	char		*linep;
@@ -324,7 +325,12 @@ rpx_line(void)
 		get_word();
 	} while (*wp != '\n');
 
-	if (!error && wordp - word > 1) {
+	if (error) {
+		err(error_message, SH_ERR);
+		return;
+	}
+
+	if (wordp - word > 1) {
 		(void)sigfillset(&nmask);
 		(void)sigprocmask(SIG_SETMASK, &nmask, &omask);
 		t = NULL;
@@ -363,7 +369,7 @@ loop:
 		while ((c = xgetc(!DOLSUB)) != c1) {
 			if (c == '\n') {
 				if (!error)
-					err("syntax error", SH_ERR);
+					error_message = "syntax error";
 				peekc = c;
 				*linep++ = '\0';
 				error = true;
@@ -443,7 +449,7 @@ xgetc(bool dolsub)
 		while (xgetc(!DOLSUB) != '\n')
 			;	/* nothing */
 		wordp += 4;
-		err("Too many args", SH_ERR);
+		error_message = "Too many args";
 		goto geterr;
 	}
 	if (linep >= &line[LINEMAX - 5]) {
@@ -451,7 +457,7 @@ xgetc(bool dolsub)
 		while (xgetc(!DOLSUB) != '\n')
 			;	/* nothing */
 		linep += 10;
-		err("Too many characters", SH_ERR);
+		error_message = "Too many characters";
 		goto geterr;
 	}
 
@@ -479,7 +485,7 @@ getd:
 	/* Ignore all NUL characters. */
 	if (c == '\0') do {
 		if (++nul_count >= LINEMAX) {
-			err("Too many characters", SH_ERR);
+			error_message = "Too many characters";
 			goto geterr;
 		}
 		c = readc();
