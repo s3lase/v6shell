@@ -179,19 +179,19 @@ static	const char *const sig[XNSIG] = {
 
 static	char		apid[6];	/* $$ - ASCII shell process ID      */
 /*@null@*/
-static	const char	*arginp;	/* string for `-c' option           */
+static	const char	*argv2p;	/* string for `-c' option           */
 static	int		chintr;		/* SIGINT / SIGQUIT flag for child  */
 static	int		dolc;		/* $N dollar-argument count         */
 /*@null@*/
 static	const char	*dolp;		/* $N and $$ dollar-value pointer   */
 static	char	*const	*dolv;		/* $N dollar-argument value array   */
 static	bool		error;		/* error flag for read/parse errors */
-static	bool		globit;		/* glob flag for `*', `?', `['      */
+static	bool		glob_flag;	/* glob flag for `*', `?', `['      */
 static	char		line[LINEMAX];	/* command-line buffer              */
 static	char		*linep;
 static	const char	*name;		/* $0 - shell command name          */
-static	int		nulcnt;		/* `\0'-character count (per line)  */
-static	int		olnflg;		/* one-line flag for `-t' option    */
+static	int		nul_count;	/* `\0'-character count (per line)  */
+static	int		one_line_flag;	/* one-line flag for `-t' option    */
 static	char		peekc;		/* just-read, pushed-back character */
 /*@null@*/ /*@observer@*/
 static	const char	*prompt;	/* interactive-shell prompt pointer */
@@ -266,9 +266,9 @@ main(int argc, char **argv)
 			if (argv[1][1] == 'c' && argc > 2) {
 				dolv  += 1;
 				dolc  -= 1;
-				arginp = argv[2];
+				argv2p = argv[2];
 			} else if (argv[1][1] == 't')
-				olnflg = 2;
+				one_line_flag = 2;
 		} else {
 			(void)close(FD0);
 			if (open(argv[1], O_RDONLY) != FD0) {
@@ -318,7 +318,7 @@ rpx_line(void)
 	linep = line;
 	wordp = word;
 	error = false;
-	nulcnt = 0;
+	nul_count = 0;
 	do {
 		wp = linep;
 		get_word();
@@ -478,7 +478,7 @@ getd:
 	}
 	/* Ignore all NUL characters. */
 	if (c == '\0') do {
-		if (++nulcnt >= LINEMAX) {
+		if (++nul_count >= LINEMAX) {
 			err("Too many characters", SH_ERR);
 			goto geterr;
 		}
@@ -493,8 +493,8 @@ geterr:
 
 /*
  * Read and return an ASCII-equivalent character from the string
- * pointed to by arginp or from the standard input.  When reading
- * from arginp, return the character or `\n' at end-of-string.
+ * pointed to by argv2p or from the standard input.  When reading
+ * from argv2p, return the character or `\n' at end-of-string.
  * When reading from the standard input, return the character.
  * Otherwise, exit the shell w/ the current value of the global
  * variable status when appropriate.
@@ -504,20 +504,20 @@ readc(void)
 {
 	char c;
 
-	if (arginp != NULL) {
-		if ((c = (*arginp++ & ASCII)) == '\0') {
-			arginp = NULL;
-			olnflg = 1;
+	if (argv2p != NULL) {
+		if ((c = (*argv2p++ & ASCII)) == '\0') {
+			argv2p = NULL;
+			one_line_flag = 1;
 			c = '\n';
 		}
 		return c;
 	}
-	if (olnflg == 1)
+	if (one_line_flag == 1)
 		exit(status);
 	if (read(FD0, &c, (size_t)1) != 1)
 		exit(status);
-	if ((c &= ASCII) == '\n' && olnflg == 2)
-		olnflg = 1;
+	if ((c &= ASCII) == '\n' && one_line_flag == 2)
+		one_line_flag = 1;
 	return c;
 }
 
@@ -807,15 +807,15 @@ ascan(char *ap, int (*func)(int))
 }
 
 /*
- * Set the global variable globit to true (1) if the character c
- * is a glob character.  Return the character in all cases.
+ * Set the global variable glob_flag to true (1) if the character
+ * c is a glob character.  Return the character in all cases.
  */
 static int
 tglob(int c)
 {
 
 	if (any(c, "*?["))
-		globit = true;
+		glob_flag = true;
 	return c;
 }
 
@@ -1051,9 +1051,9 @@ execute(struct tnode *t, int *pin, int *pout)
 			execute(t1, NULL, NULL);
 			_exit(status);
 		}
-		globit = false;
+		glob_flag = false;
 		vscan(t->nav, tglob);
-		if (globit) {
+		if (glob_flag) {
 			for (i = 0; t->nav[i] != NULL; i++)
 				;	/* nothing */
 			gav = xmalloc((i + 2) * sizeof(char *));

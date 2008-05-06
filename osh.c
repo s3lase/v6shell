@@ -333,7 +333,7 @@ static	const char *const sbi[] = {
 };
 
 /*@null@*/
-static	const char	*arginp;	/* string for `-c' option           */
+static	const char	*argv2p;	/* string for `-c' option           */
 static	int		chintr;		/* SIGINT / SIGQUIT flag for child  */
 static	char		dolbuf[32];	/* dollar buffer for $$, $n, $s, $v */
 static	int		dolc;		/* $N dollar-argument count         */
@@ -350,7 +350,7 @@ static	char		line[LINEMAX];	/* command-line buffer              */
 static	char		*linep;
 /*@observer@*/
 static	const char	*name;		/* $0 - shell command name          */
-static	int		nulcnt;		/* `\0'-character count (per line)  */
+static	int		nul_count;	/* `\0'-character count (per line)  */
 static	int		peekc;		/* just-read, pushed-back character */
 static	int		sig_state;	/* SIGINT / SIGQUIT / SIGTERM state */
 static	pid_t		spid;		/* shell process ID                 */
@@ -434,7 +434,7 @@ static	char		**glob(char **);
 int
 main(int argc, char **argv)
 {
-	char *argv0p;
+	char *av0p;
 	int rc_flag = 0;
 
 	sh_init();
@@ -445,7 +445,7 @@ main(int argc, char **argv)
 
 	if (argc > 1 && *argv[1] == '-' && argv[1][1] == 'v') {
 		verbose_flag = true;
-		argv0p = argv[0], argv = &argv[1], argv[0] = argv0p;
+		av0p = argv[0], argv = &argv[1], argv[0] = av0p;
 		argc--;
 	}
 
@@ -459,7 +459,7 @@ main(int argc, char **argv)
 				stype  = ONE_LINE;
 				dolv  += 1;
 				dolc  -= 1;
-				arginp = argv[2];
+				argv2p = argv[2];
 			} else if (argv[1][1] == 't')
 				stype = ONE_LINE;
 		} else {
@@ -574,7 +574,7 @@ rpx_line(void)
 	linep = line;
 	wordp = word;
 	error = false;
-	nulcnt = 0;
+	nul_count = 0;
 	do {
 		wp = linep;
 		if (get_word() == EOF)
@@ -755,7 +755,7 @@ getd:
 	}
 	/* Ignore all NUL characters. */
 	if (c == '\0') do {
-		if (++nulcnt >= LINEMAX) {
+		if (++nul_count >= LINEMAX) {
 			error_message = ERR_TMCHARS;
 			goto geterr;
 		}
@@ -770,7 +770,7 @@ geterr:
 
 /*
  * Read and return a character from the string pointed to by
- * arginp or from the standard input.  When reading from arginp,
+ * argv2p or from the standard input.  When reading from argv2p,
  * return the character or `\n' at end-of-string.  When reading
  * from the standard input, return the character or EOF.  EOF is
  * returned both on end-of-file and on read(2) error.
@@ -780,9 +780,9 @@ readc(void)
 {
 	unsigned char c;
 
-	if (arginp != NULL) {
-		if ((c = (*arginp++ & 0377)) == '\0') {
-			arginp = NULL;
+	if (argv2p != NULL) {
+		if ((c = (*argv2p++ & 0377)) == '\0') {
+			argv2p = NULL;
 			c = '\n';
 		}
 		return c;
