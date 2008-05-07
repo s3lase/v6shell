@@ -460,6 +460,12 @@ main(int argc, char **argv)
 				dolv  += 1;
 				dolc  -= 1;
 				argv2p = argv[2];
+			} else if (argv[1][1] == 'i') {
+				stype   = INTERACTIVE;
+				rc_flag = DO_DOT_OSHRC;
+			} else if (argv[1][1] == 'l') {
+				stype   = INTERACTIVE;
+				rc_flag = DO_SYSTEM_LOGIN;
 			} else if (argv[1][1] == 't')
 				stype = ONE_LINE;
 		} else {
@@ -474,10 +480,8 @@ main(int argc, char **argv)
 	} else {
 		chintr = 1;
 		fd_free();
-		if (isatty(FD0) != 0 && isatty(FD2) != 0) {
+		if (isatty(FD0) != 0 && isatty(FD2) != 0)
 			stype = INTERACTIVE;
-			(void)signal(SIGTERM, SIG_IGN);
-		}
 		name = "";
 		dolc = 1;
 	}
@@ -488,10 +492,13 @@ main(int argc, char **argv)
 		if (signal(SIGQUIT, SIG_IGN) == SIG_DFL)
 			chintr |= CH_SIGQUIT;
 		if (PROMPT) {
-			if (*argv[0] == '-')
-				rc_flag = DO_SYSTEM_LOGIN;
-			else
-				rc_flag = DO_DOT_OSHRC;
+			(void)signal(SIGTERM, SIG_IGN);
+			if (rc_flag == 0) {
+				if (*argv[0] == '-')
+					rc_flag = DO_SYSTEM_LOGIN;
+				else
+					rc_flag = DO_DOT_OSHRC;
+			}
 			rc_file(&rc_flag);
 		}
 	}
@@ -1229,7 +1236,7 @@ execute(struct tnode *t, int *pin, int *pout)
 	case TCOMMAND:
 		if (t->nav == NULL || t->nav[0] == NULL) {
 			/* should never be true */
-			err(-1, "execute: Invalid command");
+			err(-1, "execute: Invalid command\n");
 			return;
 		}
 		if (t->nidx != -1 && t->nidx != SBIEXEC) {
@@ -1291,7 +1298,7 @@ exec1(struct tnode *t)
 
 	if (t->nav == NULL || t->nav[0] == NULL) {
 		/* should never be true */
-		err(-1, "exec1: Invalid command");
+		err(-1, "exec1: Invalid command\n");
 		return;
 	}
 	switch (t->nidx) {
@@ -1574,7 +1581,7 @@ exec2(struct tnode *t, int *pin, int *pout)
 	}
 	if (t->nav == NULL || t->nav[0] == NULL) {
 		/* should never be true */
-		err(FC_ERR, "exec2: Invalid command");
+		err(FC_ERR, "exec2: Invalid command\n");
 		/*NOTREACHED*/
 	}
 	if (vtglob(t->nav)) {
@@ -1964,10 +1971,10 @@ sh_init(void)
 	 */
 	for (fd = 0; fd < 3; fd++)
 		if (!fd_type(fd, FD_ISOPEN))
-			err(SH_ERR, "%u: %s", (unsigned)fd, strerror(errno));
+			err(SH_ERR, "%u: %s\n", (unsigned)fd, strerror(errno));
 	if ((dupfd0 = dup2(FD0, DUPFD0)) == -1 ||
 	    fcntl(dupfd0, F_SETFD, FD_CLOEXEC) == -1)
-		err(SH_ERR, "%u: %s", DUPFD0, strerror(errno));
+		err(SH_ERR, "%u: %s\n", DUPFD0, strerror(errno));
 
 	/* Try to get the terminal name for $t. */
 	p   = ttyname(dupfd0);
@@ -2046,7 +2053,7 @@ rc_file(int *rc_flag)
 				r = snprintf(path, sizeof(path),
 					"%s/%s", home, file);
 				if (r < 0 || r >= (int)sizeof(path)) {
-					err(-1, "%s/%s: %s", home, file,
+					err(-1, "%s/%s: %s\n", home, file,
 					    strerror(ENAMETOOLONG));
 					*path = '\0';
 				}
@@ -2253,7 +2260,7 @@ atrim(char *ap)
 	}
 
 aterr:
-	err(ESTATUS, "%s %s", ERR_TRIM, ap);
+	err(ESTATUS, "%s %s\n", ERR_TRIM, ap);
 }
 
 /*
@@ -2319,7 +2326,7 @@ gtrim(char *ap)
 	}
 
 gterr:
-	err(FC_ERR, "%s %s", ERR_TRIM, ap);
+	err(FC_ERR, "%s %s\n", ERR_TRIM, ap);
 	/*NOTREACHED*/
 	return NULL;
 }

@@ -64,7 +64,12 @@ osh \- old shell (command interpreter)
 .SH SYNOPSIS
 .B osh
 [\fB\-v\fR]
-[\fB\-\fR | \fB\-c\fR \fIstring\fR | \fB\-t\fR | \fIfile\fR [\fIarg1 ...\fR]]
+[\fB\-\fR |
+\fB\-c\fR \fIstring\fR |
+\fB\-i\fR |
+\fB\-l\fR |
+\fB\-t\fR |
+\fIfile\fR [\fIarg1 ...\fR]]
 .SH DESCRIPTION
 .I Osh
 is an enhanced,
@@ -92,8 +97,19 @@ The shell executes
 .I string
 as a command line and exits.
 .TP
-.B \-t
+.B \-i
 (+)
+The shell is an interactive shell
+and prompts for input
+even if it is not connected to a terminal.
+.TP
+.B \-l
+(+)
+The shell is an interactive login shell
+and prompts for input
+even if it is not connected to a terminal.
+.TP
+.B \-t
 The shell reads a single command line
 from the standard input,
 executes it,
@@ -227,7 +243,7 @@ termination messages:
 	Bus error
 	Memory fault
 	Bad system call
-	(+) Broken pipe
+	Broken pipe (+)
 .fi
 .PP
 For an asynchronous process,
@@ -576,10 +592,9 @@ Otherwise,
 each pattern argument failing to match
 any files is simply removed from the argument list.
 .SS Initialization (+)
-If the first character of the name used to invoke
-an interactive shell is `\-' (e.g.,\ \-osh),
-it is assumed to be a login shell
-and tries to read the following
+If the first character of the file name used to
+invoke an interactive shell is `\-' (e.g.,\ \-osh),
+it is a login shell and tries to read the following
 three files in sequence:
 .IR @SYSCONFDIR@/osh.login ,
 .IR $h/.osh.login ,
@@ -587,13 +602,24 @@ and
 .IR $h/.oshrc .
 For each file which exists and is readable,
 the shell reads and executes the commands contained within.
+The same is true when the shell is invoked with the
+.B \-l
+option,
+regardless of the shell's file name.
 .PP
-In the case where an interactive shell is not a login shell,
+In the case where an interactive shell is not
+a login shell according to its file name,
 it only tries to read and execute commands from one file:
 .IR $h/.oshrc .
-In any case, after the shell finishes with the appropriate
-initialization file(s) it then prompts the user for
-input as usual.
+The same is true when the shell is invoked with the
+.B \-i
+option,
+regardless of the shell's file name.
+.PP
+.\" In any case,
+After the shell finishes with the appropriate
+initialization file(s),
+it then prompts the user for input as usual.
 .PP
 In the normal case,
 a SIGINT or SIGQUIT signal received by the shell
