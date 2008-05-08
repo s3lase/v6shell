@@ -2005,7 +2005,7 @@ sh_magic(void)
 	if (fd_type(FD0, FD_ISREG) && lseek(FD0, (off_t)0, SEEK_CUR) == 0) {
 		if (readc() == '#' && readc() == '!') {
 			for (len = 2; len < LINEMAX; len++)
-				if ((c = readc()) == EOF || c == '\n')
+				if ((c = readc()) == '\n' || c == EOF)
 					return;
 			err(-1, FMT1S, ERR_TMCHARS);
 		} else
