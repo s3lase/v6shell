@@ -186,6 +186,7 @@ static	int		dolc;		/* $N dollar-argument count         */
 static	const char	*dolp;		/* $N and $$ dollar-value pointer   */
 static	char	*const	*dolv;		/* $N dollar-argument value array   */
 static	bool		error;		/* error flag for read/parse errors */
+/*@observer@*/
 static	const char	*error_message;	/* error message for read errors    */
 static	bool		glob_flag;	/* glob flag for `*', `?', `['      */
 static	char		line[LINEMAX];	/* command-line buffer              */
