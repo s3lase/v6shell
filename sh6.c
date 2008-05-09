@@ -3,7 +3,7 @@
  */
 /*-
  * Copyright (c) 2004-2008
- *	Jeffrey Allen Neitzel <jneitzel (at) v6shell (dot) org>.
+ *	Jeffrey Allen Neitzel <jan (at) v6shell (dot) org>.
  *	All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

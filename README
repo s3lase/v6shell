@@ -1,4 +1,4 @@
-Welcome to osh-current (20080307)!
+Welcome to osh-current (20080509)!
 
 Osh(1) is an enhanced, backward-compatible port of the Sixth Edition (V6)
 Unix shell (circa 1975), also known as the Thompson shell.  The original
@@ -32,19 +32,19 @@ package to see if it works or not.  In either case, please consider
 reporting the results to the developer if possible.  The resulting
 "config.h" file and the compiler name/version is most helpful.
 
-If you think you may have found a bug, before reporting it, please
-try to reproduce it with the latest version of the code.  With bug
-reports, please try to ensure that enough information to reproduce
-the problem is enclosed.  Also, if a known fix for it exists then
-please include that as well.  All bug reports should be sent to the
-following email address:
-	jneitzel (at) v6shell (dot) org
+Before reporting a bug in the osh package, please try to reproduce it
+with the latest version of the code.  With problem reports, please try
+to ensure that enough information to reproduce the problem is enclosed.
+Also, if a known fix for it exists, then please include that as well.
+Please send your problem report to the following email address:
+
+	pr (at) v6shell (dot) org
 
 If you have any comments or questions about this software, I encourage
 you to contact me via email.  Thanks & Enjoy!
 
 Jeffrey Allen Neitzel
-jneitzel (at) v6shell (dot) org
-http://www.v6shell.org/						2008/03/07
+jan (at) v6shell (dot) org
+http://www.v6shell.org/						2008/05/09
 
 @(#)$Id$
