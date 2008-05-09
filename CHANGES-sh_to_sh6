@@ -5,6 +5,10 @@ command in porting them to run on modern Unix systems.
 -------------------------------------------------------------------------------
 [osh-current]:
 sh6.c:
+	* No user-visible changes.
+
+	* Did some refactoring to keep the code in sync w/ osh.c when possible.
+
 	* Refactored the NUL-ignoring code in the xgetc() function.
 
 -------------------------------------------------------------------------------
@@ -296,6 +300,6 @@ glob.c:
     Date: May 14, 1975
     From: Sixth Edition Unix /usr/source/s1/glob.c
 
-Jeffrey Allen Neitzel						2008/04/10
+Jeffrey Allen Neitzel						2008/05/09
 
 @(#)$Id$
