@@ -1,4 +1,4 @@
-# Makefile for osh-current (20080507)
+# Makefile for osh-current (20080509)
 #
 # @(#)$Id$
 #
@@ -43,23 +43,19 @@ CFLAGS+=	-Wall -W
 # !!! ================= Developer stuff below... ================= !!!
 
 #
-# Further adjust CFLAGS and LDFLAGS as needed according to MOX*.
+# Adjust CFLAGS and LDFLAGS for MOXARCH if needed.
 #
 MOXARCH?=
-MOXSHELLARCH?=	$(MOXARCH)
-MOXUTILSARCH?=	$(MOXARCH)
-SCFLAGS=	$(CFLAGS)	$(MOXSHELLARCH)
-SLDFLAGS=	$(LDFLAGS)	$(MOXSHELLARCH)
-UCFLAGS=	$(CFLAGS)	$(MOXUTILSARCH)
-ULDFLAGS=	$(LDFLAGS)	$(MOXUTILSARCH)
+CFLAGS+=	$(MOXARCH)
+LDFLAGS+=	$(MOXARCH)
 
 #
-# The following specifies the osh version:
+# The following specifies the osh date and version:
 #	osh-YYYYMMDD		== official release
 #	osh-current (YYYYMMDD)	== development snapshot
 #
-OSH_DATE=	May 7, 2008
-OSH_VERSION=	osh-current (20080507)
+OSH_DATE=	May 9, 2008
+OSH_VERSION=	osh-current (20080509)
 
 OSH=	osh
 SH6=	sh6 glob6
@@ -86,27 +82,22 @@ sh6all: $(SH6) utils man
 utils: $(UTILS)
 
 osh: config.h rcsid.h $(PEXSRC) osh.c
-	@if test X"$(MOXSHELLARCH)" != X"$(MOXUTILSARCH)";then rm -f pexec.o;fi
-	@$(MAKE) CFLAGS='$(SCFLAGS)' LDFLAGS='$(SLDFLAGS)' $@bin
+	@$(MAKE) $@bin
 
 sh6: config.h rcsid.h $(PEXSRC) sh6.c
-	@if test X"$(MOXSHELLARCH)" != X"$(MOXUTILSARCH)";then rm -f pexec.o;fi
-	@$(MAKE) CFLAGS='$(SCFLAGS)' LDFLAGS='$(SLDFLAGS)' $@bin
+	@$(MAKE) $@bin
 
 glob6: config.h rcsid.h $(PEXSRC) glob6.c
-	@if test X"$(MOXSHELLARCH)" != X"$(MOXUTILSARCH)";then rm -f pexec.o;fi
-	@$(MAKE) CFLAGS='$(SCFLAGS)' LDFLAGS='$(SLDFLAGS)' $@bin
+	@$(MAKE) $@bin
 
 if: config.h rcsid.h $(PEXSRC) if.c
-	@if test X"$(MOXSHELLARCH)" != X"$(MOXUTILSARCH)";then rm -f pexec.o;fi
-	@$(MAKE) CFLAGS='$(UCFLAGS)' LDFLAGS='$(ULDFLAGS)' $@bin
+	@$(MAKE) $@bin
 
 goto: config.h rcsid.h goto.c
-	@$(MAKE) CFLAGS='$(UCFLAGS)' LDFLAGS='$(ULDFLAGS)' $@bin
+	@$(MAKE) $@bin
 
 fd2: config.h rcsid.h $(PEXSRC) fd2.c
-	@if test X"$(MOXSHELLARCH)" != X"$(MOXUTILSARCH)";then rm -f pexec.o;fi
-	@$(MAKE) CFLAGS='$(UCFLAGS)' LDFLAGS='$(ULDFLAGS)' $@bin
+	@$(MAKE) $@bin
 
 $(OBJ): config.h rcsid.h
 pexec.o: $(PEXSRC)

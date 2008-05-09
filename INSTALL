@@ -1,4 +1,4 @@
-Build and install instructions for osh-current (20080307)!
+Build and install instructions for osh-current (20080509)!
 
 SYNOPSIS
 	env [variable=value ...] make [target ...]
@@ -51,7 +51,7 @@ passing the desired variable=value pair(s) on the command line.
 			and manual pages to their final targets.
 
 Mac OS X only:
-The following configuration variables specify the desired target
+The following configuration variable specifies the desired target
 architecture(s) for compiling universal binaries and/or 64-bit
 binaries and/or 32-bit binaries for Mac OS X running on Intel and
 PowerPC Macs.
@@ -60,10 +60,6 @@ PowerPC Macs.
 			one or more of the following: -arch x86_64,
 			-arch ppc64, -arch i386, -arch ppc.
 			See also EXAMPLES.
-
-	MOXSHELLARCH	Defaults to $(MOXARCH).
-
-	MOXUTILSARCH	Defaults to $(MOXARCH).
 
 -------
 TARGETS
@@ -120,17 +116,6 @@ It then installs the entire osh package into the default location.
 	% make MOXARCH='-arch i386 -arch ppc'
 	# make install
 
-The following example compiles the shell components (osh, sh6,
-glob6) as 64-bit binaries and the utilities (if, goto, fd2) as
-32-bit binaries for Mac OS X running on 64-bit Intel Macs.  It
-then installs the entire osh package into the default location.
-
-This can provide a noticeable performance improvement for heavy
-shell scripting on 64-bit Intel Macs.
-
-	% make MOXSHELLARCH='-arch x86_64' MOXUTILSARCH='-arch i386'
-	# make install
-
-Jeffrey Allen Neitzel						2008/03/07
+Jeffrey Allen Neitzel						2008/05/09
 
 @(#)$Id$
