@@ -348,7 +348,6 @@ static	bool		error_source;	/* error flag for `source' command  */
 static	uid_t		euid;		/* effective shell user ID          */
 static	char		line[LINEMAX];	/* command-line buffer              */
 static	char		*linep;
-/*@observer@*/
 static	const char	*name;		/* $0 - shell command name          */
 static	int		nul_count;	/* `\0'-character count (per line)  */
 static	int		peekc;		/* just-read, pushed-back character */
@@ -482,8 +481,6 @@ main(int argc, char **argv)
 		fd_free();
 		if (isatty(FD0) != 0 && isatty(FD2) != 0)
 			stype = INTERACTIVE;
-		name = "";
-		dolc = 1;
 	}
 	if (chintr != 0) {
 		chintr = 0;
@@ -559,8 +556,7 @@ cmd_verbose(void)
 	if (verbose_flag) {
 		vp = word;
 		while (**vp != '\n') {
-			fd_print(FD2, "%s", *vp);
-			vp++;
+			fd_print(FD2, "%s", *vp++);
 			if (**vp != '\n')
 				fd_print(FD2, " ");
 		}
