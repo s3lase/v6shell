@@ -1,4 +1,4 @@
-Welcome to osh-current (20080509)!
+Welcome to osh-current (20080512)!
 
 Osh(1) is an enhanced, backward-compatible port of the Sixth Edition (V6)
 Unix shell (circa 1975), also known as the Thompson shell.  The original
@@ -45,6 +45,6 @@ you to contact me via email.  Thanks & Enjoy!
 
 Jeffrey Allen Neitzel
 jan (at) v6shell (dot) org
-http://www.v6shell.org/						2008/05/09
+http://www.v6shell.org/						2008/05/12
 
 @(#)$Id$
