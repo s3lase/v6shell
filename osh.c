@@ -189,8 +189,9 @@ OSH_RCSID("@(#)$Id$");
 #define	ONE_LINE	001
 #define	COMMAND_FILE	002
 #define	INTERACTIVE	004
-#define	RC_FILE		010
-#define	SOURCE		020
+#define	ON_TTY		010
+#define	RC_FILE		020
+#define	SOURCE		040
 
 /*
  * Non-zero exit status values
@@ -240,7 +241,7 @@ OSH_RCSID("@(#)$Id$");
 #define	ESTATUS		((getpid() == spid) ? SH_ERR : FC_ERR)
 #define	EXIT(s)		((getpid() == spid) ? exit((s)) : _exit((s)))
 #define	HALT		true
-#define	PROMPT		((stype & 037) == INTERACTIVE)
+#define	PROMPT		((stype & 077) == (INTERACTIVE | ON_TTY))
 #define	STYPE(f)	((stype & (f)) != 0)
 
 /*
@@ -403,6 +404,7 @@ static	void		pwait(pid_t);
 static	int		prsig(int, pid_t, pid_t);
 static	void		sh_init(void);
 static	void		sh_magic(void);
+static	bool		sh_on_tty(void);
 static	void		rc_file(int *);
 static	void		omsg(int, const char *, va_list);
 static	void		err(int, /*@null@*/ const char *, /*@printflike@*/ ...);
@@ -460,11 +462,13 @@ main(int argc, char **argv)
 				dolc  -= 1;
 				argv2p = argv[2];
 			} else if (argv[1][1] == 'i') {
-				stype   = INTERACTIVE;
 				rc_flag = DO_DOT_OSHRC;
-			} else if (argv[1][1] == 'l') {
 				stype   = INTERACTIVE;
+				if (sh_on_tty()) stype |= ON_TTY;
+			} else if (argv[1][1] == 'l') {
 				rc_flag = DO_SYSTEM_LOGIN;
+				stype   = INTERACTIVE;
+				if (sh_on_tty()) stype |= ON_TTY;
 			} else if (argv[1][1] == 't')
 				stype = ONE_LINE;
 		} else {
@@ -479,8 +483,8 @@ main(int argc, char **argv)
 	} else {
 		chintr = 1;
 		fd_free();
-		if (isatty(FD0) != 0 && isatty(FD2) != 0)
-			stype = INTERACTIVE;
+		if (sh_on_tty())
+			stype = INTERACTIVE | ON_TTY;
 	}
 	if (chintr != 0) {
 		chintr = 0;
@@ -488,7 +492,7 @@ main(int argc, char **argv)
 			chintr |= CH_SIGINT;
 		if (signal(SIGQUIT, SIG_IGN) == SIG_DFL)
 			chintr |= CH_SIGQUIT;
-		if (PROMPT) {
+		if (STYPE(INTERACTIVE)) {
 			(void)signal(SIGTERM, SIG_IGN);
 			if (rc_flag == 0) {
 				if (*argv[0] == '-')
@@ -2007,6 +2011,17 @@ sh_magic(void)
 		} else
 			(void)lseek(FD0, (off_t)0, SEEK_SET);
 	}
+}
+
+/*
+ * Return true (1) if the shell is connected to a terminal.
+ * Otherwise, return false (0).
+ */
+static bool
+sh_on_tty(void)
+{
+
+	return isatty(FD0) != 0 && isatty(FD2) != 0;
 }
 
 /*

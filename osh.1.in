@@ -99,15 +99,15 @@ as a command line and exits.
 .TP
 .B \-i
 (+)
-The shell is an interactive shell
-and prompts for input
-even if it is not connected to a terminal.
+The shell is an interactive shell.
+.\" and prompts for input
+.\" even if it is not connected to a terminal.
 .TP
 .B \-l
 (+)
-The shell is an interactive login shell
-and prompts for input
-even if it is not connected to a terminal.
+The shell is an interactive login shell.
+.\" and prompts for input
+.\" even if it is not connected to a terminal.
 .TP
 .B \-t
 The shell reads a single command line
