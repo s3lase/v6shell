@@ -1,4 +1,4 @@
-Build and install instructions for osh-current (20080516)!
+Build and install instructions for osh-current (20080521)!
 
 SYNOPSIS
 	env [variable=value ...] make [target ...]
@@ -116,6 +116,6 @@ It then installs the entire osh package into the default location.
 	% make MOXARCH='-arch i386 -arch ppc'
 	# make install
 
-Jeffrey Allen Neitzel						2008/05/16
+Jeffrey Allen Neitzel						2008/05/21
 
 @(#)$Id$

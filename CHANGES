@@ -7,8 +7,7 @@ are marked w/ a `C:' in the details below.
 	  the osh project website has a new URL, http://www.v6shell.org/,
 	  as of Wednesday, 2008-01-16.
 
-INSTALL:
-Makefile:
+INSTALL, Makefile:
 	* On Mac OS X, changed how compiling universal binaries is handled.
 	  Now, only MOXARCH is used to specify the target architecture(s)
 	  if and when the default (native) architecture is not desired.
@@ -18,6 +17,10 @@ Makefile:
 		% make MOXARCH='-arch x86_64'
 
 osh.c:
+	* Changed the behavior of the shell when invoked w/ the `-i' or `-l'
+	  option so that it only prompts for input if it is connected to a
+	  terminal.
+
 	* Added code for 3 new command-line options (see osh(1)):
 		`-i' == interactive shell
 		`-l' == login shell
@@ -34,6 +37,8 @@ goto.c:
 	* Commented the xgetc() function.
 
 osh.1.in:
+	* Modified the documentation for the `-i' and `-l' options.
+
 	* Added appropriate documentation for the `-i', `-l', and `-v'
 	  command-line options.
 
@@ -1256,6 +1261,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2008/05/09
+Jeffrey Allen Neitzel						2008/05/21
 
 @(#)$Id$
