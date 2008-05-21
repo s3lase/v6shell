@@ -1,0 +1,16 @@
+#!/usr/bin/env sh6
+:
+: sh6 - " Force sh(1), csh(1), and other shells to exit w/ error! " <'' ;;;
+:
+
+: " Check for correct usage. "
+: >>$0'' <'' ; : >>$1'' <'' ; : >>$2'' <''
+if X$1 != X-c -a X$1 != X-m -o X$2 != X if { exit } pusage $0 '"{-c | -m}"'
+
+	goto $1
+
+: -c
+	mksums dosums Makefile mkconfig *.* | diff SUMS - ; exit
+
+: -m
+	mksums dosums Makefile mkconfig *.* >SUMS
