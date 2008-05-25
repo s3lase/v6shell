@@ -369,6 +369,7 @@ static	char		**wordp;
 /*
  * Function prototypes
  */
+static	int8_t		cmd_index(const char *);
 static	void		cmd_loop(bool);
 static	void		cmd_verbose(void);
 static	int		rpx_line(void);
@@ -388,7 +389,6 @@ static	struct tnode	*syn2(char **, char **);
 /*@null@*/
 static	struct tnode	*syn3(char **, char **);
 static	bool		any(int, const char *);
-static	int8_t		which(const char *);
 static	bool		vtglob(char **);
 static	void		vtrim(char **);
 static	void		execute(/*@null@*/ struct tnode *,
@@ -520,6 +520,22 @@ done:
 	xfree(user);
 	user = NULL;
 	return status;
+}
+
+/*
+ * Determine whether cmd is a special built-in command.
+ * If so, return its index value.  Otherwise, return -1
+ * as name is either external or not a command at all.
+ */
+static int8_t
+cmd_index(const char *cmd)
+{
+	int8_t i;
+
+	for (i = 0; sbi[i] != NULL; i++)
+		if (EQUAL(cmd, sbi[i]))
+			return i;
+	return -1;
 }
 
 /*
@@ -1109,7 +1125,7 @@ syn3(char **p1, char **p2)
 		for (ac = 0; ac < n; ac++)
 			t->nav[ac] = xstrdup(p1[ac]);
 		t->nav[ac] = NULL;
-		t->nidx = which(t->nav[0]);
+		t->nidx    = cmd_index(t->nav[0]);
 	} else {
 		if (n != 0)
 			goto synerr;
@@ -1143,22 +1159,6 @@ any(int c, const char *as)
 		if (*s++ == c)
 			return true;
 	return false;
-}
-
-/*
- * Determine whether cmd is a special built-in command.
- * If so, return its index value.  Otherwise, return -1
- * as name is either external or not a command at all.
- */
-static int8_t
-which(const char *cmd)
-{
-	int8_t i;
-
-	for (i = 0; sbi[i] != NULL; i++)
-		if (EQUAL(cmd, sbi[i]))
-			return i;
-	return -1;
 }
 
 /*
