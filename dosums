@@ -1,16 +1,18 @@
-#!/usr/bin/env sh6
+#!/usr/bin/env osh
 :
-: sh6 - " Force sh(1), csh(1), and other shells to exit w/ error! " <'' ;;;
+: osh - " Force sh(1), csh(1), and other shells to exit w/ error! " <'' ;;;
 :
 
 : " Check for correct usage. "
-: >>$0'' <'' ; : >>$1'' <'' ; : >>$2'' <''
-if X$1 != X-c -a X$1 != X-m -o X$2 != X if { exit } pusage $0 '"{-c | -m}"'
+: >>$0'' <'' ; : >>$1'' <'' ; killer $0 dosums
+if $n = 1 -a X$1 = X-c -o X$1 = X-m goto $1
 
-	goto $1
+	pusage $0 '"{-c | -m}"' ; exit
 
-: -c
+: -c - " Check the current list of files against the SUMS file. "
+
 	mksums dosums Makefile mkconfig *.* | diff SUMS - ; exit
 
-: -m
+: -m - " Make a new SUMS file from the current list of files. "
+
 	mksums dosums Makefile mkconfig *.* >SUMS
