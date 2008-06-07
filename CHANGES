@@ -17,6 +17,11 @@ INSTALL, Makefile:
 		% make MOXARCH='-arch x86_64'
 
 osh.c:
+	* Added support for SYSCONFDIR/osh.oshrc (system-wide rc init file
+	  for interactive shells), SYSCONFDIR/osh.logout (system-wide rc
+	  logout file for login shells), and $h/.osh.logout (user rc logout
+	  file for login shells).
+
 	* Changed the behavior of the shell when invoked w/ the `-i' or `-l'
 	  option so that it only prompts for input if it is connected to a
 	  terminal.
@@ -37,6 +42,11 @@ goto.c:
 	* Commented the xgetc() function.
 
 osh.1.in:
+	* Added documentation for SYSCONFDIR/osh.oshrc (system-wide rc init
+	  file for interactive shells), SYSCONFDIR/osh.logout (system-wide
+	  rc logout file for login shells), and $h/.osh.logout (user rc logout
+	  file for login shells).
+
 	* Modified the documentation for the `-i' and `-l' options.
 
 	* Added appropriate documentation for the `-i', `-l', and `-v'
@@ -1261,6 +1271,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2008/05/21
+Jeffrey Allen Neitzel						2008/06/07
 
 @(#)$Id$
