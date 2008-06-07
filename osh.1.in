@@ -99,15 +99,29 @@ as a command line and exits.
 .TP
 .B \-i
 (+)
-The shell is an interactive shell.
-.\" and prompts for input
-.\" even if it is not connected to a terminal.
+The shell behaves as an interactive shell
+by reading and executing commands from the
+appropriate rc file(s) if possible
+(see
+.I "Startup"
+below)
+before reading and executing command lines
+from the standard input.
+The shell prompts for input
+if it is connected to a terminal.
 .TP
 .B \-l
 (+)
-The shell is an interactive login shell.
-.\" and prompts for input
-.\" even if it is not connected to a terminal.
+The shell behaves as a login shell
+by reading and executing commands from the
+appropriate rc file(s) if possible
+(see
+.I "Startup"
+below)
+before reading and executing command lines
+from the standard input.
+The shell prompts for input
+if it is connected to a terminal.
 .TP
 .B \-t
 The shell reads a single command line
@@ -144,11 +158,13 @@ with a `%\ ' (or `#\ ' for the superuser)
 before reading each command line from the terminal.
 .PP
 (+) Whenever an interactive shell starts,
-it first tries to execute commands from the
-appropriate initialization file(s) before
-reading command lines from the terminal (see
-.I "Initialization"
-below).
+it first tries to read and execute commands
+from the appropriate rc file(s)
+(see
+.I "Startup"
+below)
+before reading and executing command lines
+from the terminal.
 .SS Commands
 Each command is a sequence of non-blank command arguments
 separated by blanks (spaces or tabs).
@@ -591,17 +607,16 @@ fail to match any files.
 Otherwise,
 each pattern argument failing to match
 any files is simply removed from the argument list.
-.SS Initialization (+)
+.SS Startup (+)
 If the first character of the file name used to
 invoke an interactive shell is `\-' (e.g.,\ \-osh),
-it is a login shell and tries to read the following
-three files in sequence:
+it is a login shell and tries to read and execute commands
+from the following three rc init files in sequence:
 .IR @SYSCONFDIR@/osh.login ,
+.IR @SYSCONFDIR@/osh.oshrc ,
 .IR $h/.osh.login ,
 and
 .IR $h/.oshrc .
-For each file which exists and is readable,
-the shell reads and executes the commands contained within.
 The same is true when the shell is invoked with the
 .B \-l
 option,
@@ -609,21 +624,35 @@ regardless of the shell's file name.
 .PP
 In the case where an interactive shell is not
 a login shell according to its file name,
-it only tries to read and execute commands from one file:
+it only tries to read and execute commands
+from two rc init files:
+.I @SYSCONFDIR@/osh.oshrc
+and
 .IR $h/.oshrc .
 The same is true when the shell is invoked with the
 .B \-i
 option,
 regardless of the shell's file name.
 .PP
-.\" In any case,
-After the shell finishes with the appropriate
-initialization file(s),
+The shell only performs the initialization actions
+described above for readable, regular rc files.
+If any rc file is
+.I not
+readable,
+the shell ignores it and continues as normal.
+If any rc file is
+.I not
+a regular file (or a link to a regular file),
+the shell ignores it, prints a diagnostic,
+and continues as normal.
+.PP
+In any case,
+after the shell finishes its initialization actions,
 it then prompts the user for input as usual.
 .PP
 In the normal case,
 a SIGINT or SIGQUIT signal received by the shell
-during execution of any initialization file causes
+during execution of any rc file causes
 it to cease execution of that file
 without terminating.
 Thus,
@@ -631,28 +660,34 @@ it may be desirable to use the
 .B sigign
 special command to ignore these
 and other signals in some cases.
-This is particularly true in the case of
-.IR @SYSCONFDIR@/osh.login .
+This is particularly true for
+.IR @SYSCONFDIR@/osh.login ,
+and possibly for
+.I @SYSCONFDIR@/osh.oshrc
+as well.
 .PP
-An
+The
 .B exit
-command
+special command
 always causes the shell to terminate if it occurs
-in any initialization file.
-.PP
-Notice that
-if any initialization file is
-.I not
-a regular file (or a link to a regular file),
-the shell ignores it, prints a diagnostic,
-and then continues with the normal initialization
-actions described above.
+in any rc file.
+.SS Shutdown (+)
+If the shell is invoked as a login shell,
+it tries to read and execute commands from
+.I @SYSCONFDIR@/osh.logout
+and
+.I $h/.osh.logout
+upon logout.
+These two rc logout files may be used to clean up
+upon termination of a user's login session (see
+.I "End of file"
+below).
 .SS End of file
 An end-of-file in the shell's input
 causes it to exit.
 If the shell is interactive,
 this means it exits when the user
-types an EOT (^D).
+types an EOT (^D) at the prompt.
 .SS Special commands
 The following commands are special in that they are
 executed by the shell without creating a new process.
@@ -680,8 +715,8 @@ Pipes and I/O redirection are permitted.
 .TP
 .B exit
 Causes the shell to cease execution of a file.
-This means exit has no effect in an interactive shell
-when its standard input is connected to a terminal.
+This means exit has no effect at the prompt
+of an interactive shell.
 .TP
 \fBlogin\fR [\fIarg ...\fR]
 Replaces the current interactive shell with
@@ -878,13 +913,22 @@ not PATH.
 default source of input for asynchronous processes
 .TP
 .IR @SYSCONFDIR@/osh.login \ (+)
-system-wide initialization file for interactive login shells
+system-wide rc init file for login shells
+.TP
+.IR @SYSCONFDIR@/osh.oshrc \ (+)
+system-wide rc init file for \fIall\fR interactive shells
 .TP
 .IR $h/.osh.login \ (+)
-user initialization file for interactive login shells
+user rc init file for login shells
 .TP
 .IR $h/.oshrc \ (+)
-user initialization file for \fIall\fR interactive shells
+user rc init file for \fIall\fR interactive shells
+.TP
+.IR @SYSCONFDIR@/osh.logout \ (+)
+system-wide rc logout file for login shells
+.TP
+.IR $h/.osh.logout \ (+)
+user rc logout file for login shells
 .SH "SEE ALSO"
 awk(1),
 echo(1),
