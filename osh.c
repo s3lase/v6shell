@@ -144,15 +144,23 @@ OSH_RCSID("@(#)$Id$");
 #define	SAVFD0		12	/* used in do_source()                */
 
 /*
- * These are the initialization files used by osh.
- * The `PATH_DOT_*' files are in the user's HOME directory.
+ * These are the rc (init and logout) files used by osh.
+ * The `FILE_DOT_*' files are in the user's HOME directory.
  */
 #define	DO_SYSTEM_LOGIN		1
 #define	PATH_SYSTEM_LOGIN	SYSCONFDIR/**/"/osh.login"
-#define	DO_DOT_LOGIN		2
-#define	PATH_DOT_LOGIN		".osh.login"
-#define	DO_DOT_OSHRC		3
-#define	PATH_DOT_OSHRC		".oshrc"
+#define	DO_SYSTEM_OSHRC		2
+#define	PATH_SYSTEM_OSHRC	SYSCONFDIR/**/"/osh.oshrc"
+#define	DO_DOT_LOGIN		3
+#define	FILE_DOT_LOGIN		".osh.login"
+#define	DO_DOT_OSHRC		4
+#define	FILE_DOT_OSHRC		".oshrc"
+#define	DO_INIT_DONE		5
+#define	DO_SYSTEM_LOGOUT	1
+#define	PATH_SYSTEM_LOGOUT	SYSCONFDIR/**/"/osh.logout"
+#define	DO_DOT_LOGOUT		2
+#define	FILE_DOT_LOGOUT		".osh.logout"
+#define	DO_LOGOUT_DONE		3
 
 /*
  * These are the symbolic names for the types checked by fd_type().
@@ -405,7 +413,12 @@ static	int		prsig(int, pid_t, pid_t);
 static	void		sh_init(void);
 static	void		sh_magic(void);
 static	bool		sh_on_tty(void);
-static	void		rc_file(int *);
+static	void		rc_init(bool, int *);
+static	void		rc_logout(bool, int *);
+static	char		*rc_build(/*@out@*/ /*@returned@*/ char *,
+				  const char *, size_t);
+/*@maynotreturn@*/
+static	bool		rc_open(/*@null@*/ const char *);
 static	void		omsg(int, const char *, va_list);
 static	void		err(int, /*@null@*/ const char *, /*@printflike@*/ ...);
 static	void		fd_free(void);
@@ -427,7 +440,7 @@ static	char		**glob(char **);
  *	osh - old shell (command interpreter)
  *
  * SYNOPSIS
- *	osh [- | -c string | -t | file [arg1 ...]]
+ *	osh [-v] [- | -c string | -i | -l | -t | file [arg1 ...]]
  *
  * DESCRIPTION
  *	See the osh(1) manual page for full details.
@@ -437,6 +450,7 @@ main(int argc, char **argv)
 {
 	char *av0p;
 	int rc_flag = 0;
+	bool rc_login = false;
 
 	sh_init();
 	if (argv[0] == NULL || *argv[0] == '\0')
@@ -462,13 +476,16 @@ main(int argc, char **argv)
 				dolc  -= 1;
 				argv2p = argv[2];
 			} else if (argv[1][1] == 'i') {
-				rc_flag = DO_DOT_OSHRC;
+				rc_flag = DO_SYSTEM_OSHRC;
 				stype   = INTERACTIVE;
-				if (sh_on_tty()) stype |= ON_TTY;
+				if (sh_on_tty())
+					stype |= ON_TTY;
 			} else if (argv[1][1] == 'l') {
-				rc_flag = DO_SYSTEM_LOGIN;
-				stype   = INTERACTIVE;
-				if (sh_on_tty()) stype |= ON_TTY;
+				rc_flag  = DO_SYSTEM_LOGIN;
+				rc_login = true;
+				stype    = INTERACTIVE;
+				if (sh_on_tty())
+					stype |= ON_TTY;
 			} else if (argv[1][1] == 't')
 				stype = ONE_LINE;
 		} else {
@@ -495,23 +512,35 @@ main(int argc, char **argv)
 		if (STYPE(INTERACTIVE)) {
 			(void)signal(SIGTERM, SIG_IGN);
 			if (rc_flag == 0) {
-				if (*argv[0] == '-')
-					rc_flag = DO_SYSTEM_LOGIN;
-				else
-					rc_flag = DO_DOT_OSHRC;
+				if (*argv[0] == '-') {
+					rc_flag  = DO_SYSTEM_LOGIN;
+					rc_login = true;
+				} else
+					rc_flag = DO_SYSTEM_OSHRC;
 			}
-			rc_file(&rc_flag);
+			rc_init(rc_login, &rc_flag);
 		}
 	}
 
 	if (STYPE(ONE_LINE))
 		(void)rpx_line();
 	else {
+		/* Read and execute any rc init files if appropriate. */
 		while (STYPE(RC_FILE)) {
 			cmd_loop(!HALT);
-			rc_file(&rc_flag);
+			rc_init(rc_login, &rc_flag);
 		}
+
+		/* Read and execute the shell's input. */
 		cmd_loop(!HALT);
+
+		/* Read and execute any rc logout files if appropriate. */
+		rc_flag = DO_SYSTEM_LOGOUT;
+		rc_logout(rc_login, &rc_flag);
+		while (STYPE(RC_FILE)) {
+			cmd_loop(!HALT);
+			rc_logout(rc_login, &rc_flag);
+		}
 	}
 
 done:
@@ -576,7 +605,8 @@ cmd_verbose(void)
 	if (verbose_flag) {
 		vp = word;
 		while (**vp != '\n') {
-			fd_print(FD2, "%s", *vp++);
+			fd_print(FD2, "%s", *vp);
+			vp++;
 			if (**vp != '\n')
 				fd_print(FD2, " ");
 		}
@@ -1319,11 +1349,11 @@ exec1(struct tnode *t)
 	case SBIEXIT:
 		/*
 		 * If the shell is invoked w/ the `-c' or `-t' option, or is
-		 * executing an initialization file, exit the shell outright
-		 * if it is not sourcing another file in the current context.
-		 * Otherwise, cause the shell to cease execution of a file of
-		 * commands by seeking to the end of the file (and explicitly
-		 * exiting the shell only if the file is not being sourced).
+		 * executing an rc file, exit the shell outright if it is not
+		 * sourcing another file in the current context.  Otherwise,
+		 * cause the shell to cease execution of a file of commands
+		 * by seeking to the end of the file (and explicitly exiting
+		 * the shell only if the file is not being sourced).
 		 */
 		if (!PROMPT) {
 			if (STYPE(ONE_LINE|RC_FILE) && !STYPE(SOURCE))
@@ -2025,81 +2055,154 @@ sh_on_tty(void)
 }
 
 /*
- * Try to open each rc file for shell initialization.
- * If successful, temporarily assign the shell's standard input to
- * come from said file and return.  Restore original standard input
- * after all files have been tried.
- *
- * NOTE: The shell places no restrictions on the ownership/permissions
- *	 of any rc file.  If the file is readable and regular, the shell
- *	 will use it.  Thus, users should always protect themselves and
- *	 not do something like `chmod 0666 $h/.osh.login' w/o having
- *	 a legitimate reason to do so.
+ * Process the sequence of rc init files used by the shell.
+ * For each call to rc_init(), temporarily assign the shell's
+ * standard input to come from a given file in the sequence if
+ * possible and return.  For the default case, restore the shell's
+ * original standard input (or die trying), unset the RC_FILE flag,
+ * and return.
  */
 static void
-rc_file(int *rc_flag)
+rc_init(bool rc_login, int *rc_flag)
 {
-	int nfd, r;
 	char path[PATHMAX];
-	const char *file, *home;
+	const char *file;
 
-	/*
-	 * Try each rc file in turn.
-	 */
-	while (*rc_flag < 4) {
+#if 0
+	fd_print(FD2, "rc_init: STYPE(RC_FILE) == %s, *rc_flag == %d\n",
+		 STYPE(RC_FILE) ? "true" : "false", *rc_flag);
+#endif
+
+	while (*rc_flag <= DO_INIT_DONE) {
 		file = NULL;
-		*path = '\0';
 		switch (*rc_flag) {
 		case DO_SYSTEM_LOGIN:
 			file = PATH_SYSTEM_LOGIN;
 			break;
-		case DO_DOT_LOGIN:
-			file = PATH_DOT_LOGIN;
-			/*FALLTHROUGH*/
-		case DO_DOT_OSHRC:
-			if (file == NULL)
-				file = PATH_DOT_OSHRC;
-			home = getenv("HOME");
-			if (home != NULL && *home != '\0') {
-				r = snprintf(path, sizeof(path),
-					"%s/%s", home, file);
-				if (r < 0 || r >= (int)sizeof(path)) {
-					err(-1, "%s/%s: %s\n", home, file,
-					    strerror(ENAMETOOLONG));
-					*path = '\0';
-				}
-			}
-			file = path;
+		case DO_SYSTEM_OSHRC:
+			if (!rc_login)
+				(*rc_flag)++;
+			file = PATH_SYSTEM_OSHRC;
 			break;
+		case DO_DOT_LOGIN:
+			file = rc_build(path, FILE_DOT_LOGIN, sizeof(path));
+			break;
+		case DO_DOT_OSHRC:
+			file = rc_build(path, FILE_DOT_OSHRC, sizeof(path));
+			break;
+		default:
+			if (dup2(dupfd0, FD0) == -1)
+				err(SH_ERR, FMT1S, strerror(errno));
+			stype &= ~RC_FILE;
+			(*rc_flag)++;
+			return;
 		}
 		(*rc_flag)++;
-		if (file == NULL || *file == '\0')
-			continue;
-		if ((nfd = open(file, O_RDONLY | O_NONBLOCK)) == -1)
-			continue;
+		if (rc_open(file))
+			break;
+	}
+}
 
-		/* It must be a regular file (or a link to a regular file). */
-		if (!fd_type(nfd, FD_ISREG)) {
-			err(-1, FMT2S, file, ERR_EXEC);
-			(void)close(nfd);
-			continue;
-		}
-		if (dup2(nfd, FD0) == -1 ||
-		    fcntl(FD0, F_SETFL, O_RDONLY & ~O_NONBLOCK) == -1)
-			err(SH_ERR, FMT2S, file, strerror(errno));
+/*
+ * If rc_login == false, unset the RC_FILE flag and return.
+ * Otherwise, process the sequence of rc logout files used by
+ * the shell.  For each call to rc_logout(), temporarily assign
+ * the shell's standard input to come from a given file in the
+ * sequence if possible and return.  For the default case,
+ * unset the RC_FILE flag and return.
+ */
+static void
+rc_logout(bool rc_login, int *rc_flag)
+{
+	char path[PATHMAX];
+	const char *file;
 
-		/* success - clean up, return, and execute the rc file */
-		(void)close(nfd);
-		stype |= RC_FILE;
+	if (!rc_login) {
+		stype &= ~RC_FILE;
 		return;
 	}
-	stype &= ~RC_FILE;
 
-	/*
-	 * Restore original standard input or die trying.
-	 */
-	if (dup2(dupfd0, FD0) == -1)
-		err(SH_ERR, FMT1S, strerror(errno));
+#if 0
+	fd_print(FD2, "rc_logout: STYPE(RC_FILE) == %s, *rc_flag == %d\n",
+		 STYPE(RC_FILE) ? "true" : "false", *rc_flag);
+#endif
+
+	while (*rc_flag <= DO_LOGOUT_DONE) {
+		file = NULL;
+		switch (*rc_flag) {
+		case DO_SYSTEM_LOGOUT:
+			file = PATH_SYSTEM_LOGOUT;
+			break;
+		case DO_DOT_LOGOUT:
+			file = rc_build(path, FILE_DOT_LOGOUT, sizeof(path));
+			break;
+		default:
+			stype &= ~RC_FILE;
+			(*rc_flag)++;
+			return;
+		}
+		(*rc_flag)++;
+		if (rc_open(file))
+			break;
+	}
+}
+
+/*
+ * Build a path name for the rc file name pointed to by file.
+ * Write the resulting path name to the buffer pointed to by path.
+ * The size of the buffer pointed to by path is specified by size.
+ * Return path, which will be the empty string if the build fails.
+ */
+static char *
+rc_build(char *path, const char *file, size_t size)
+{
+	int len;
+	const char *home;
+
+	*path = '\0';
+	home  = getenv("HOME");
+	if (home != NULL && *home != '\0') {
+		len = snprintf(path, size, "%s/%s", home, file);
+		if (len < 0 || len >= (int)size) {
+			err(-1,"%s/%s: %s\n",home,file,strerror(ENAMETOOLONG));
+			*path = '\0';
+		}
+	}
+	return path;
+}
+
+/*
+ * Open the rc file specified by file, and prepare it for execution.
+ * The specified file must be readable and regular (or a link to a
+ * regular file) for the shell to use it.  Return true (1) if file
+ * is ready for execution, or return false (0) if file cannot be
+ * opened or executed.  Do not return on dup2(2) or fcntl(2) error.
+ */
+static bool
+rc_open(const char *file)
+{
+	int fd;
+
+	if (file == NULL || *file == '\0')
+		return false;
+
+	if ((fd = open(file, O_RDONLY | O_NONBLOCK)) == -1)
+		return false;
+
+	if (!fd_type(fd, FD_ISREG)) {
+		err(-1, FMT2S, file, ERR_EXEC);
+		(void)close(fd);
+		return false;
+	}
+
+	/* NOTE: A dup2(2) or fcntl(2) error here is fatal. */
+	if (dup2(fd, FD0) == -1 ||
+	    fcntl(FD0, F_SETFL, O_RDONLY & ~O_NONBLOCK) == -1)
+		err(SH_ERR, FMT2S, file, strerror(errno));
+
+	(void)close(fd);
+	stype |= RC_FILE;
+	return true;
 }
 
 /*
