@@ -509,7 +509,7 @@ An end-of-file in the shell's input
 causes it to exit.
 If the shell is interactive,
 this means it exits when the user
-types an EOT (^D).
+types an EOT (^D) at the prompt.
 .SS Special commands
 The following commands are special in that they are
 executed by the shell without creating a new process.
@@ -523,7 +523,8 @@ Changes the shell's current working directory to
 .TP
 .B exit
 Causes the shell to cease execution of a file.
-This means exit has no effect in an interactive shell.
+This means exit has no effect at the prompt
+of an interactive shell.
 .TP
 \fBlogin\fR [\fIarg ...\fR]
 Replaces the current interactive shell with

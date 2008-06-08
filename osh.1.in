@@ -611,7 +611,7 @@ any files is simply removed from the argument list.
 If the first character of the file name used to
 invoke an interactive shell is `\-' (e.g.,\ \-osh),
 it is a login shell and tries to read and execute commands
-from the following three rc init files in sequence:
+from the following four rc init files in sequence:
 .IR @SYSCONFDIR@/osh.login ,
 .IR @SYSCONFDIR@/osh.oshrc ,
 .IR $h/.osh.login ,
@@ -624,8 +624,8 @@ regardless of the shell's file name.
 .PP
 In the case where an interactive shell is not
 a login shell according to its file name,
-it only tries to read and execute commands
-from two rc init files:
+it tries to read and execute commands
+from the following two rc init files in sequence:
 .I @SYSCONFDIR@/osh.oshrc
 and
 .IR $h/.oshrc .
@@ -634,7 +634,7 @@ The same is true when the shell is invoked with the
 option,
 regardless of the shell's file name.
 .PP
-The shell only performs the initialization actions
+The shell only performs the startup actions
 described above for readable, regular rc files.
 If any rc file is
 .I not
@@ -647,8 +647,11 @@ the shell ignores it, prints a diagnostic,
 and continues as normal.
 .PP
 In any case,
-after the shell finishes its initialization actions,
-it then prompts the user for input as usual.
+after the shell finishes its startup actions,
+it then reads and executes command lines
+from the standard input.
+The shell only prompts the user for input
+if it is connected to a terminal.
 .PP
 In the normal case,
 a SIGINT or SIGQUIT signal received by the shell
@@ -678,10 +681,14 @@ it tries to read and execute commands from
 and
 .I $h/.osh.logout
 upon logout.
-These two rc logout files may be used to clean up
-upon termination of a user's login session (see
+These two rc logout files may be used to perform
+cleanup upon termination of a login session (see
 .I "End of file"
 below).
+.PP
+With regard to the shell's error, signal,
+and exit behavior,
+rc logout files are identical to rc init files.
 .SS End of file
 An end-of-file in the shell's input
 causes it to exit.
