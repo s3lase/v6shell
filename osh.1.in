@@ -103,7 +103,7 @@ The shell behaves as an interactive shell
 by reading and executing commands from the
 appropriate rc file(s) if possible
 (see
-.I "Startup"
+.I "Startup and shutdown"
 below)
 before reading and executing command lines
 from the standard input.
@@ -116,7 +116,7 @@ The shell behaves as a login shell
 by reading and executing commands from the
 appropriate rc file(s) if possible
 (see
-.I "Startup"
+.I "Startup and shutdown"
 below)
 before reading and executing command lines
 from the standard input.
@@ -157,11 +157,11 @@ An interactive shell prompts the user
 with a `%\ ' (or `#\ ' for the superuser)
 before reading each command line from the terminal.
 .PP
-(+) Whenever an interactive shell starts,
-it first tries to read and execute commands
-from the appropriate rc file(s)
+(+) When an interactive shell starts,
+it reads and executes commands
+from the appropriate rc file(s) if possible
 (see
-.I "Startup"
+.I "Startup and shutdown"
 below)
 before reading and executing command lines
 from the terminal.
@@ -607,7 +607,7 @@ fail to match any files.
 Otherwise,
 each pattern argument failing to match
 any files is simply removed from the argument list.
-.SS Startup (+)
+.SS Startup and shutdown (+)
 If the first character of the file name used to
 invoke an interactive shell is `\-' (e.g.,\ \-osh),
 it is a login shell and tries to read and execute commands
@@ -634,7 +634,26 @@ The same is true when the shell is invoked with the
 option,
 regardless of the shell's file name.
 .PP
-The shell only performs the startup actions
+In any case,
+after the shell finishes its startup actions,
+it then reads and executes command lines
+from the standard input.
+The shell only prompts the user for input
+if it is connected to a terminal.
+.PP
+If the shell is invoked as a login shell,
+it tries to read and execute commands from
+.I @SYSCONFDIR@/osh.logout
+and
+.I $h/.osh.logout
+in sequence upon logout.
+These two rc logout files may be used if necessary
+for cleanup upon termination of a login session (see
+.I "End of file"
+below).
+.PP
+Notice that
+the shell only performs the startup and shutdown actions
 described above for readable, regular rc files.
 If any rc file is
 .I not
@@ -646,13 +665,6 @@ a regular file (or a link to a regular file),
 the shell ignores it, prints a diagnostic,
 and continues as normal.
 .PP
-In any case,
-after the shell finishes its startup actions,
-it then reads and executes command lines
-from the standard input.
-The shell only prompts the user for input
-if it is connected to a terminal.
-.PP
 In the normal case,
 a SIGINT or SIGQUIT signal received by the shell
 during execution of any rc file causes
@@ -663,32 +675,20 @@ it may be desirable to use the
 .B sigign
 special command to ignore these
 and other signals in some cases.
-This is particularly true for
+For example,
+this is particularly true for
 .IR @SYSCONFDIR@/osh.login ,
-and possibly for
-.I @SYSCONFDIR@/osh.oshrc
-as well.
+.IR @SYSCONFDIR@/osh.oshrc ,
+and
+.\" possibly for
+.IR @SYSCONFDIR@/osh.logout .
+.\" as well.
 .PP
 The
 .B exit
 special command
 always causes the shell to terminate if it occurs
 in any rc file.
-.SS Shutdown (+)
-If the shell is invoked as a login shell,
-it tries to read and execute commands from
-.I @SYSCONFDIR@/osh.logout
-and
-.I $h/.osh.logout
-upon logout.
-These two rc logout files may be used to perform
-cleanup upon termination of a login session (see
-.I "End of file"
-below).
-.PP
-With regard to the shell's error, signal,
-and exit behavior,
-rc logout files are identical to rc init files.
 .SS End of file
 An end-of-file in the shell's input
 causes it to exit.
