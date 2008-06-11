@@ -2058,7 +2058,7 @@ sh_on_tty(void)
  * Process the sequence of rc init files used by the shell.
  * For each call to rc_init(), temporarily assign the shell's
  * standard input to come from a given file in the sequence if
- * possible and return.  For the default case, restore the shell's
+ * possible and return.  When DO_INIT_DONE, restore the shell's
  * original standard input (or die trying), unset the RC_FILE flag,
  * and return.
  */
@@ -2069,7 +2069,7 @@ rc_init(bool rc_login, int *rc_flag)
 	const char *file;
 
 #if 0
-	fd_print(FD2, "rc_init: STYPE(RC_FILE) == %s, *rc_flag == %d\n",
+	fd_print(FD2, "rc_init: 1: STYPE(RC_FILE) == %s, *rc_flag == %d\n",
 		 STYPE(RC_FILE) ? "true" : "false", *rc_flag);
 #endif
 
@@ -2090,17 +2090,24 @@ rc_init(bool rc_login, int *rc_flag)
 		case DO_DOT_OSHRC:
 			file = rc_build(path, FILE_DOT_OSHRC, sizeof(path));
 			break;
-		default:
+		case DO_INIT_DONE:
 			if (dup2(dupfd0, FD0) == -1)
 				err(SH_ERR, FMT1S, strerror(errno));
 			stype &= ~RC_FILE;
 			(*rc_flag)++;
+			return;
+		default:
+			stype &= ~RC_FILE;
 			return;
 		}
 		(*rc_flag)++;
 		if (rc_open(file))
 			break;
 	}
+#if 0
+	fd_print(FD2, "rc_init: 2: STYPE(RC_FILE) == %s, *rc_flag == %d\n",
+		 STYPE(RC_FILE) ? "true" : "false", *rc_flag);
+#endif
 }
 
 /*
@@ -2108,8 +2115,8 @@ rc_init(bool rc_login, int *rc_flag)
  * Otherwise, process the sequence of rc logout files used by
  * the shell.  For each call to rc_logout(), temporarily assign
  * the shell's standard input to come from a given file in the
- * sequence if possible and return.  For the default case,
- * unset the RC_FILE flag and return.
+ * sequence if possible and return.  When DO_LOGOUT_DONE, unset
+ * the RC_FILE flag and return.
  */
 static void
 rc_logout(bool rc_login, int *rc_flag)
@@ -2123,7 +2130,7 @@ rc_logout(bool rc_login, int *rc_flag)
 	}
 
 #if 0
-	fd_print(FD2, "rc_logout: STYPE(RC_FILE) == %s, *rc_flag == %d\n",
+	fd_print(FD2, "rc_logout: 1: STYPE(RC_FILE) == %s, *rc_flag == %d\n",
 		 STYPE(RC_FILE) ? "true" : "false", *rc_flag);
 #endif
 
@@ -2136,15 +2143,22 @@ rc_logout(bool rc_login, int *rc_flag)
 		case DO_DOT_LOGOUT:
 			file = rc_build(path, FILE_DOT_LOGOUT, sizeof(path));
 			break;
-		default:
+		case DO_LOGOUT_DONE:
 			stype &= ~RC_FILE;
 			(*rc_flag)++;
+			return;
+		default:
+			stype &= ~RC_FILE;
 			return;
 		}
 		(*rc_flag)++;
 		if (rc_open(file))
 			break;
 	}
+#if 0
+	fd_print(FD2, "rc_logout: 2: STYPE(RC_FILE) == %s, *rc_flag == %d\n",
+		 STYPE(RC_FILE) ? "true" : "false", *rc_flag);
+#endif
 }
 
 /*
