@@ -101,6 +101,13 @@ OSH_RCSID("@(#)$Id$");
 #include <unistd.h>
 
 #include "pexec.h"
+#include "sasignal.h"
+
+#ifdef	__GNUC__
+#define	IS_UNUSED	__attribute__((__unused__))
+#else
+#define	IS_UNUSED	/* nothing */
+#endif
 
 /*
  * Constants
@@ -197,9 +204,8 @@ OSH_RCSID("@(#)$Id$");
 #define	ONE_LINE	001
 #define	COMMAND_FILE	002
 #define	INTERACTIVE	004
-#define	ON_TTY		010
-#define	RC_FILE		020
-#define	SOURCE		040
+#define	RC_FILE		010
+#define	SOURCE		020
 
 /*
  * Non-zero exit status values
@@ -210,20 +216,8 @@ OSH_RCSID("@(#)$Id$");
 /*
  * Diagnostics
  */
-#define	ERR_ALTOOLONG	"Arg list too long"
-#define	ERR_FORK	"Cannot fork - try again"
-#define	ERR_PIPE	"Cannot pipe - try again"
-#define	ERR_TRIM	"Cannot trim"
 #define	ERR_ALINVAL	"Invalid argument list"
-#define	ERR_NODIR	"No directory"
-#define	ERR_NOHOMEDIR	"No home directory"
-#define	ERR_NOMATCH	"No match"
-#define	ERR_NOPWD	"No previous directory"
-#define	ERR_NOSHELL	"No shell!"
-#define	ERR_NOMEM	"Out of memory"
-#define	ERR_SETID	"Set-ID execution denied"
-#define	ERR_TMARGS	"Too many args"
-#define	ERR_TMCHARS	"Too many characters"
+#define	ERR_ALTOOLONG	"Arg list too long"
 #define	ERR_ARGCOUNT	"arg count"
 #define	ERR_BADDIR	"bad directory"
 #define	ERR_BADMASK	"bad mask"
@@ -231,11 +225,24 @@ OSH_RCSID("@(#)$Id$");
 #define	ERR_BADSIGNAL	"bad signal"
 #define	ERR_CREATE	"cannot create"
 #define	ERR_EXEC	"cannot execute"
-#define	ERR_OPEN	"cannot open"
+#define	ERR_FORK	"Cannot fork - try again"
 #define	ERR_GENERIC	"error"
 #define	ERR_NOARGS	"no args"
+#define	ERR_NODIR	"No directory"
+#define	ERR_NOHOMEDIR	"No home directory"
+#define	ERR_NOMATCH	"No match"
+#define	ERR_NOMEM	"Out of memory"
+#define	ERR_NOPWD	"No previous directory"
+#define	ERR_NOSHELL	"No shell!"
 #define	ERR_NOTFOUND	"not found"
+#define	ERR_NOTTY	"No terminal!"
+#define	ERR_OPEN	"cannot open"
+#define	ERR_PIPE	"Cannot pipe - try again"
+#define	ERR_SETID	"Set-ID execution denied"
 #define	ERR_SYNTAX	"syntax error"
+#define	ERR_TMARGS	"Too many args"
+#define	ERR_TMCHARS	"Too many characters"
+#define	ERR_TRIM	"Cannot trim"
 #define	FMT1S		"%s\n"
 #define	FMT2S		"%s: %s\n"
 #define	FMT3S		"%s: %s: %s\n"
@@ -249,7 +256,7 @@ OSH_RCSID("@(#)$Id$");
 #define	ESTATUS		((getpid() == spid) ? SH_ERR : FC_ERR)
 #define	EXIT(s)		((getpid() == spid) ? exit((s)) : _exit((s)))
 #define	HALT		true
-#define	PROMPT		((stype & 077) == (INTERACTIVE | ON_TTY))
+#define	PROMPT		((stype & 037) == INTERACTIVE)
 #define	STYPE(f)	((stype & (f)) != 0)
 
 /*
@@ -272,8 +279,8 @@ struct tnode {
  */
 #define	TLIST		1	/* pipelines separated by `;', `&', or `\n' */
 #define	TPIPE		2	/* commands separated by `|' or `^'         */
-#define	TCOMMAND	3	/* command [ arg ... ] [ < in ] [ > out ]   */
-#define	TSUBSHELL	4	/* ( list ) [ < in ] [ > out ]              */
+#define	TCOMMAND	3	/* command  [arg ...]  [< in]  [> [>] out]  */
+#define	TSUBSHELL	4	/* ( list )            [< in]  [> [>] out]  */
 
 /*
  * Node/command flags
@@ -355,8 +362,11 @@ static	bool		error;		/* error flag for read/parse errors */
 static	const char	*error_message;	/* error message for read errors    */
 static	bool		error_source;	/* error flag for `source' command  */
 static	uid_t		euid;		/* effective shell user ID          */
+static	bool		is_login;	/* login shell flag (true if login) */
 static	char		line[LINEMAX];	/* command-line buffer              */
 static	char		*linep;
+static	volatile sig_atomic_t
+			logout_now;	/* SIGHUP caught flag (1 if caught) */
 static	const char	*name;		/* $0 - shell command name          */
 static	int		nul_count;	/* `\0'-character count (per line)  */
 static	int		peekc;		/* just-read, pushed-back character */
@@ -413,8 +423,9 @@ static	int		prsig(int, pid_t, pid_t);
 static	void		sh_init(void);
 static	void		sh_magic(void);
 static	bool		sh_on_tty(void);
-static	void		rc_init(bool, int *);
-static	void		rc_logout(bool, int *);
+static	void		sighup(/*@unused@*/ int IS_UNUSED);
+static	void		rc_init(int *);
+static	void		rc_logout(int *);
 static	char		*rc_build(/*@out@*/ /*@returned@*/ char *,
 				  const char *, size_t);
 /*@maynotreturn@*/
@@ -450,7 +461,6 @@ main(int argc, char **argv)
 {
 	char *av0p;
 	int rc_flag = 0;
-	bool rc_login = false;
 
 	sh_init();
 	if (argv[0] == NULL || *argv[0] == '\0')
@@ -478,14 +488,14 @@ main(int argc, char **argv)
 			} else if (argv[1][1] == 'i') {
 				rc_flag = DO_SYSTEM_OSHRC;
 				stype   = INTERACTIVE;
-				if (sh_on_tty())
-					stype |= ON_TTY;
+				if (!sh_on_tty())
+					err(SH_ERR, FMT2S, argv[1], ERR_NOTTY);
 			} else if (argv[1][1] == 'l') {
+				is_login = true;
 				rc_flag  = DO_SYSTEM_LOGIN;
-				rc_login = true;
 				stype    = INTERACTIVE;
-				if (sh_on_tty())
-					stype |= ON_TTY;
+				if (!sh_on_tty())
+					err(SH_ERR, FMT2S, argv[1], ERR_NOTTY);
 			} else if (argv[1][1] == 't')
 				stype = ONE_LINE;
 		} else {
@@ -501,24 +511,27 @@ main(int argc, char **argv)
 		chintr = 1;
 		fd_free();
 		if (sh_on_tty())
-			stype = INTERACTIVE | ON_TTY;
+			stype = INTERACTIVE;
 	}
 	if (chintr != 0) {
 		chintr = 0;
-		if (signal(SIGINT, SIG_IGN) == SIG_DFL)
+		if (sasignal(SIGINT, SIG_IGN) == SIG_DFL)
 			chintr |= CH_SIGINT;
-		if (signal(SIGQUIT, SIG_IGN) == SIG_DFL)
+		if (sasignal(SIGQUIT, SIG_IGN) == SIG_DFL)
 			chintr |= CH_SIGQUIT;
-		if (STYPE(INTERACTIVE)) {
-			(void)signal(SIGTERM, SIG_IGN);
+		if (PROMPT) {
+			(void)sasignal(SIGTERM, SIG_IGN);
 			if (rc_flag == 0) {
 				if (*argv[0] == '-') {
+					is_login = true;
 					rc_flag  = DO_SYSTEM_LOGIN;
-					rc_login = true;
 				} else
 					rc_flag = DO_SYSTEM_OSHRC;
 			}
-			rc_init(rc_login, &rc_flag);
+			if (is_login)
+				if (sasignal(SIGHUP, sighup) == SIG_IGN)
+					(void)sasignal(SIGHUP, SIG_IGN);
+			rc_init(&rc_flag);
 		}
 	}
 
@@ -528,18 +541,29 @@ main(int argc, char **argv)
 		/* Read and execute any rc init files if appropriate. */
 		while (STYPE(RC_FILE)) {
 			cmd_loop(!HALT);
-			rc_init(rc_login, &rc_flag);
+			if (logout_now != 0) {
+				logout_now = 0;
+				if (is_login)
+					goto logout;
+				goto done;
+			}
+			rc_init(&rc_flag);
 		}
 
 		/* Read and execute the shell's input. */
 		cmd_loop(!HALT);
+		if (logout_now != 0)
+			logout_now = 0;
 
+logout:
 		/* Read and execute any rc logout files if appropriate. */
 		rc_flag = DO_SYSTEM_LOGOUT;
-		rc_logout(rc_login, &rc_flag);
+		rc_logout(&rc_flag);
 		while (STYPE(RC_FILE)) {
 			cmd_loop(!HALT);
-			rc_logout(rc_login, &rc_flag);
+			if (logout_now != 0)
+				logout_now = 0;
+			rc_logout(&rc_flag);
 		}
 	}
 
@@ -568,9 +592,9 @@ cmd_index(const char *cmd)
 }
 
 /*
- * Read and execute command lines forever, or until one of the
- * following conditions is true.  If halt == true, return on EOF
- * or when error_source == true.  If halt == false, return on EOF.
+ * Read and execute command lines until EOF, or until one of
+ * error_source or logout_now != 0 is true according to halt
+ * or is_login.
  */
 static void
 cmd_loop(bool halt)
@@ -589,12 +613,14 @@ cmd_loop(bool halt)
 		}
 		if (halt && error_source)
 			break;
+		if (is_login && logout_now != 0)
+			break;
 		gz = true;
 	}
 }
 
 /*
- * If verbose_flag == true, print each argument/word in the word
+ * If verbose_flag is true, print each argument/word in the word
  * pointer array to the standard error.  Otherwise, do nothing.
  */
 static void
@@ -605,8 +631,7 @@ cmd_verbose(void)
 	if (verbose_flag) {
 		vp = word;
 		while (**vp != '\n') {
-			fd_print(FD2, "%s", *vp);
-			vp++;
+			fd_print(FD2, "%s", *vp++);
 			if (**vp != '\n')
 				fd_print(FD2, " ");
 		}
@@ -760,7 +785,7 @@ get_word(void)
 }
 
 /*
- * If dolsub == true, get either the next literal character from the
+ * If dolsub is true, get either the next literal character from the
  * standard input or substitute the current $ dollar w/ the next
  * character of its value, which is pointed to by dolp.  Otherwise,
  * get only the next literal character from the standard input.
@@ -1077,8 +1102,8 @@ syn2(char **p1, char **p2)
 
 /*
  * syn3:
- *	command [ arg ... ] [ < in ] [ > out ]
- *	( syn1 ) [ < in ] [ > out ]
+ *	command  [arg ...]  [< in]  [> [>] out]
+ *	( syn1 )            [< in]  [> [>] out]
  */
 static struct tnode *
 syn3(char **p1, char **p2)
@@ -1286,7 +1311,7 @@ execute(struct tnode *t, int *pin, int *pout)
 			}
 			t->nflags |= FNOFORK;
 			t->nav     = &t->nav[1];	/* never free()d */
-			(void)signal(SIGCHLD, SIG_IGN);
+			(void)sasignal(SIGCHLD, SIG_IGN);
 		}
 		/*FALLTHROUGH*/
 
@@ -1373,11 +1398,11 @@ exec1(struct tnode *t)
 		if (PROMPT) {
 			p = (t->nidx == SBILOGIN) ? PATH_LOGIN : PATH_NEWGRP;
 			vtrim(t->nav);
-			(void)signal(SIGINT, SIG_DFL);
-			(void)signal(SIGQUIT, SIG_DFL);
+			(void)sasignal(SIGINT, SIG_DFL);
+			(void)sasignal(SIGQUIT, SIG_DFL);
 			(void)pexec(p, (char *const *)t->nav);
-			(void)signal(SIGINT, SIG_IGN);
-			(void)signal(SIGQUIT, SIG_IGN);
+			(void)sasignal(SIGINT, SIG_IGN);
+			(void)sasignal(SIGQUIT, SIG_IGN);
 		}
 		emsg = ERR_EXEC;
 		break;
@@ -1588,8 +1613,8 @@ exec2(struct tnode *t, int *pin, int *pout)
 	 * redirect input for `&' commands from `/dev/null' if needed.
 	 */
 	if ((f & FINTR) != 0) {
-		(void)signal(SIGINT, SIG_IGN);
-		(void)signal(SIGQUIT, SIG_IGN);
+		(void)sasignal(SIGINT, SIG_IGN);
+		(void)sasignal(SIGQUIT, SIG_IGN);
 		if (t->nfin == NULL && (f & (FFIN|FPIN|FPRS)) == FPRS) {
 			(void)close(FD0);
 			if (open("/dev/null", O_RDONLY) != FD0)
@@ -1597,12 +1622,12 @@ exec2(struct tnode *t, int *pin, int *pout)
 		}
 	} else {
 		if ((sig_state & SS_SIGINT) == 0 && (chintr & CH_SIGINT) != 0)
-			(void)signal(SIGINT, SIG_DFL);
+			(void)sasignal(SIGINT, SIG_DFL);
 		if ((sig_state & SS_SIGQUIT) == 0 && (chintr & CH_SIGQUIT) != 0)
-			(void)signal(SIGQUIT, SIG_DFL);
+			(void)sasignal(SIGQUIT, SIG_DFL);
 	}
 	if ((sig_state & SS_SIGTERM) == 0)
-		(void)signal(SIGTERM, SIG_DFL);
+		(void)sasignal(SIGTERM, SIG_DFL);
 	if (t->ntype == TSUBSHELL) {
 		if ((t1 = t->nsub) != NULL)
 			t1->nflags |= (f & (FFIN | FPIN | FINTR));
@@ -1733,6 +1758,7 @@ do_sigign(char **av)
 		}
 
 		(void)memset(&act, 0, sizeof(act));
+		(void)sigemptyset(&act.sa_mask);
 		if (EQUAL(av[1], "+"))
 			act.sa_handler = SIG_IGN;
 		else if (EQUAL(av[1], "-"))
@@ -1741,8 +1767,7 @@ do_sigign(char **av)
 			sigerr = 1;
 			goto sigdone;
 		}
-		(void)sigemptyset(&act.sa_mask);
-		act.sa_flags = 0;
+		act.sa_flags = SA_RESTART;
 
 		for (i = 2; av[i] != NULL; i++) {
 			errno = 0;
@@ -1754,14 +1779,26 @@ do_sigign(char **av)
 			}
 			signo = (int)lsigno;
 
-			/* Does anything need to be done? */
+			/* Do nothing if no signal changes are needed. */
 			if (sigaction(signo, NULL, &oact) < 0 ||
-			    (act.sa_handler == SIG_DFL &&
-			    oact.sa_handler == SIG_DFL))
+			    (act.sa_handler  == SIG_DFL &&
+			     oact.sa_handler == SIG_DFL))
 				continue;
 
+			/* Set flags for already ignored signals if needed. */
 			if (ignlst[signo - 1]) {
 				set_ss_flags(act.sa_handler, signo);
+				continue;
+			}
+
+			/* Reinstall SIGHUP signal handler if needed. */
+			if (is_login&&signo==1&&act.sa_handler==SIG_DFL) {
+				if (oact.sa_handler == sighup)
+					continue;
+				if (sasignal(SIGHUP, sighup) == SIG_ERR) {
+					sigerr = signo;
+					goto sigdone;
+				}
 				continue;
 			}
 
@@ -1783,9 +1820,9 @@ do_sigign(char **av)
 			    oact.sa_handler != SIG_IGN)
 				continue;
 			if (!ignlst[i - 1] || (STYPE(INTERACTIVE) &&
-			    ((i == SIGINT && (sig_state & SS_SIGINT) != 0) ||
-			    (i == SIGQUIT && (sig_state & SS_SIGQUIT) != 0) ||
-			    (i == SIGTERM && (sig_state & SS_SIGTERM) != 0))))
+			    ((i == SIGINT  && (sig_state & SS_SIGINT)  != 0) ||
+			     (i == SIGQUIT && (sig_state & SS_SIGQUIT) != 0) ||
+			     (i == SIGTERM && (sig_state & SS_SIGTERM) != 0))))
 				fd_print(FD1, "%s + %u\n", av[0], (unsigned)i);
 		}
 	}
@@ -1874,9 +1911,8 @@ do_source(char **av)
 	/* Restore any saved positional parameters. */
 	name = sname, dolv = sdolv, dolc = sdolc;
 
-	if (error_source) {
+	if (error_source || (is_login && logout_now != 0)) {
 		/*
-		 * The shell has detected an error (e.g., syntax error).
 		 * Terminate any and all source commands (nested or not).
 		 * Restore original standard input before returning for
 		 * the final time, and call err() if needed.
@@ -2019,7 +2055,7 @@ sh_init(void)
 	 * Correct operation of the shell requires that zombies
 	 * be created for its children when they terminate.
 	 */
-	(void)signal(SIGCHLD, SIG_DFL);
+	(void)sasignal(SIGCHLD, SIG_DFL);
 }
 
 /*
@@ -2055,23 +2091,28 @@ sh_on_tty(void)
 }
 
 /*
+ * Handle the SIGHUP signal by setting the global logout_now flag.
+ */
+static void
+sighup(int signo IS_UNUSED)
+{
+
+	logout_now = 1;
+}
+
+/*
  * Process the sequence of rc init files used by the shell.
  * For each call to rc_init(), temporarily assign the shell's
  * standard input to come from a given file in the sequence if
  * possible and return.  When DO_INIT_DONE, restore the shell's
- * original standard input (or die trying), unset the RC_FILE flag,
- * and return.
+ * original standard input (or die trying), unset the RC_FILE
+ * flag, and return.
  */
 static void
-rc_init(bool rc_login, int *rc_flag)
+rc_init(int *rc_flag)
 {
 	char path[PATHMAX];
 	const char *file;
-
-#if 0
-	fd_print(FD2, "rc_init: 1: STYPE(RC_FILE) == %s, *rc_flag == %d\n",
-		 STYPE(RC_FILE) ? "true" : "false", *rc_flag);
-#endif
 
 	while (*rc_flag <= DO_INIT_DONE) {
 		file = NULL;
@@ -2080,7 +2121,7 @@ rc_init(bool rc_login, int *rc_flag)
 			file = PATH_SYSTEM_LOGIN;
 			break;
 		case DO_SYSTEM_OSHRC:
-			if (!rc_login)
+			if (!is_login)
 				(*rc_flag)++;
 			file = PATH_SYSTEM_OSHRC;
 			break;
@@ -2104,14 +2145,10 @@ rc_init(bool rc_login, int *rc_flag)
 		if (rc_open(file))
 			break;
 	}
-#if 0
-	fd_print(FD2, "rc_init: 2: STYPE(RC_FILE) == %s, *rc_flag == %d\n",
-		 STYPE(RC_FILE) ? "true" : "false", *rc_flag);
-#endif
 }
 
 /*
- * If rc_login == false, unset the RC_FILE flag and return.
+ * If is_login is false, unset the RC_FILE flag and return.
  * Otherwise, process the sequence of rc logout files used by
  * the shell.  For each call to rc_logout(), temporarily assign
  * the shell's standard input to come from a given file in the
@@ -2119,20 +2156,15 @@ rc_init(bool rc_login, int *rc_flag)
  * the RC_FILE flag and return.
  */
 static void
-rc_logout(bool rc_login, int *rc_flag)
+rc_logout(int *rc_flag)
 {
 	char path[PATHMAX];
 	const char *file;
 
-	if (!rc_login) {
+	if (!is_login) {
 		stype &= ~RC_FILE;
 		return;
 	}
-
-#if 0
-	fd_print(FD2, "rc_logout: 1: STYPE(RC_FILE) == %s, *rc_flag == %d\n",
-		 STYPE(RC_FILE) ? "true" : "false", *rc_flag);
-#endif
 
 	while (*rc_flag <= DO_LOGOUT_DONE) {
 		file = NULL;
@@ -2155,10 +2187,6 @@ rc_logout(bool rc_login, int *rc_flag)
 		if (rc_open(file))
 			break;
 	}
-#if 0
-	fd_print(FD2, "rc_logout: 2: STYPE(RC_FILE) == %s, *rc_flag == %d\n",
-		 STYPE(RC_FILE) ? "true" : "false", *rc_flag);
-#endif
 }
 
 /*
