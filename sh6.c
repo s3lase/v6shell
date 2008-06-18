@@ -86,6 +86,7 @@ OSH_RCSID("@(#)$Id$");
 #include <unistd.h>
 
 #include "pexec.h"
+#include "sasignal.h"
 
 /*
  * Constants
@@ -141,8 +142,8 @@ struct tnode {
  */
 #define	TLIST		1	/* pipelines separated by `;', `&', or `\n' */
 #define	TPIPE		2	/* commands separated by `|' or `^'         */
-#define	TCOMMAND	3	/* command [ arg ... ] [ < in ] [ > out ]   */
-#define	TSUBSHELL	4	/* ( list ) [ < in ] [ > out ]              */
+#define	TCOMMAND	3	/* command  [arg ...]  [< in]  [> [>] out]  */
+#define	TSUBSHELL	4	/* ( list )            [< in]  [> [>] out]  */
 
 /*
  * Node/command flags
@@ -284,14 +285,14 @@ main(int argc, char **argv)
 		chintr = 1;
 		if (isatty(FD0) != 0 && isatty(FD2) != 0) {
 			prompt = (geteuid() != 0) ? "% " : "# ";
-			(void)signal(SIGTERM, SIG_IGN);
+			(void)sasignal(SIGTERM, SIG_IGN);
 		}
 	}
 	if (chintr != 0) {
 		chintr = 0;
-		if (signal(SIGINT, SIG_IGN) == SIG_DFL)
+		if (sasignal(SIGINT, SIG_IGN) == SIG_DFL)
 			chintr |= CH_SIGINT;
-		if (signal(SIGQUIT, SIG_IGN) == SIG_DFL)
+		if (sasignal(SIGQUIT, SIG_IGN) == SIG_DFL)
 			chintr |= CH_SIGQUIT;
 	}
 	fd_free();
@@ -428,7 +429,7 @@ loop:
 }
 
 /*
- * If dolsub == true, get either the next literal character from the
+ * If dolsub is true, get either the next literal character from the
  * standard input or substitute the current $ dollar w/ the next
  * character of its value, which is pointed to by dolp.  Otherwise,
  * get only the next literal character from the standard input.
@@ -685,8 +686,8 @@ syn2(char **p1, char **p2)
 
 /*
  * syn3:
- *	command [ arg ... ] [ < in ] [ > out ]
- *	( syn1 ) [ < in ] [ > out ]
+ *	command  [arg ...]  [< in]  [> [>] out]
+ *	( syn1 )            [< in]  [> [>] out]
  */
 static struct tnode *
 syn3(char **p1, char **p2)
@@ -932,11 +933,11 @@ execute(struct tnode *t, int *pin, int *pout)
 			if (prompt != NULL) {
 				p = (*cmd == 'l') ? PATH_LOGIN : PATH_NEWGRP;
 				vscan(t->nav, trim);
-				(void)signal(SIGINT, SIG_DFL);
-				(void)signal(SIGQUIT, SIG_DFL);
+				(void)sasignal(SIGINT, SIG_DFL);
+				(void)sasignal(SIGQUIT, SIG_DFL);
 				(void)pexec(p, (char *const *)t->nav);
-				(void)signal(SIGINT, SIG_IGN);
-				(void)signal(SIGQUIT, SIG_IGN);
+				(void)sasignal(SIGINT, SIG_IGN);
+				(void)sasignal(SIGQUIT, SIG_IGN);
 			}
 			prs(cmd);
 			err(": cannot execute", SH_ERR);
@@ -1036,8 +1037,8 @@ execute(struct tnode *t, int *pin, int *pout)
 		 * redirect input for `&' commands from `/dev/null' if needed.
 		 */
 		if ((f & FINTR) != 0) {
-			(void)signal(SIGINT, SIG_IGN);
-			(void)signal(SIGQUIT, SIG_IGN);
+			(void)sasignal(SIGINT, SIG_IGN);
+			(void)sasignal(SIGQUIT, SIG_IGN);
 			if (t->nfin == NULL && (f & (FFIN|FPIN|FPRS)) == FPRS) {
 				(void)close(FD0);
 				if (open("/dev/null", O_RDONLY) != FD0) {
@@ -1047,11 +1048,11 @@ execute(struct tnode *t, int *pin, int *pout)
 			}
 		} else {
 			if ((chintr & CH_SIGINT) != 0)
-				(void)signal(SIGINT, SIG_DFL);
+				(void)sasignal(SIGINT, SIG_DFL);
 			if ((chintr & CH_SIGQUIT) != 0)
-				(void)signal(SIGQUIT, SIG_DFL);
+				(void)sasignal(SIGQUIT, SIG_DFL);
 		}
-		(void)signal(SIGTERM, SIG_DFL);
+		(void)sasignal(SIGTERM, SIG_DFL);
 		if (t->ntype == TSUBSHELL) {
 			if ((t1 = t->nsub) != NULL)
 				t1->nflags |= (f & (FFIN | FPIN | FINTR));
@@ -1238,7 +1239,7 @@ sh_init(void)
 	 * Correct operation of the shell requires that zombies
 	 * be created for its children when they terminate.
 	 */
-	(void)signal(SIGCHLD, SIG_DFL);
+	(void)sasignal(SIGCHLD, SIG_DFL);
 }
 
 /*
