@@ -61,7 +61,8 @@ OSH=	osh
 SH6=	sh6 glob6
 UTILS=	if goto fd2
 PEXSRC=	pexec.h pexec.c
-OBJ=	pexec.o osh.o sh6.o glob6.o if.o goto.o fd2.o
+SIGSRC=	sasignal.h sasignal.c
+OBJ=	pexec.o sasignal.o osh.o sh6.o glob6.o if.o goto.o fd2.o
 MANSRC=	osh.1.in sh6.1.in glob6.1.in if.1.in goto.1.in fd2.1.in
 MANDST=	osh.1 sh6.1 glob6.1 if.1 goto.1 fd2.1
 
@@ -81,10 +82,10 @@ sh6all: $(SH6) utils man
 
 utils: $(UTILS)
 
-osh: config.h rcsid.h $(PEXSRC) osh.c
+osh: config.h rcsid.h $(PEXSRC) $(SIGSRC) osh.c
 	@$(MAKE) $@bin
 
-sh6: config.h rcsid.h $(PEXSRC) sh6.c
+sh6: config.h rcsid.h $(PEXSRC) $(SIGSRC) sh6.c
 	@$(MAKE) $@bin
 
 glob6: config.h rcsid.h $(PEXSRC) glob6.c
@@ -101,16 +102,18 @@ fd2: config.h rcsid.h $(PEXSRC) fd2.c
 
 $(OBJ): config.h rcsid.h
 pexec.o: $(PEXSRC)
+sasignal.o: $(SIGSRC)
 osh.o sh6.o glob6.o if.o fd2.o: pexec.h
+osh.o sh6.o: sasignal.h
 
 config.h: mkconfig
 	$(SHELL) ./mkconfig
 
-oshbin: pexec.o osh.o
-	$(CC) $(LDFLAGS) -o osh osh.o pexec.o $(LIBS)
+oshbin: pexec.o sasignal.o osh.o
+	$(CC) $(LDFLAGS) -o osh osh.o pexec.o sasignal.o $(LIBS)
 
-sh6bin: pexec.o sh6.o
-	$(CC) $(LDFLAGS) -o sh6 sh6.o pexec.o $(LIBS)
+sh6bin: pexec.o sasignal.o sh6.o
+	$(CC) $(LDFLAGS) -o sh6 sh6.o pexec.o sasignal.o $(LIBS)
 
 glob6bin: pexec.o glob6.o
 	$(CC) $(LDFLAGS) -o glob6 glob6.o pexec.o $(LIBS)
