@@ -416,7 +416,7 @@ static	void		exec2(struct tnode *,
 			      /*@null@*/ int *, /*@null@*/ int *);
 static	void		do_chdir(char **);
 static	void		do_sigign(char **);
-static	void		set_ss_flags(void (*)(int), int);
+static	void		set_ss_flags(int, sig_t);
 static	void		do_source(char **);
 static	void		pwait(pid_t);
 static	int		prsig(int, pid_t, pid_t);
@@ -1787,7 +1787,7 @@ do_sigign(char **av)
 
 			/* Set flags for already ignored signals if needed. */
 			if (ignlst[signo - 1]) {
-				set_ss_flags(act.sa_handler, signo);
+				set_ss_flags(signo, act.sa_handler);
 				continue;
 			}
 
@@ -1811,7 +1811,7 @@ do_sigign(char **av)
 			    sigaction(signo, &act, NULL) < 0)
 				continue;
 
-			set_ss_flags(act.sa_handler, signo);
+			set_ss_flags(signo, act.sa_handler);
 		}
 	} else {
 		/* Print signals currently ignored because of `sigign'. */
@@ -1838,25 +1838,25 @@ sigdone:
 }
 
 /*
- * Set global sig_state flags according to action act and signal s.
+ * Set global sig_state flags according to signal sig and action act.
  */
 static void
-set_ss_flags(void (*act)(int), int s)
+set_ss_flags(int sig, sig_t act)
 {
 
 	if (act == SIG_IGN) {
-		if (s == SIGINT)
+		if (sig == SIGINT)
 			sig_state |= SS_SIGINT;
-		else if (s == SIGQUIT)
+		else if (sig == SIGQUIT)
 			sig_state |= SS_SIGQUIT;
-		else if (s == SIGTERM)
+		else if (sig == SIGTERM)
 			sig_state |= SS_SIGTERM;
 	} else if (act == SIG_DFL) {
-		if (s == SIGINT)
+		if (sig == SIGINT)
 			sig_state &= ~SS_SIGINT;
-		else if (s == SIGQUIT)
+		else if (sig == SIGQUIT)
 			sig_state &= ~SS_SIGQUIT;
-		else if (s == SIGTERM)
+		else if (sig == SIGTERM)
 			sig_state &= ~SS_SIGTERM;
 	}
 }
@@ -2091,10 +2091,10 @@ sh_on_tty(void)
 }
 
 /*
- * Handle the SIGHUP signal by setting the global logout_now flag.
+ * Handle the SIGHUP signal by setting the volatile logout_now flag.
  */
 static void
-sighup(int signo IS_UNUSED)
+sighup(/*@unused@*/ int signo IS_UNUSED)
 {
 
 	logout_now = 1;
