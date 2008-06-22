@@ -38,7 +38,7 @@ passing the desired variable=value pair(s) on the command line.
 			system-wide initialization file if such a file
 			is available on the system.  See also:
 
-				http://www.v6shell.org/rc_files/
+				http://v6shell.org/rc_files/
 
 			...
 			for example initialization files.
@@ -116,6 +116,6 @@ It then installs the entire osh package into the default location.
 	% make MOXARCH='-arch i386 -arch ppc'
 	# make install
 
-Jeffrey Allen Neitzel						2008/06/07
+Jeffrey Allen Neitzel						2008/06/22
 
 @(#)$Id$
