@@ -416,7 +416,7 @@ static	void		exec2(struct tnode *,
 			      /*@null@*/ int *, /*@null@*/ int *);
 static	void		do_chdir(char **);
 static	void		do_sigign(char **);
-static	void		set_ss_flags(int, sig_t);
+static	void		set_ss_flags(int, sasig_t);
 static	void		do_source(char **);
 static	void		pwait(pid_t);
 static	int		prsig(int, pid_t, pid_t);
@@ -1841,7 +1841,7 @@ sigdone:
  * Set global sig_state flags according to signal sig and action act.
  */
 static void
-set_ss_flags(int sig, sig_t act)
+set_ss_flags(int sig, sasig_t act)
 {
 
 	if (act == SIG_IGN) {
