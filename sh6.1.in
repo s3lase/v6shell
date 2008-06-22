@@ -662,7 +662,7 @@ osh(1),
 sed(1)
 .PP
 Osh home page:
-http://www.v6shell.org/
+http://v6shell.org/
 .SH AUTHORS
 This port of the Thompson shell is derived from
 Sixth Edition Unix /usr/source/s2/sh.c,
@@ -695,7 +695,7 @@ in Seventh Edition Unix.
 See either the LICENSE file which is distributed with
 .I osh
 or
-http://www.v6shell.org/license/
+http://v6shell.org/license/
 for full details.
 .SH NOTES
 Since

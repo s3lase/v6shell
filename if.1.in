@@ -237,7 +237,7 @@ sh6(1),
 test(1)
 .PP
 Osh home page:
-http://www.v6shell.org/
+http://v6shell.org/
 .SH COMPATIBILITY
 The
 .I if
@@ -273,5 +273,5 @@ in Third Edition Unix.
 See either the LICENSE file which is distributed with
 .I osh
 or
-http://www.v6shell.org/license/
+http://v6shell.org/license/
 for full details.

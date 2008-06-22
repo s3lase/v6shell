@@ -116,7 +116,7 @@ osh(1),
 sh6(1)
 .PP
 Osh home page:
-http://www.v6shell.org/
+http://v6shell.org/
 .SH AUTHOR
 This implementation of
 .I fd2
@@ -125,5 +125,5 @@ is written by Jeffrey Allen Neitzel.
 See either the LICENSE file which is distributed with
 .I osh
 or
-http://www.v6shell.org/license/
+http://v6shell.org/license/
 for full details.
