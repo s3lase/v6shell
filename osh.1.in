@@ -105,10 +105,10 @@ appropriate rc file(s) if possible
 (see
 .I "Startup and shutdown"
 below)
-before reading and executing command lines
-from the standard input.
-The shell prompts for input
-if it is connected to a terminal.
+before prompting the user, reading, and
+executing command lines from the standard input.
+The shell prints a diagnostic and exits with a
+non-zero status if it is not connected to a terminal.
 .TP
 .B \-l
 (+)
@@ -118,10 +118,10 @@ appropriate rc file(s) if possible
 (see
 .I "Startup and shutdown"
 below)
-before reading and executing command lines
-from the standard input.
-The shell prompts for input
-if it is connected to a terminal.
+before prompting the user, reading, and
+executing command lines from the standard input.
+The shell prints a diagnostic and exits with a
+non-zero status if it is not connected to a terminal.
 .TP
 .B \-t
 The shell reads a single command line
@@ -149,7 +149,9 @@ below)
 during execution of the command file.
 .PP
 Otherwise,
-if no arguments are specified and if both
+if no arguments except for
+.B \-v
+are specified and if both
 the standard input and standard error are
 connected to a terminal,
 the shell is interactive.
@@ -376,14 +378,14 @@ If a double or single quote appears
 but is not part of a matched pair,
 a diagnostic is printed.
 .SS Parameter substitution
-When the shell is invoked as a non-interactive command,
+When the shell is invoked with arguments besides
+.BR \-v ,
 it has additional string processing capabilities
-which are not available when it is interactive.
-A non-interactive shell may be invoked
-as follows:
+which are not otherwise available.
+Such a shell may be invoked as follows:
 .PP
 .nf
-	\fBosh\fR \fIname\fR [\fIarg1 ...\fR]
+	\fBosh\fR [\fB\-v\fR] \fIname\fR [\fIarg1 ...\fR]
 .fi
 .PP
 If the first character of
@@ -394,7 +396,7 @@ it is taken as the name of a
 or
 .IR "shell script" ,
 which is opened as the standard input
-for a new instance of the shell.
+for a new shell instance.
 Thus,
 the new shell reads and interprets command lines
 from the named file.
@@ -402,9 +404,9 @@ from the named file.
 Otherwise,
 .I name
 is taken as one of the shell options,
-and a new instance of the shell is invoked
-to read and interpret command lines from its
-standard input.
+and a new shell instance is invoked
+to read and interpret command lines
+from its standard input.
 However,
 notice that the
 .B \-c
@@ -432,19 +434,19 @@ command line is substituted with the value of the
 `$0' is substituted with
 .IR name .
 .PP
-In both interactive and non-interactive shells,
+In all shell instances,
 `$$' is substituted with the process ID of
 the current shell.
 The value is represented as a 5-digit ASCII string,
 padded on the left with zeros when the process ID
 is less than 10000.
 .PP
-(+) Interactive and non-interactive shells
-also attempt to set the following special parameters.
-`(*)' indicates those parameters which are always set;
-otherwise,
-the parameter is unset
-when the shell cannot determine its value.
+(+) All shell instances attempt to set
+the special parameters in the following list.
+`(*)' indicates those which are always set.
+Otherwise,
+the parameter is unset when the shell
+cannot determine its value.
 .TP 10
 $d
 The value of the environment variable OSHDIR.
@@ -456,7 +458,7 @@ $h
 The value of the environment variable HOME.
 .TP
 $n (*)
-The number of positional parameters currently known
+The number of positional parameters currently available
 to the shell.
 .TP
 $p
@@ -636,10 +638,8 @@ regardless of the shell's file name.
 .PP
 In any case,
 after the shell finishes its startup actions,
-it then reads and executes command lines
-from the standard input.
-The shell only prompts the user for input
-if it is connected to a terminal.
+it then prompts the user, reads, and executes
+command lines from the standard input as usual.
 .PP
 If the shell is invoked as a login shell,
 it tries to read and execute commands from
@@ -648,8 +648,12 @@ and
 .I $h/.osh.logout
 in sequence upon logout.
 These two rc logout files may be used if necessary
-for cleanup upon termination of a login session (see
+for cleanup upon termination of a login session by
+an EOT (see
 .I "End of file"
+below)
+or a SIGHUP signal (see
+.I "Signals"
 below).
 .PP
 Notice that
@@ -791,18 +795,22 @@ Removes the variable \fIname\fR from the environment.
 Waits for all asynchronous processes to terminate,
 reporting on abnormal terminations.
 .SS Signals (+)
-If the shell is interactive,
-it ignores the SIGINT, SIGQUIT, and SIGTERM
-signals (see
+An interactive or login shell always ignores
+the SIGINT, SIGQUIT, and SIGTERM signals (see
 .IR signal (3)).
-However,
-if the shell is invoked with
-any option argument,
-it only ignores SIGINT and SIGQUIT.
+A login shell also handles the SIGHUP signal,
+the receipt of which causes the shell to terminate
+the login session and to read and execute
+its rc logout files if possible.
 .PP
-If SIGINT or SIGQUIT is already ignored
+When a non-interactive shell executes a command file,
+it does not handle or ignore any signal by default.
+Any other non-interactive shell always ignores
+the SIGINT and SIGQUIT signals.
+.PP
+If SIGHUP, SIGINT, or SIGQUIT is already ignored
 when the shell starts,
-it is also ignored for all of the shell's
+it is also ignored by the current shell and all of its
 child processes.
 Otherwise,
 each signal is reset to its
@@ -952,7 +960,7 @@ sed(1),
 sh6(1)
 .PP
 Osh home page:
-http://www.v6shell.org/
+http://v6shell.org/
 .SH AUTHORS
 This enhanced port of the Thompson shell is derived from
 Sixth Edition Unix /usr/source/s2/sh.c,
@@ -990,7 +998,7 @@ in Seventh Edition Unix.
 See either the LICENSE file which is distributed with
 .I osh
 or
-http://www.v6shell.org/license/
+http://v6shell.org/license/
 for full details.
 .SH NOTES
 Notice that this port of the shell
