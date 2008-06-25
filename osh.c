@@ -179,10 +179,11 @@ OSH_RCSID("@(#)$Id$");
 #define	FD_ISREG	S_IFREG	/* Does FD refer to a regular file?        */
 
 /*
- * Child interrupt flags (see chintr)
+ * Signal child flags (see sig_child)
  */
-#define	CH_SIGINT	01
-#define	CH_SIGQUIT	02
+#define	SC_SIGINT	01
+#define	SC_SIGQUIT	02
+#define	SC_SIGTERM	04
 
 /*
  * Signal state flags (see sig_state)
@@ -350,7 +351,6 @@ static	const char *const sbi[] = {
 
 /*@null@*/
 static	const char	*argv2p;	/* string for `-c' option           */
-static	int		chintr;		/* SIGINT / SIGQUIT flag for child  */
 static	char		dolbuf[32];	/* dollar buffer for $$, $n, $s, $v */
 static	int		dolc;		/* $N dollar-argument count         */
 /*@null@*/ /*@only@*/
@@ -370,7 +370,8 @@ static	volatile sig_atomic_t
 static	const char	*name;		/* $0 - shell command name          */
 static	int		nul_count;	/* `\0'-character count (per line)  */
 static	int		peekc;		/* just-read, pushed-back character */
-static	int		sig_state;	/* SIGINT / SIGQUIT / SIGTERM state */
+static	int		sig_child;	/* SIG(INT|QUIT|TERM) child flags   */
+static	int		sig_state;	/* SIG(INT|QUIT|TERM) state flags   */
 static	pid_t		spid;		/* shell process ID                 */
 static	int		status;		/* shell exit status                */
 static	int		stype;		/* shell type (determines behavior) */
@@ -479,7 +480,7 @@ main(int argc, char **argv)
 		dolv = &argv[1];
 		dolc = argc - 1;
 		if (*argv[1] == '-') {
-			chintr = 1;
+			sig_child = 1;
 			if (argv[1][1] == 'c' && argc > 2) {
 				stype  = ONE_LINE;
 				dolv  += 1;
@@ -508,19 +509,20 @@ main(int argc, char **argv)
 		}
 		fd_free();
 	} else {
-		chintr = 1;
+		sig_child = 1;
 		fd_free();
 		if (sh_on_tty())
 			stype = INTERACTIVE;
 	}
-	if (chintr != 0) {
-		chintr = 0;
+	if (sig_child != 0) {
+		sig_child = 0;
 		if (sasignal(SIGINT, SIG_IGN) == SIG_DFL)
-			chintr |= CH_SIGINT;
+			sig_child |= SC_SIGINT;
 		if (sasignal(SIGQUIT, SIG_IGN) == SIG_DFL)
-			chintr |= CH_SIGQUIT;
+			sig_child |= SC_SIGQUIT;
 		if (PROMPT) {
-			(void)sasignal(SIGTERM, SIG_IGN);
+			if (sasignal(SIGTERM, SIG_IGN) == SIG_DFL)
+				sig_child |= SC_SIGTERM;
 			if (rc_flag == 0) {
 				if (*argv[0] == '-') {
 					is_login = true;
@@ -1621,12 +1623,13 @@ exec2(struct tnode *t, int *pin, int *pout)
 				err(FC_ERR, FMT2S, "/dev/null", ERR_OPEN);
 		}
 	} else {
-		if ((sig_state & SS_SIGINT) == 0 && (chintr & CH_SIGINT) != 0)
+		if ((sig_state&SS_SIGINT) == 0 && (sig_child&SC_SIGINT) != 0)
 			(void)sasignal(SIGINT, SIG_DFL);
-		if ((sig_state & SS_SIGQUIT) == 0 && (chintr & CH_SIGQUIT) != 0)
+		if ((sig_state&SS_SIGQUIT) == 0 && (sig_child&SC_SIGQUIT) != 0)
 			(void)sasignal(SIGQUIT, SIG_DFL);
 	}
-	if ((sig_state & SS_SIGTERM) == 0)
+	/* Set SIGTERM to its default action if needed. */
+	if ((sig_state&SS_SIGTERM) == 0 && (sig_child&SC_SIGTERM) != 0)
 		(void)sasignal(SIGTERM, SIG_DFL);
 	if (t->ntype == TSUBSHELL) {
 		if ((t1 = t->nsub) != NULL)
@@ -1819,10 +1822,13 @@ do_sigign(char **av)
 			if (sigaction(i, NULL, &oact) < 0 ||
 			    oact.sa_handler != SIG_IGN)
 				continue;
-			if (!ignlst[i - 1] || (STYPE(INTERACTIVE) &&
-			    ((i == SIGINT  && (sig_state & SS_SIGINT)  != 0) ||
-			     (i == SIGQUIT && (sig_state & SS_SIGQUIT) != 0) ||
-			     (i == SIGTERM && (sig_state & SS_SIGTERM) != 0))))
+			if (!ignlst[i - 1] ||
+			    (i == SIGINT  && (sig_state & SS_SIGINT)  != 0 &&
+			     (sig_child & SC_SIGINT)  != 0) ||
+			    (i == SIGQUIT && (sig_state & SS_SIGQUIT) != 0 &&
+			     (sig_child & SC_SIGQUIT) != 0) ||
+			    (i == SIGTERM && (sig_state & SS_SIGTERM) != 0 &&
+			     (sig_child & SC_SIGTERM) != 0))
 				fd_print(FD1, "%s + %u\n", av[0], (unsigned)i);
 		}
 	}
