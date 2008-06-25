@@ -26,8 +26,8 @@
 .\"	@(#)$Id$
 .\"
 .\"	Derived from:
-.\"		- Sixth Edition Unix	/usr/man/man1/sh.1
-.\"		- Sixth Edition Unix	/usr/man/man8/glob.8
+.\"		- Sixth Edition UNIX	/usr/man/man1/sh.1
+.\"		- Sixth Edition UNIX	/usr/man/man8/glob.8
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.  All rights reserved.
 .\"
@@ -68,7 +68,7 @@ glob6 \- global command (file name generation)
 \fIcommand\fR [\fIarg ...\fR]
 .SH DESCRIPTION
 .I Glob6
-is a port of the global command from Sixth Edition Unix.
+is a port of the global command from Sixth Edition UNIX.
 It is passed an argument list by
 .IR sh6 (1)
 which contains one or more unquoted
@@ -144,7 +144,7 @@ the exit status is that
 of the executed command.
 .SH ENVIRONMENT
 Notice that the concept of `user environment'
-was not defined in Sixth Edition Unix.
+was not defined in Sixth Edition UNIX.
 Thus,
 use of the following environment variables
 by this port of the global command
@@ -164,7 +164,7 @@ the value of this variable is taken as the
 sequence of directories which is used to
 search for the specified command.
 Notice that the
-global command from Sixth Edition Unix
+global command from Sixth Edition UNIX
 always used the equivalent of `.:/bin:/usr/bin',
 not PATH.
 .SH "SEE ALSO"
@@ -178,7 +178,7 @@ A
 command
 appeared as
 .I /etc/glob
-in First Edition Unix.
+in First Edition UNIX.
 .SH LICENSE
 See either the LICENSE file which is distributed with
 .I osh

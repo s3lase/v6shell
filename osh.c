@@ -1,5 +1,5 @@
 /*
- * osh.c - an enhanced port of the Sixth Edition (V6) Unix Thompson shell
+ * osh.c - an enhanced port of the Sixth Edition (V6) UNIX Thompson shell
  */
 /*-
  * Copyright (c) 2004-2008

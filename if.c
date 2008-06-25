@@ -1,5 +1,5 @@
 /*
- * if.c - a port of the Sixth Edition (V6) Unix conditional command
+ * if.c - a port of the Sixth Edition (V6) UNIX conditional command
  */
 /*-
  * Copyright (c) 2004-2008
@@ -30,8 +30,8 @@
  */
 /*
  *	Derived from:
- *		- Sixth Edition Unix	/usr/source/s1/if.c
- *		- Seventh Edition Unix	/usr/src/cmd/test.c
+ *		- Sixth Edition UNIX	/usr/source/s1/if.c
+ *		- Seventh Edition UNIX	/usr/src/cmd/test.c
  */
 /*-
  * Copyright (C) Caldera International Inc.  2001-2002.  All rights reserved.

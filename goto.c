@@ -1,5 +1,5 @@
 /*
- * goto.c - a port of the Sixth Edition (V6) Unix transfer command
+ * goto.c - a port of the Sixth Edition (V6) UNIX transfer command
  */
 /*-
  * Copyright (c) 2004-2008
@@ -29,7 +29,7 @@
  *	@(#)$Id$
  */
 /*
- *	Derived from: Sixth Edition Unix /usr/source/s1/goto.c
+ *	Derived from: Sixth Edition UNIX /usr/source/s1/goto.c
  */
 /*-
  * Copyright (C) Caldera International Inc.  2001-2002.  All rights reserved.

@@ -25,7 +25,7 @@
 .\"
 .\"	@(#)$Id$
 .\"
-.\"	Derived from: Sixth Edition Unix /usr/man/man1/if.1
+.\"	Derived from: Sixth Edition UNIX /usr/man/man1/if.1
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.  All rights reserved.
 .\"
@@ -208,7 +208,7 @@ the exit status is that of the executed
 .IR command .
 .SH ENVIRONMENT
 Notice that the concept of `user environment'
-was not defined in Sixth Edition Unix.
+was not defined in Sixth Edition UNIX.
 Thus,
 use of the following environment variables
 by this port of the conditional command is an enhancement:
@@ -227,7 +227,7 @@ the value of this variable is taken as the
 sequence of directories which is used to
 search for the specified command.
 Notice that the
-conditional command from Sixth Edition Unix
+conditional command from Sixth Edition UNIX
 always used the equivalent of `.:/bin:/usr/bin',
 not PATH.
 .SH "SEE ALSO"
@@ -241,7 +241,7 @@ http://v6shell.org/
 .SH COMPATIBILITY
 The
 .I if
-command from Sixth Edition Unix
+command from Sixth Edition UNIX
 does not support the
 .BR \-d ,
 .BR \-e ,
@@ -268,7 +268,7 @@ An
 command
 appeared as
 .I /bin/if
-in Third Edition Unix.
+in Third Edition UNIX.
 .SH LICENSE
 See either the LICENSE file which is distributed with
 .I osh

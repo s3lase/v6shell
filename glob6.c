@@ -1,5 +1,5 @@
 /*
- * glob6.c - a port of the Sixth Edition (V6) Unix global command
+ * glob6.c - a port of the Sixth Edition (V6) UNIX global command
  */
 /*-
  * Copyright (c) 2004-2008
@@ -29,7 +29,7 @@
  *	@(#)$Id$
  */
 /*
- *	Derived from: Sixth Edition Unix /usr/source/s1/glob.c
+ *	Derived from: Sixth Edition UNIX /usr/source/s1/glob.c
  */
 /*-
  * Copyright (C) Caldera International Inc.  2001-2002.  All rights reserved.

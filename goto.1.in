@@ -25,7 +25,7 @@
 .\"
 .\"	@(#)$Id$
 .\"
-.\"	Derived from: Sixth Edition Unix /usr/man/man1/goto.1
+.\"	Derived from: Sixth Edition UNIX /usr/man/man1/goto.1
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.  All rights reserved.
 .\"
@@ -106,7 +106,7 @@ http://v6shell.org/
 .SH COMPATIBILITY
 The
 .I goto
-command from Sixth Edition Unix
+command from Sixth Edition UNIX
 requires \fB:\fR to be the first character
 on the labelled line.
 Otherwise,
@@ -121,7 +121,7 @@ A
 command
 appeared as
 .I /bin/goto
-in Third Edition Unix.
+in Third Edition UNIX.
 .SH LICENSE
 See either the LICENSE file which is distributed with
 .I osh

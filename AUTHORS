@@ -26,7 +26,7 @@ since July 2003.  The origin of each one is described below.
 
 [osh-20061230 through osh-current]:
 	The second variation was originally authored by Ken Thompson as
-	Sixth Edition Unix /usr/source/s2/sh.c and was then ported by
+	Sixth Edition UNIX /usr/source/s2/sh.c and was then ported by
 	Jeffrey Allen Neitzel for personal use in January 2004.
 
 	I eventually released it as sh6(1) in osh-060124.  Then, after its
@@ -45,6 +45,6 @@ I wish to thank the original authors very much for their efforts.
 Without their previous work, none of this software or documentation
 would exist today.
 
-Jeffrey Allen Neitzel						2008/01/05
+Jeffrey Allen Neitzel						2008/06/25
 
 @(#)$Id$

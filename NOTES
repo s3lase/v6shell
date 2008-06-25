@@ -2,14 +2,14 @@
 Historical notes for osh(1) and sh6(1):
 
 The Thompson shell, by Ken Thompson of Bell Labs, was distributed
-as the standard command interpreter through Sixth Edition Unix.
+as the standard command interpreter through Sixth Edition UNIX.
 Then, in the Seventh Edition, it was replaced by the Bourne shell.
 However, the Thompson shell was still distributed with the system
 as osh because of known portability problems with the Bourne shell's
-memory management in Seventh Edition Unix.
+memory management in Seventh Edition UNIX.
 
 The name of the Thompson shell's binary executable was `sh'.
-It was installed as `/bin/sh' through Sixth Edition Unix and
+It was installed as `/bin/sh' through Sixth Edition UNIX and
 made use of the following external utilities:
 
 	1) /bin/exit was used to terminate command files.
@@ -19,7 +19,7 @@ made use of the following external utilities:
 
 	3) /bin/if was used to evaluate conditional expressions.
 	   This is the predecessor of test(1), which was first
-	   released in Seventh Edition Unix.
+	   released in Seventh Edition UNIX.
 
 	4) /etc/glob was used to expand `*', `?', and `[...]'
 	   in command arguments.
@@ -34,7 +34,7 @@ glob6(1) source code.
 
 For sh6(1), the Thompson-shell port's binary executable has been
 renamed from `sh' to `sh6' to avoid name conflict and confusion
-with the system shell, sh(1), on modern Unix systems.  Similarly,
+with the system shell, sh(1), on modern UNIX systems.  Similarly,
 the `glob' utility has been renamed to `glob6' and is installed
 into the same directory as the shell, rather than being installed
 into the /etc directory.
@@ -43,7 +43,7 @@ into the /etc directory.
 Compatibility notes for osh(1):
 
 This is an enhanced, backward-compatible port of the Thompson shell
-from Sixth Edition Unix.  However, when it is known to differ in
+from Sixth Edition UNIX.  However, when it is known to differ in
 some way from the original, this fact is indicated in the osh(1)
 manual page.
 
@@ -56,7 +56,7 @@ Further details regarding some of the known differences:
 
 1) This port of the shell uses PATH to search for external commands,
    but the original always uses the equivalent of `.:/bin:/usr/bin'.
-   The sh(1) manual page from Sixth Edition Unix reads as follows:
+   The sh(1) manual page from Sixth Edition UNIX reads as follows:
 
        If  the  first argument is the name of an executable file,
        it is invoked; otherwise the string `/bin/'  is  prepended
@@ -90,7 +90,7 @@ Further details regarding some of the known differences:
 --------
 Compatibility notes for sh6(1):
 
-This is a port of the Thompson shell from Sixth Edition Unix.
+This is a port of the Thompson shell from Sixth Edition UNIX.
 However, when it is known to differ in some way from the original,
 this fact is indicated in the sh6(1) manual page.
 
@@ -102,7 +102,7 @@ Further details regarding the substantial differences:
 
 1) This port of the shell uses PATH to search for external commands,
    but the original always uses the equivalent of `.:/bin:/usr/bin'.
-   The sh(1) manual page from Sixth Edition Unix reads as follows:
+   The sh(1) manual page from Sixth Edition UNIX reads as follows:
 
        If  the  first argument is the name of an executable file,
        it is invoked; otherwise the string `/bin/'  is  prepended
@@ -133,6 +133,6 @@ Further details regarding the substantial differences:
 3) The original implementation of the shell does shell accounting
    in order to record command execution data; this port does not.
 
-Jeffrey Allen Neitzel						2008/01/05
+Jeffrey Allen Neitzel						2008/06/25
 
 @(#)$Id$

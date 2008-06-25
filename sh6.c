@@ -1,5 +1,5 @@
 /*
- * sh6.c - a port of the Sixth Edition (V6) Unix Thompson shell
+ * sh6.c - a port of the Sixth Edition (V6) UNIX Thompson shell
  */
 /*-
  * Copyright (c) 2004-2008
@@ -29,7 +29,7 @@
  *	@(#)$Id$
  */
 /*
- *	Derived from: Sixth Edition Unix /usr/source/s2/sh.c
+ *	Derived from: Sixth Edition UNIX /usr/source/s2/sh.c
  */
 /*-
  * Copyright (C) Caldera International Inc.  2001-2002.  All rights reserved.

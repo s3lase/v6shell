@@ -25,7 +25,7 @@
 .\"
 .\"	@(#)$Id$
 .\"
-.\"	Derived from: Sixth Edition Unix /usr/man/man1/sh.1
+.\"	Derived from: Sixth Edition UNIX /usr/man/man1/sh.1
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.  All rights reserved.
 .\"
@@ -74,7 +74,7 @@ osh \- old shell (command interpreter)
 .I Osh
 is an enhanced,
 backward-compatible port of the
-standard command interpreter from Sixth Edition Unix.
+standard command interpreter from Sixth Edition UNIX.
 It may be used either as an interactive shell
 or as a non-interactive shell.
 Throughout this manual,
@@ -82,7 +82,7 @@ Throughout this manual,
 .I osh
 is known to differ from the original
 .IR sh (1),
-as it appeared in Sixth Edition Unix.
+as it appeared in Sixth Edition UNIX.
 .PP
 The options are as follows:
 .TP
@@ -878,7 +878,7 @@ An external command was not found.
 An external command was terminated by a signal.
 .SH "ENVIRONMENT (+)"
 Notice that the concept of `user environment'
-was not defined in Sixth Edition Unix.
+was not defined in Sixth Edition UNIX.
 Thus,
 use of the following environment variables
 by this port of the shell is an enhancement:
@@ -919,7 +919,7 @@ sequence of directories used
 by the shell to search for external commands.
 Its value is available to the shell via
 the `$p' special parameter.
-Notice that the Sixth Edition Unix
+Notice that the Sixth Edition UNIX
 shell always used the equivalent of `.:/bin:/usr/bin',
 not PATH.
 .SH FILES
@@ -963,7 +963,7 @@ Osh home page:
 http://v6shell.org/
 .SH AUTHORS
 This enhanced port of the Thompson shell is derived from
-Sixth Edition Unix /usr/source/s2/sh.c,
+Sixth Edition UNIX /usr/source/s2/sh.c,
 which was principally written by Ken Thompson of Bell Labs.
 Jeffrey Allen Neitzel initially ported it in January 2004
 and currently maintains it as
@@ -979,11 +979,11 @@ A
 command
 appeared as
 .I /bin/sh
-in First Edition Unix.
+in First Edition UNIX.
 .PP
 The Thompson shell
 was used as the standard command interpreter
-through Sixth Edition Unix.
+through Sixth Edition UNIX.
 Then,
 in the Seventh Edition,
 it was replaced by the Bourne shell.
@@ -993,7 +993,7 @@ was still distributed with the system as
 .I osh
 because of known portability problems
 with the Bourne shell's memory management
-in Seventh Edition Unix.
+in Seventh Edition UNIX.
 .SH LICENSE
 See either the LICENSE file which is distributed with
 .I osh
