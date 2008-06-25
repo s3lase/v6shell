@@ -102,12 +102,20 @@ OSH_RCSID("@(#)$Id$");
 #define	FDFREEMAX	65536	/* Arbitrary maximum value for fd_free(). */
 #define	PIDMAX		99999	/* Maximum value for both prn() and apid. */
 
+/*
+ * Following standard conventions, file descriptors 0, 1, and 2 are used
+ * for standard input, standard output, and standard error respectively.
+ */
 #define	FD0		STDIN_FILENO
 #define	FD1		STDOUT_FILENO
 #define	FD2		STDERR_FILENO
 
-#define	CH_SIGINT	01
-#define	CH_SIGQUIT	02
+/*
+ * Signal child flags (see sig_child)
+ */
+#define	SC_SIGINT	01
+#define	SC_SIGQUIT	02
+#define	SC_SIGTERM	04
 
 #define	FC_ERR		124	/* fatal child error (changed in pwait()) */
 #define	SH_ERR		2	/* shell-detected error (default value)   */
@@ -181,7 +189,6 @@ static	const char *const sig[XNSIG] = {
 static	char		apid[6];	/* $$ - ASCII shell process ID      */
 /*@null@*/
 static	const char	*argv2p;	/* string for `-c' option           */
-static	int		chintr;		/* SIGINT / SIGQUIT flag for child  */
 static	int		dolc;		/* $N dollar-argument count         */
 /*@null@*/
 static	const char	*dolp;		/* $N and $$ dollar-value pointer   */
@@ -198,6 +205,7 @@ static	int		one_line_flag;	/* one-line flag for `-t' option    */
 static	char		peekc;		/* just-read, pushed-back character */
 /*@null@*/ /*@observer@*/
 static	const char	*prompt;	/* interactive-shell prompt pointer */
+static	int		sig_child;	/* SIG(INT|QUIT|TERM) child flags   */
 static	pid_t		spid;		/* shell process ID                 */
 static	int		status;		/* shell exit status                */
 static	char		*word[WORDMAX];	/* argument/word pointer array      */
@@ -265,7 +273,7 @@ main(int argc, char **argv)
 		dolv = &argv[1];
 		dolc = argc - 1;
 		if (*argv[1] == '-') {
-			chintr = 1;
+			sig_child = 1;
 			if (argv[1][1] == 'c' && argc > 2) {
 				dolv  += 1;
 				dolc  -= 1;
@@ -282,18 +290,19 @@ main(int argc, char **argv)
 				goto done;
 		}
 	} else {
-		chintr = 1;
-		if (isatty(FD0) != 0 && isatty(FD2) != 0) {
+		sig_child = 1;
+		if (isatty(FD0) != 0 && isatty(FD2) != 0)
 			prompt = (geteuid() != 0) ? "% " : "# ";
-			(void)sasignal(SIGTERM, SIG_IGN);
-		}
 	}
-	if (chintr != 0) {
-		chintr = 0;
+	if (sig_child != 0) {
+		sig_child = 0;
 		if (sasignal(SIGINT, SIG_IGN) == SIG_DFL)
-			chintr |= CH_SIGINT;
+			sig_child |= SC_SIGINT;
 		if (sasignal(SIGQUIT, SIG_IGN) == SIG_DFL)
-			chintr |= CH_SIGQUIT;
+			sig_child |= SC_SIGQUIT;
+		if (prompt != NULL)
+			if (sasignal(SIGTERM, SIG_IGN) == SIG_DFL)
+				sig_child |= SC_SIGTERM;
 	}
 	fd_free();
 	sh_magic();
@@ -1047,12 +1056,14 @@ execute(struct tnode *t, int *pin, int *pout)
 				}
 			}
 		} else {
-			if ((chintr & CH_SIGINT) != 0)
+			if ((sig_child & SC_SIGINT) != 0)
 				(void)sasignal(SIGINT, SIG_DFL);
-			if ((chintr & CH_SIGQUIT) != 0)
+			if ((sig_child & SC_SIGQUIT) != 0)
 				(void)sasignal(SIGQUIT, SIG_DFL);
 		}
-		(void)sasignal(SIGTERM, SIG_DFL);
+		/* Set SIGTERM to its default action if needed. */
+		if ((sig_child & SC_SIGTERM) != 0)
+			(void)sasignal(SIGTERM, SIG_DFL);
 		if (t->ntype == TSUBSHELL) {
 			if ((t1 = t->nsub) != NULL)
 				t1->nflags |= (f & (FFIN | FPIN | FINTR));
