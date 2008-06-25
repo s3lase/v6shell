@@ -1,7 +1,7 @@
-Welcome to osh-current (20080607)!
+Welcome to osh-20080629!
 
 Osh(1) is an enhanced, backward-compatible port of the Sixth Edition (V6)
-Unix shell (circa 1975), also known as the Thompson shell.  The original
+UNIX shell (circa 1975), also known as the Thompson shell.  The original
 Thompson shell was principally written by Ken Thompson of Bell Labs.
 
 Sh6(1) (a port of the original shell) and glob6(1) (a port of the
@@ -12,9 +12,9 @@ but without the obvious enhancements found in osh.
 
 Notice that this package also includes the following shell utilities:
 
-	if(1)   - conditional command (ported from Sixth Edition Unix)
+	if(1)   - conditional command (ported from Sixth Edition UNIX)
 
-	goto(1) - transfer command (ported from Sixth Edition Unix)
+	goto(1) - transfer command (ported from Sixth Edition UNIX)
 
 	fd2(1)  - redirect file descriptor 2
 
@@ -23,7 +23,7 @@ See the INSTALL file for build and install instructions.
 
 -------
 The osh package should build successfully on any POSIX-compliant
-Unix system.  It is currently developed, maintained, and tested by
+UNIX system.  It is currently developed, maintained, and tested by
 the developer on Mac OS X, FreeBSD, NetBSD, OpenBSD, and Xubuntu
 Linux.
 
@@ -43,6 +43,6 @@ you to contact me via email.  Thanks & Enjoy!
 
 Jeffrey Allen Neitzel
 <jan (at) v6shell (dot) org>
-http://v6shell.org/						2008/06/22
+http://v6shell.org/						2008/06/25
 
 @(#)$Id$

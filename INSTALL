@@ -1,4 +1,4 @@
-Build and install instructions for osh-current (20080607)!
+Build and install instructions for osh-20080629!
 
 SYNOPSIS
 	env [variable=value ...] make [target ...]
@@ -35,13 +35,13 @@ passing the desired variable=value pair(s) on the command line.
 
 	SYSCONFDIR	Defaults to $(PREFIX)/etc.  This is the target
 			directory where the shell shall search for its
-			system-wide initialization file if such a file
-			is available on the system.  See also:
+			system-wide rc (init and logout) files if such
+			files are available on the system.  See also:
 
 				http://v6shell.org/rc_files/
 
 			...
-			for example initialization files.
+			for example rc files.
 
 	DESTDIR		Unset by default.  This may be used for
 			building binary packages if needed.
@@ -101,10 +101,10 @@ manual pages into /usr/pkg/man/man1, and also sets SYSCONFDIR to
 	% make PREFIX=/usr/pkg sh6all
 	# make PREFIX=/usr/pkg install-sh6all
 
-The following example compiles everything, configuring the shell
-to use /etc/osh.login as its system-wide initialization file instead
-of /usr/local/etc/osh.login, which is the default.  It then installs
-the entire osh package into the default location.
+The following example compiles everything, configuring the shell to
+search for its system-wide rc files in /etc instead of /usr/local/etc
+by default.  It then installs the entire osh package into the
+default location.
 
 	% make SYSCONFDIR=/etc
 	# make install
@@ -116,6 +116,6 @@ It then installs the entire osh package into the default location.
 	% make MOXARCH='-arch i386 -arch ppc'
 	# make install
 
-Jeffrey Allen Neitzel						2008/06/22
+Jeffrey Allen Neitzel						2008/06/25
 
 @(#)$Id$
