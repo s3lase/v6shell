@@ -27,15 +27,15 @@ UNIX system.  It is currently used by the developer on Mac OS X
 and NetBSD.  More specifically, it is known to build successfully
 on the following systems at the time of this release:
 
-	System		Release(s) / Additional Info
-	--------------------------------------------
+	System		Release(s), Distributions, Additional Info
+	----------------------------------------------------------
 	FreeBSD		6.1, 7.0
 	Mac OS X	10.4, 10.5
 	NetBSD		2.1, 3.1.1, 4.0
 	OpenBSD		4.1, 4.2, 4.3
 	OpenSolaris	2008.05
-	GNU/Linux	Debian, Kubuntu, Mandriva (2007.0),
-			Slackware (12.1), Xubuntu
+	GNU/Linux	CentOS 5.2, Debian testing (lenny), Kubuntu,
+			Mandriva 2007.0, Slackware 12.1, Xubuntu
 
 If your system is not mentioned above, simply try to build the osh
 package to see if it works or not.  In either case, please consider
