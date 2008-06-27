@@ -23,18 +23,24 @@ MANMODE=	-m 0444
 #
 # Build utilities (SHELL must be POSIX-compliant)
 #
-#CC=		/usr/bin/cc
-INSTALL=	/usr/bin/install
+CC?=		/usr/bin/cc
+INSTALL?=	/usr/bin/install
 SHELL=		/bin/sh
 
 #
-# Compiler and linker flags
+# Preprocessor, compiler, and linker flags
 #
+#	If your compiler gives errors or warnings about any of
+#	the flags specified by `OPTIONS=' or `WARNINGS=' below,
+#	comment out the appropriate line(s) with a `#' character
+#	according to the compiler's errors or warnings.  Then,
+#	try to rebuild by doing a `make clean ; make'.
+#
+#CPPFLAGS=
+OPTIONS=	-std=c99 -pedantic
+WARNINGS=	-Wall -W
 #CFLAGS+=	-g
-CFLAGS+=	-O2
-CFLAGS+=	-std=c99
-CFLAGS+=	-pedantic
-CFLAGS+=	-Wall -W
+CFLAGS+=	-O2 $(OPTIONS) $(WARNINGS)
 #LDFLAGS+=	-static
 
 #
@@ -54,8 +60,8 @@ LDFLAGS+=	$(MOXARCH)
 #	osh-current (YYYYMMDD)	== development snapshot
 #	osh-YYYYMMDD		== official release
 #
-OSH_DATE=	June 25, 2008
-OSH_VERSION=	osh-20080629-b1
+OSH_DATE=	June 29, 2008
+OSH_VERSION=	osh-20080629
 
 OSH=	osh
 SH6=	sh6 glob6
