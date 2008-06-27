@@ -71,8 +71,8 @@ OSH_RCSID("@(#)$Id$");
 
 #include "sasignal.h"
 
-sasig_t
-sasignal(int sig, sasig_t act)
+action_type
+sasignal(int sig, action_type act)
 {
 	struct sigaction a, oa;
 

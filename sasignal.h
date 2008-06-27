@@ -35,8 +35,8 @@
  * it returns SIG_ERR and sets errno according to the error.
  */
 
-typedef	void	(*sasig_t)(int);	/* signal action type */
+typedef	void	(*action_type)(int);		/* signal action type */
 
-sasig_t	sasignal(int, sasig_t);
+action_type	sasignal(int, action_type);
 
 #endif	/* !SASIGNAL_H */
