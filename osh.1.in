@@ -101,7 +101,7 @@ as a command line and exits.
 (+)
 The shell behaves as an interactive shell
 by reading and executing commands from the
-appropriate rc file(s) if possible
+appropriate rc files if possible
 (see
 .I "Startup and shutdown"
 below)
@@ -114,7 +114,7 @@ non-zero status if it is not connected to a terminal.
 (+)
 The shell behaves as a login shell
 by reading and executing commands from the
-appropriate rc file(s) if possible
+appropriate rc files if possible
 (see
 .I "Startup and shutdown"
 below)
@@ -161,7 +161,7 @@ before reading each command line from the terminal.
 .PP
 (+) When an interactive shell starts,
 it reads and executes commands
-from the appropriate rc file(s) if possible
+from the appropriate rc files if possible
 (see
 .I "Startup and shutdown"
 below)
@@ -193,11 +193,11 @@ if the command name contains one or more `/' characters,
 the shell attempts to execute it without
 performing any PATH search.
 .PP
-If an executable file does not begin with
+(+) If an executable file does not begin with
 the proper magic number or a `#!shell' sequence,
 it is assumed to be a shell command file,
 and a new shell is automatically invoked to execute it.
-(+) The environment variable EXECSHELL
+The environment variable EXECSHELL
 specifies the shell which is invoked
 to execute such a file.
 .PP
@@ -684,9 +684,7 @@ this is particularly true for
 .IR @SYSCONFDIR@/osh.login ,
 .IR @SYSCONFDIR@/osh.oshrc ,
 and
-.\" possibly for
 .IR @SYSCONFDIR@/osh.logout .
-.\" as well.
 .PP
 The
 .B exit
@@ -803,28 +801,27 @@ the receipt of which causes the shell to terminate
 the login session and to read and execute
 its rc logout files if possible.
 .PP
-When a non-interactive shell executes a command file,
-it does not handle or ignore any signal by default.
-Any other non-interactive shell always ignores
-the SIGINT and SIGQUIT signals.
-.PP
-If SIGHUP, SIGINT, or SIGQUIT is already ignored
+If SIGHUP, SIGINT, SIGQUIT, or SIGTERM is already ignored
 when the shell starts,
 it is also ignored by the current shell and all of its
 child processes.
 Otherwise,
-each signal is reset to its
-default action for sequential child processes.
-SIGTERM is always reset to its default action
-for all child processes by default.
+SIGINT and SIGQUIT are reset to the
+default action for sequential child processes,
+whereas SIGHUP and SIGTERM are reset to the default action
+for all child processes.
 .PP
-For all other signals,
+When a non-interactive shell executes a command file,
+it does not handle or ignore any signal by default.
+Any other non-interactive shell ignores SIGINT and SIGQUIT.
+.PP
+For any signal not mentioned above,
 the shell inherits the signal action (default or ignore)
-from its parent and passes it to its children.
+from its parent process and passes it to its child processes.
 Remember that the
 .B sigign
 special command may be used to ignore signals
-in those cases where the shell does not do so automatically.
+when the shell does not do so by default.
 .PP
 Asynchronous child processes always ignore
 both SIGINT and SIGQUIT.
@@ -1002,7 +999,8 @@ http://v6shell.org/license/
 for full details.
 .SH NOTES
 Notice that this port of the shell
-can handle 8-bit character sets.
+can handle 8-bit character sets,
+as well as the UTF-8 encoding.
 However,
 the original can only handle 7-bit ASCII.
 .PP

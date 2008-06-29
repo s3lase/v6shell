@@ -63,7 +63,10 @@
 sh6 \- shell (command interpreter)
 .SH SYNOPSIS
 .B sh6
-[\fB\-\fR | \fB\-c\fR \fIstring\fR | \fB\-t\fR | \fIfile\fR [\fIarg1 ...\fR]]
+[\fB\-\fR |
+\fB\-c\fR \fIstring\fR |
+\fB\-t\fR |
+\fIfile\fR [\fIarg1 ...\fR]]
 .SH DESCRIPTION
 .I Sh6
 is a port of the
@@ -140,11 +143,11 @@ if the command name contains one or more `/' characters,
 the shell attempts to execute it without
 performing any PATH search.
 .PP
-If an executable file does not begin with
+(+) If an executable file does not begin with
 the proper magic number or a `#!shell' sequence,
 it is assumed to be an ASCII command file,
 and a new shell is automatically invoked to execute it.
-(+) The environment variable EXECSHELL
+The environment variable EXECSHELL
 specifies the shell which is invoked
 to execute such a file.
 .PP
@@ -336,7 +339,7 @@ it is taken as the name of an ASCII
 or
 .IR "shell script" ,
 which is opened as the standard input
-for a new instance of the shell.
+for a new shell instance.
 Thus,
 the new shell reads and interprets command lines
 from the named file.
@@ -344,9 +347,9 @@ from the named file.
 Otherwise,
 .I name
 is taken as one of the shell options,
-and a new instance of the shell is invoked
-to read and interpret command lines from its
-standard input.
+and a new shell instance is invoked
+to read and interpret command lines
+from its standard input.
 However,
 notice that the
 .B \-c
@@ -554,19 +557,19 @@ if the shell is invoked with
 any option argument,
 it only ignores SIGINT and SIGQUIT.
 .PP
-If SIGINT or SIGQUIT is already ignored
+If SIGINT, SIGQUIT, or SIGTERM is already ignored
 when the shell starts,
-it is also ignored for all of the shell's
+it is also ignored by the current shell and all of its
 child processes.
 Otherwise,
-each signal is reset to its
-default action for sequential child processes.
-SIGTERM is always reset to its default action
+SIGINT and SIGQUIT are reset to the
+default action for sequential child processes,
+whereas SIGTERM is reset to the default action
 for all child processes.
 .PP
-For all other signals,
+For any signal not mentioned above,
 the shell inherits the signal action (default or ignore)
-from its parent and passes it to its children.
+from its parent process and passes it to its child processes.
 .PP
 Asynchronous child processes always ignore
 both SIGINT and SIGQUIT.
