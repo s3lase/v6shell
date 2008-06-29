@@ -23,11 +23,10 @@ See the INSTALL file for build and install instructions.
 
 -------
 The osh package should build successfully on any POSIX-compliant
-UNIX system.  It is currently used by the developer on Mac OS X
-and NetBSD.  More specifically, it is known to build successfully
-on the following systems at the time of this release:
+UNIX system.  It is known to build successfully on the following
+systems at the time of this release:
 
-	System		Release(s), Distributions, Additional Info
+	System		Releases / Distributions / Additional Info
 	----------------------------------------------------------
 	FreeBSD		6.1, 7.0
 	Mac OS X	10.4, 10.5
@@ -53,6 +52,6 @@ you to contact me via email.  Thanks & Enjoy!
 
 Jeffrey Allen Neitzel
 <jan (at) v6shell (dot) org>
-http://v6shell.org/						2008/06/27
+http://v6shell.org/						2008/06/29
 
 @(#)$Id$

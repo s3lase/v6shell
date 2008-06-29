@@ -23,18 +23,16 @@ MANMODE=	-m 0444
 #
 # Build utilities (SHELL must be POSIX-compliant)
 #
-CC?=		/usr/bin/cc
 INSTALL?=	/usr/bin/install
 SHELL=		/bin/sh
 
 #
 # Preprocessor, compiler, and linker flags
 #
-#	If your compiler gives errors or warnings about any of
-#	the flags specified by `OPTIONS=' or `WARNINGS=' below,
-#	comment out the appropriate line(s) with a `#' character
-#	according to the compiler's errors or warnings.  Then,
-#	try to rebuild by doing a `make clean ; make'.
+#	If the compiler gives errors about any of flags specified
+#	by `OPTIONS=' or `WARNINGS=' below, comment the appropriate
+#	line(s) with a `#' character to fix the compiler errors.
+#	Then, try to rebuild by doing a `make clean ; make'.
 #
 #CPPFLAGS=
 OPTIONS=	-std=c99 -pedantic
