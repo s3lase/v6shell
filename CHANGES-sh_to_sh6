@@ -5,11 +5,11 @@ command in porting them to run on modern Unix systems.
 -------------------------------------------------------------------------------
 [osh-20080629]:
 sh6.c:
-	* No user-visible changes.
+	* Changed the way that the shell deals w/ the SIGTERM signal so that
+	  it only sets SIGTERM to its default action for child processes if
+	  it was set to its default action when the shell started.
 
-	* Did some refactoring to keep the code in sync w/ osh.c when possible.
-
-	* Refactored the NUL-ignoring code in the xgetc() function.
+	* Changed the code to use sasignal() instead of signal(3).
 
 -------------------------------------------------------------------------------
 [osh-20080109]:
@@ -300,6 +300,6 @@ glob.c:
     Date: May 14, 1975
     From: Sixth Edition Unix /usr/source/s1/glob.c
 
-Jeffrey Allen Neitzel						2008/06/25
+Jeffrey Allen Neitzel						2008/06/29
 
 @(#)$Id$

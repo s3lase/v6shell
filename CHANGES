@@ -7,6 +7,23 @@ are marked w/ a `C:' in the details below.
 	  the osh project website has a new URL, http://v6shell.org/, as of
 	  Wednesday, 2008-01-16.
 
+	* Changed the general contact email address and the bug report email
+	  address for the osh project.  See the README file for details.
+
+	* Changed instances of "Unix" to "UNIX" in all files (excluding C*).
+	  Though "Unix" is not an acronym, "UNIX" is a registered trademark
+	  of The Open Group (http://www.opengroup.org/tm-guidelines.htm).
+
+	  NOTE: The developer is not a lawyer and does not know that this
+	  change is necessary in the legal sense.  In any case, it seems
+	  appropriate and sensible to acknowledge the UNIX trademark.
+
+	* New files:  sasignal.c (from OpenBSD /usr/src/lib/libc/gen/signal.c)
+		      and a corresponding sasignal.h
+
+LICENSE:
+	* Added a copy of OpenBSD's license to account for sasignal.c .
+
 INSTALL, Makefile:
 	* On Mac OS X, changed how compiling universal binaries is handled.
 	  Now, only MOXARCH is used to specify the target architecture(s)
@@ -16,43 +33,47 @@ INSTALL, Makefile:
 	  or
 		% make MOXARCH='-arch x86_64'
 
+	* Made a few changes to the Makefile to allow for more flexibility
+	  in the compilation of the osh package.  This should help on systems
+	  where GCC is not the default compiler and where /usr/bin/install
+	  is not a BSD-like or GNU-like install utility.
+
+mkconfig:
+	* Add a case to define _XOPEN_SOURCE with a value of 600 on OpenSolaris
+	  2008.05 (uname -s == SunOS), and generate an appropriate "config.h"
+	  file.  Specifying "CC=/usr/bin/gcc" and "INSTALL=/usr/bin/ginstall"
+	  on the make command line allows osh to compile and install.
+
 osh.c:
+	* Added support for 3 new command-line options (see osh(1)):
+		`-i' == interactive shell
+		`-l' == login shell
+		`-v' == verbose shell
+
 	* Added support for SYSCONFDIR/osh.oshrc (system-wide rc init file
 	  for interactive shells), SYSCONFDIR/osh.logout (system-wide rc
 	  logout file for login shells), and $h/.osh.logout (user rc logout
 	  file for login shells).
 
-	* Changed the behavior of the shell when invoked w/ the `-i' or `-l'
-	  option so that it only prompts for input if it is connected to a
-	  terminal.
+	* Added code to handle the SIGHUP signal.  Cause the shell to execute
+	  its rc logout files (if any) upon receipt of this signal.
 
-	* Added code for 3 new command-line options (see osh(1)):
-		`-i' == interactive shell
-		`-l' == login shell
-		`-v' == verbose shell
+	* Changed the way that the shell deals w/ the SIGTERM signal so that
+	  it only sets SIGTERM to its default action for child processes if
+	  it was set to its default action when the shell started.
 
-	* Refactored the NUL-ignoring code in the xgetc() function.
+	  Doing a `sigign + 15' causes the shell's child processes to ignore
+	  SIGTERM in all cases.
+
+	* Changed the code to use sasignal() instead of signal(3).
 
 	* Added a "Broken pipe" termination message for the SIGPIPE signal.
 
 	  Notice that the original shell did not print a termination message
-	  for this signal, but it can be quite useful for debugging purposes.
-
-goto.c:
-	* Commented the xgetc() function.
+	  for this signal, but it can be quite useful in some cases.
 
 osh.1.in:
-	* Added documentation for SYSCONFDIR/osh.oshrc (system-wide rc init
-	  file for interactive shells), SYSCONFDIR/osh.logout (system-wide
-	  rc logout file for login shells), and $h/.osh.logout (user rc logout
-	  file for login shells).
-
-	* Modified the documentation for the `-i' and `-l' options.
-
-	* Added appropriate documentation for the `-i', `-l', and `-v'
-	  command-line options.
-
-	* Added "Broken pipe (+)" to "Termination reporting" subsection.
+	* Updated the documentation as needed to reflect changes to the code.
 
 -------------------------------------------------------------------------------
 [osh-20080109]:
@@ -1271,6 +1292,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2008/06/25
+Jeffrey Allen Neitzel						2008/06/29
 
 @(#)$Id$
