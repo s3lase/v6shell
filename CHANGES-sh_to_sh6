@@ -11,6 +11,9 @@ sh6.c:
 
 	* Changed the code to use sasignal() instead of signal(3).
 
+sh6.1.in:
+	* Updated the documentation as needed to reflect changes to the code.
+
 -------------------------------------------------------------------------------
 [osh-20080109]:
 	* No user-visible changes.
@@ -300,6 +303,6 @@ glob.c:
     Date: May 14, 1975
     From: Sixth Edition Unix /usr/source/s1/glob.c
 
-Jeffrey Allen Neitzel						2008/06/29
+Jeffrey Allen Neitzel						2008/07/05
 
 @(#)$Id$
