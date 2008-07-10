@@ -1,6 +1,6 @@
 The following list describes the changes made to the original source
-code for the Sixth Edition (V6) Unix Thompson shell and global
-command in porting them to run on modern Unix systems.
+code for the Sixth Edition (V6) UNIX Thompson shell and global
+command in porting them to run on modern UNIX systems.
 
 -------------------------------------------------------------------------------
 [osh-20080629]:
@@ -303,6 +303,6 @@ glob.c:
     Date: May 14, 1975
     From: Sixth Edition Unix /usr/source/s1/glob.c
 
-Jeffrey Allen Neitzel						2008/07/05
+Jeffrey Allen Neitzel						2008/07/10
 
 @(#)$Id$
