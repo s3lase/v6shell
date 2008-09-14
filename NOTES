@@ -1,4 +1,6 @@
---------
+Implementation (historical/compatibility) notes for the osh project.
+
+---------------------------------------
 Historical notes for osh(1) and sh6(1):
 
 The Thompson shell, by Ken Thompson of Bell Labs, was distributed
@@ -36,21 +38,20 @@ For sh6(1), the Thompson-shell port's binary executable has been
 renamed from `sh' to `sh6' to avoid name conflict and confusion
 with the system shell, sh(1), on modern UNIX systems.  Similarly,
 the `glob' utility has been renamed to `glob6' and is installed
-into the same directory as the shell, rather than being installed
-into the /etc directory.
+into the same directory as the shell, /usr/local/bin by default,
+rather than being installed into the /etc directory.
 
---------
+-------------------------------
 Compatibility notes for osh(1):
 
 This is an enhanced, backward-compatible port of the Thompson shell
 from Sixth Edition UNIX.  However, when it is known to differ in
-some way from the original, this fact is indicated in the osh(1)
-manual page.
+some way from the original, this fact is indicated with a `(+)' in
+the osh(1) manual page.
 
-Aside from those differences which are detailed either in the manual
-page or below, the only other substantial difference is that this
-port of the shell can handle 8-bit character sets.  However, the
-original can only handle 7-bit ASCII.
+Unlike the original, this port of the shell can handle 8-bit character
+sets, as well as the UTF-8 encoding.  The original, on the other
+hand, can only handle 7-bit ASCII.
 
 Further details regarding some of the known differences:
 
@@ -87,16 +88,20 @@ Further details regarding some of the known differences:
 3) The original implementation of the shell does shell accounting
    in order to record command execution data; this port does not.
 
---------
+-------------------------------
 Compatibility notes for sh6(1):
 
 This is a port of the Thompson shell from Sixth Edition UNIX.
 However, when it is known to differ in some way from the original,
-this fact is indicated in the sh6(1) manual page.
+this fact is indicated with a `(+)' in the sh6(1) manual page.
 
-Aside from those differences which are detailed either in the manual
-page or below, the CHANGES_sh-to-sh6 file contains further information
-regarding how this port differs from the original.
+Like the original, this port of the shell is not 8-bit clean as it
+uses the high-order bit of characters for quoting.  Thus, the only
+complete character set it can handle is 7-bit ASCII.
+
+Aside from those differences which are detailed either here or
+in the manual page, the CHANGES_sh-to-sh6 file contains further
+information regarding how this port differs from the original.
 
 Further details regarding the substantial differences:
 
@@ -133,6 +138,6 @@ Further details regarding the substantial differences:
 3) The original implementation of the shell does shell accounting
    in order to record command execution data; this port does not.
 
-Jeffrey Allen Neitzel						2008/06/25
+Jeffrey Allen Neitzel						2008/09/14
 
 @(#)$Id$

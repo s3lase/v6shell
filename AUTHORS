@@ -1,29 +1,34 @@
-The original Thompson shell was principally written by Ken Thompson
+The original Thompson shell was principally written by K. Thompson
 of Bell Labs.  However, it should be noted that other individuals
-at Bell Labs also had a role in its development: Dennis Ritchie,
-Doug McIlroy, and quite probably others whose names I do not know.
+at Bell Labs also had a role in its development: D. M. Ritchie,
+M. D. McIlroy, J. F. Ossanna, and quite likely others as well.
 
 Jeffrey Allen Neitzel is the principal developer and maintainer of
-the enhanced, backward-compatible port of the Sixth Edition Thompson
-shell (and all of the other software) released in this package.
+the enhanced, backward-compatible port of the Sixth Edition (V6)
+UNIX Thompson shell (and all other software) released as part of
+the osh project.
+
 Notice that I have developed two different variations of osh(1)
 since July 2003.  The origin of each one is described below.
 
+================================
 [osh-030730 through osh-060124]:
 	The first variation was originally authored by Gunnar Ritter as
 	osh-020214/osh.c and was then adopted by Jeffrey Allen Neitzel.
 
 	Unfortunately, the design of Gunnar's implementation was broken.
 	Thus, it required a lot of workarounds in order to fix the fact
-	that his design resulted in a shell which was simply incompatible
-	with the Thompson shell.
+	that his design resulted in a shell which was incompatible with
+	the Thompson shell in several respects.
 
 	I modified Gunnar's design to separate command-line parsing and
 	execution so that the shell could at least be compatible in the
-	most basic sense.  The only catch was that word splitting was still
-	incompatible.  Thus, this partial solution was always destined for
-	eventual replacement.
+	most basic sense.  The only catch was that word splitting was
+	still incompatible.  Thus, this partial solution was always
+	destined for eventual replacement.
+===
 
+===================================
 [osh-20061230 through osh-current]:
 	The second variation was originally authored by Ken Thompson as
 	Sixth Edition UNIX /usr/source/s2/sh.c and was then ported by
@@ -39,12 +44,12 @@ since July 2003.  The origin of each one is described below.
 	glob6.c, copied them to osh.c, and began working on it during my
 	free time in 2006.  Finally, I released the new variation of osh(1)
 	in osh-20061230.
+===
 
-...
 I wish to thank the original authors very much for their efforts.
 Without their previous work, none of this software or documentation
 would exist today.
 
-Jeffrey Allen Neitzel						2008/06/25
+Jeffrey Allen Neitzel						2008/09/14
 
 @(#)$Id$

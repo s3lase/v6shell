@@ -1,5 +1,8 @@
-Changes that improve compatibility w/ the Sixth Edition UNIX shell
-are marked w/ a `C:' in the details below.
+Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
+Thompson shell are marked w/ a `C:' in the details below.
+
+-------------------------------------------------------------------------------
+[osh-current]:
 
 -------------------------------------------------------------------------------
 [osh-20080629]:
@@ -217,8 +220,8 @@ osh.c	1.2 (jneitzel) 2007/01/14:
 		   tests/*: ... until I have a chance to rewrite them ...
 
 *.1:
-	* Changed all instances of `UNIX' to `Unix' since the name
-	  of the Unix operating system is not an acronym.
+	* Changed all instances of "UNIX" to "Unix" since the name
+	  of the "Unix" operating system is not an acronym.
 
 pexec.c:
 	* Fixed a possible, but very unlikely, memory leak.
@@ -270,7 +273,7 @@ Makefile:
 sh6:
 	* Changed sh6(1) from being a reimplementation which is compiled from
 	  the same sources as osh(1) to being a port of the original Thompson
-	  shell from Sixth Edition Unix.  Refer to the CHANGES_sh-to-sh6 file
+	  shell from Sixth Edition UNIX.  Refer to the CHANGES_sh-to-sh6 file
 	  for further details.
 
 osh:
@@ -304,7 +307,7 @@ osh and sh6:
 
 	* Reverted the unconventional execution error behavior introduced
 	  in the previous release since this change was out of character
-	  w/ the Thompson shell, and other common Unix shells as well.
+	  w/ the Thompson shell, and other common UNIX shells as well.
 
 osh only:
 	* Fixed a bug in the `exec' special command where a pipeline such as
@@ -360,7 +363,7 @@ osh and sh6:
 	  begins reading/executing commands, close any open descriptors in
 	  the range 3 - 19 (inclusive) that the shell did not set up for
 	  itself.  Note that doing so does not break x-only scripts if
-	  such scripts are supported on a particular Unix system.
+	  such scripts are supported on a particular UNIX system.
 
 	* Increased some key buffer sizes...
 	  The size of the command-line buffer now allows for 2047 characters
@@ -570,12 +573,12 @@ osh only:
 
 if:
 	* Did another rewrite of the if(1) utility.
-	  Started with a fresh copy of if.c from Sixth Edition Unix.
+	  Started with a fresh copy of if.c from Sixth Edition UNIX.
 	  User-visible changes?  None.
 
 goto:
 	* Did another rewrite of the goto(1) utility.
-	  Started with a fresh copy of goto.c from Sixth Edition Unix.
+	  Started with a fresh copy of goto.c from Sixth Edition UNIX.
 	  User-visible changes?  Yes, it is no longer an error for a NUL
 	  character to appear in the input.  Also, it now prints an explicit
 	  `cannot seek' diagnostic if the input file is not seekable.
@@ -802,7 +805,7 @@ osh.1:
 osh.c:
 	C: Made changes to globbing which affect the shell in compatible mode.
 	   This includes the addition of the `No directory' diagnostic which
-	   was present in /etc/glob from Sixth Edition Unix.  Also, it looks
+	   was present in /etc/glob from Sixth Edition UNIX.  Also, it looks
 	   like I had previously misinterpreted exactly when the `No match'
 	   diagnostic was supposed to be printed.  Now, when running in
 	   compatible mode the shell really is compatible.  Yay =)
@@ -917,14 +920,14 @@ if.c:
 	  the error messages.
 
 	* In addition, added some useful diagnostic messages which were
-	  inspired by the test(1) utility from Seventh Edition Unix.
+	  inspired by the test(1) utility from Seventh Edition UNIX.
 
 goto.c:
 	* Give an error message when standard input is not seekable.
 	  Previously, a label not found error would be produced instead.
 
 fd2.c:
-	* A new utility and manual page...  It is an adaptation of the PWB/Unix
+	* A new utility and manual page...  It is an adaptation of the PWB/UNIX
 	  (roughly PWB/1.0 ?) redirect diagnostic output command.  The original
 	  source came from the file `spencer_pwb.tar.gz' which can be found at:
 
@@ -1251,7 +1254,7 @@ if.c:
 goto.c:
 	* Completely fixed detection of EOF in command files.
 	  The reason for these EOF problems was because getchar(3) in
-	  V6 Unix indicated end-of-file w/ '\0', and of course this
+	  V6 UNIX indicated end-of-file w/ '\0', and of course this
 	  is no longer the case today.
 
 -------------------------------------------------------------------------------
@@ -1292,6 +1295,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2008/07/10
+Jeffrey Allen Neitzel						2008/09/14
 
 @(#)$Id$

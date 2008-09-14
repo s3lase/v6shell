@@ -716,7 +716,7 @@ manipulating environment variables within the shell.
 This must be accomplished by using other tools such as
 .IR env (1).
 .PP
-Notice that
+Like the original,
 .I sh6
 is not 8-bit clean as it uses the high-order bit
 of characters for quoting.

@@ -998,11 +998,12 @@ or
 http://v6shell.org/license/
 for full details.
 .SH NOTES
-Notice that this port of the shell
-can handle 8-bit character sets,
-as well as the UTF-8 encoding.
-However,
-the original can only handle 7-bit ASCII.
+Unlike the original,
+this port of the shell can handle 8-bit character
+sets, as well as the UTF-8 encoding.
+The original,
+on the other hand,
+can only handle 7-bit ASCII.
 .PP
 Notice also that certain shell oddities were historically
 undocumented in this manual page.

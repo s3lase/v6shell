@@ -3,6 +3,9 @@ code for the Sixth Edition (V6) UNIX Thompson shell and global
 command in porting them to run on modern UNIX systems.
 
 -------------------------------------------------------------------------------
+[osh-current]:
+
+-------------------------------------------------------------------------------
 [osh-20080629]:
 sh6.c:
 	* Changed the way that the shell deals w/ the SIGTERM signal so that
@@ -63,7 +66,7 @@ sh6.c	1.3 (jneitzel) 2006/09/15:
 	* After the shell is invoked and initializes itself, it closes
 	  unneeded file descriptors.  Changed when this is done so that it
 	  does not break x-only scripts if they are supported on a particular
-	  Unix system.
+	  UNIX system.
 
 	* The shell no longer exits w/ an explicit non-zero status if a read(2)
 	  from the input file descriptor fails.  It now exits silently w/ the
@@ -104,7 +107,7 @@ sh6.c	1.3 (jneitzel) 2006/09/15:
 	* Parse each command line into a dynamically allocated tree of tnode
 	  structures rather than using a statically allocated intptr_t buffer.
 
-	  Remember that malloc(3) did not exist in Sixth Edition Unix;
+	  Remember that malloc(3) did not exist in Sixth Edition UNIX;
 	  alloc(III) did exist, but /bin/sh did not use it.
 
 glob6.c	1.3 (jneitzel) 2006/09/23:
@@ -123,13 +126,13 @@ glob6.c	1.3 (jneitzel) 2006/09/23:
 	  exceeded or if pexec() fails and sets errno to E2BIG.  Of course,
 	  `Out of memory' is printed if glob6 runs out of memory.
 
-	  Remember that malloc(3) did not exist in Sixth Edition Unix;
+	  Remember that malloc(3) did not exist in Sixth Edition UNIX;
 	  alloc(III) did exist, but /etc/glob did not use it.
 
 -------------------------------------------------------------------------------
 [osh-060124]:
 	This is the initial public release for the following ports of the
-	original Sixth Edition Unix source code.
+	original Sixth Edition UNIX source code.
 
 sh6.c	1.2 (jneitzel) 2006/01/09:
 	* Deny set-ID execution.  If the effective user (group) ID of the sh6
@@ -142,7 +145,7 @@ sh6.c	1.2 (jneitzel) 2006/01/09:
 
 	* Cause the shell to ignore SIGINT, SIGQUIT, and SIGTERM when invoked
 	  as an interactive shell.  The original Thompson shell did not do
-	  this.  In Sixth Edition Unix, the login(1) utility invoked the shell
+	  this.  In Sixth Edition UNIX, the login(1) utility invoked the shell
 	  in the following way:
 
 		execl("/bin/sh", "-", (char *)0);
@@ -202,7 +205,7 @@ sh6.c	1.2 (jneitzel) 2006/01/09:
 
 	* Added `exit' as a special command which is built into the shell.
 	  Its usage is the same as that of the external `exit' utility found
-	  in Sixth Edition Unix.
+	  in Sixth Edition UNIX.
 
 	* Define explicit exit status for special commands, external commands,
 	  and shell errors.
@@ -234,17 +237,17 @@ glob6.c	1.2 (jneitzel) 2006/01/09:
 
 -------------------------------------------------------------------------------
 [Unreleased]:
-	The following ports of the original Sixth Edition Unix source code
+	The following ports of the original Sixth Edition UNIX source code
 	were never released to the public.
 
 sh6.c	1.1 (jneitzel) 2004/01/26:
 	* Changed the source file name from `sh.c' to `sh6.c' and the
 	  resulting binary name from `sh' to `sh6' to avoid name conflict
-	  and confusion with the system shell, sh(1), on modern Unix systems.
+	  and confusion with the system shell, sh(1), on modern UNIX systems.
 
 	* Transformed the source code from K&R C into ANSI C.
 
-	* This is nothing more than a simple port to modern Unix systems.
+	* This is nothing more than a simple port to modern UNIX systems.
 	  It is now 64-bit clean.  At least, this is true for the 64-bit
 	  systems to which the porter has access.
 
@@ -261,7 +264,7 @@ glob6.c	1.1 (jneitzel) 2004/01/26:
 
 	* Transformed the source code from K&R C into ANSI C.
 
-	* This is nothing more than a simple port to modern Unix systems.
+	* This is nothing more than a simple port to modern UNIX systems.
 
 	* Fixed possible overflow of the argument-list buffers
 	  in the cat() function.
@@ -270,7 +273,7 @@ glob6.c	1.1 (jneitzel) 2004/01/26:
 [Original]:
 	Here is some pertinent information about the original files.
 
-The following description refers to Sixth Edition (V6) Unix obtained from:
+The following description refers to Sixth Edition (V6) UNIX obtained from:
 
 	http://www.tuhs.org/Archive/PDP-11/Distributions/research/Dennis_v6/
 
@@ -294,15 +297,15 @@ The following files and the corresponding manual pages were all
 obtained from the tar archives described above:
 
 sh.c:
-    What: Original source code for the Sixth Edition (V6) Unix Thompson shell
+    What: Original source code for the Sixth Edition (V6) UNIX Thompson shell
     Date: July 17, 1975
-    From: Sixth Edition Unix /usr/source/s2/sh.c
+    From: Sixth Edition UNIX /usr/source/s2/sh.c
 
 glob.c:
-    What: Original source code for the Sixth Edition (V6) Unix global command
+    What: Original source code for the Sixth Edition (V6) UNIX global command
     Date: May 14, 1975
-    From: Sixth Edition Unix /usr/source/s1/glob.c
+    From: Sixth Edition UNIX /usr/source/s1/glob.c
 
-Jeffrey Allen Neitzel						2008/07/10
+Jeffrey Allen Neitzel						2008/09/14
 
 @(#)$Id$
