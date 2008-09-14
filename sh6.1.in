@@ -724,7 +724,7 @@ Thus,
 the only complete character set it can handle
 is 7-bit ASCII.
 .PP
-Notice also that certain shell oddities were historically
+Notice that certain shell oddities were historically
 undocumented in this manual page.
 Particularly noteworthy is the fact that there
 is no such thing as a usage error.
