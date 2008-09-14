@@ -3,9 +3,6 @@ code for the Sixth Edition (V6) UNIX Thompson shell and global
 command in porting them to run on modern UNIX systems.
 
 -------------------------------------------------------------------------------
-[osh-current]:
-
--------------------------------------------------------------------------------
 [osh-20080629]:
 sh6.c:
 	* Changed the way that the shell deals w/ the SIGTERM signal so that

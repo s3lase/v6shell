@@ -1,4 +1,6 @@
-Implementation (historical/compatibility) notes for the osh project.
+This file provides an implementation overview of the software
+released as part of the osh project, focusing on history and
+compatibility since these are the primary project objectives.
 
 ---------------------------------------
 Historical notes for osh(1) and sh6(1):
@@ -100,7 +102,7 @@ uses the high-order bit of characters for quoting.  Thus, the only
 complete character set it can handle is 7-bit ASCII.
 
 Aside from those differences which are detailed either here or
-in the manual page, the CHANGES_sh-to-sh6 file contains further
+in the manual page, the CHANGES-sh_to_sh6 file contains further
 information regarding how this port differs from the original.
 
 Further details regarding the substantial differences:
