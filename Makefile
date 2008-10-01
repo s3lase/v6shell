@@ -66,7 +66,7 @@ SH6=	sh6 glob6
 UTILS=	if goto fd2
 PEXSRC=	pexec.h pexec.c
 SIGSRC=	sasignal.h sasignal.c
-OBJ=	pexec.o sasignal.o osh.o sh6.o glob6.o if.o goto.o fd2.o
+OBJ=	version.o pexec.o sasignal.o osh.o sh6.o glob6.o if.o goto.o fd2.o
 MANSRC=	osh.1.in sh6.1.in glob6.1.in if.1.in goto.1.in fd2.1.in
 MANDST=	osh.1 sh6.1 glob6.1 if.1 goto.1 fd2.1
 
@@ -86,22 +86,22 @@ sh6all: $(SH6) utils man
 
 utils: $(UTILS)
 
-osh: config.h rcsid.h $(PEXSRC) $(SIGSRC) osh.c
+osh: config.h rcsid.h version.c $(PEXSRC) $(SIGSRC) osh.c
 	@$(MAKE) $@bin
 
-sh6: config.h rcsid.h $(PEXSRC) $(SIGSRC) sh6.c
+sh6: config.h rcsid.h version.c $(PEXSRC) $(SIGSRC) sh6.c
 	@$(MAKE) $@bin
 
-glob6: config.h rcsid.h $(PEXSRC) glob6.c
+glob6: config.h rcsid.h version.c $(PEXSRC) glob6.c
 	@$(MAKE) $@bin
 
-if: config.h rcsid.h $(PEXSRC) if.c
+if: config.h rcsid.h version.c $(PEXSRC) if.c
 	@$(MAKE) $@bin
 
-goto: config.h rcsid.h goto.c
+goto: config.h rcsid.h version.c goto.c
 	@$(MAKE) $@bin
 
-fd2: config.h rcsid.h $(PEXSRC) fd2.c
+fd2: config.h rcsid.h version.c $(PEXSRC) fd2.c
 	@$(MAKE) $@bin
 
 $(OBJ): config.h rcsid.h
@@ -113,23 +113,23 @@ osh.o sh6.o: sasignal.h
 config.h: mkconfig
 	$(SHELL) ./mkconfig
 
-oshbin: pexec.o sasignal.o osh.o
-	$(CC) $(LDFLAGS) -o osh osh.o pexec.o sasignal.o $(LIBS)
+oshbin: version.o pexec.o sasignal.o osh.o
+	$(CC) $(LDFLAGS) -o osh version.o osh.o pexec.o sasignal.o $(LIBS)
 
-sh6bin: pexec.o sasignal.o sh6.o
-	$(CC) $(LDFLAGS) -o sh6 sh6.o pexec.o sasignal.o $(LIBS)
+sh6bin: version.o pexec.o sasignal.o sh6.o
+	$(CC) $(LDFLAGS) -o sh6 version.o sh6.o pexec.o sasignal.o $(LIBS)
 
-glob6bin: pexec.o glob6.o
-	$(CC) $(LDFLAGS) -o glob6 glob6.o pexec.o $(LIBS)
+glob6bin: version.o pexec.o glob6.o
+	$(CC) $(LDFLAGS) -o glob6 version.o glob6.o pexec.o $(LIBS)
 
-ifbin: pexec.o if.o
-	$(CC) $(LDFLAGS) -o if if.o pexec.o $(LIBS)
+ifbin: version.o pexec.o if.o
+	$(CC) $(LDFLAGS) -o if version.o if.o pexec.o $(LIBS)
 
-gotobin: goto.o
-	$(CC) $(LDFLAGS) -o goto goto.o $(LIBS)
+gotobin: version.o goto.o
+	$(CC) $(LDFLAGS) -o goto version.o goto.o $(LIBS)
 
-fd2bin: pexec.o fd2.o
-	$(CC) $(LDFLAGS) -o fd2 fd2.o pexec.o $(LIBS)
+fd2bin: version.o pexec.o fd2.o
+	$(CC) $(LDFLAGS) -o fd2 version.o fd2.o pexec.o $(LIBS)
 
 #
 # Manual-page targets
