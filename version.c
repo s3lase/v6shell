@@ -28,5 +28,5 @@
 
 #ifndef	lint
 #include "rcsid.h"
-OSH_RCSID("\100(\043)\044\111\144\072 " OSH_VERSION " \044");
+OSH_RCSID("\100(#)\044Id: " OSH_VERSION " \044");
 #endif	/* !lint */
