@@ -4,7 +4,7 @@
 #
 # Write out an appropriate "config.h" file.
 # This script is invoked automatically from the Makefile.
-# The user does not need to run it manually.
+# Thus, the user does not need to run it manually.
 #
 # Exit w/ a status of 0 on success.
 # Exit w/ a status of 1 on error.
@@ -47,10 +47,13 @@ fi
 
 cat <<EOI >$CONFIG_H
 /*
- * Compiling the osh package on GNU/Linux systems requires defining
- * _XOPEN_SOURCE with a value of 600 and also defining _BSD_SOURCE.
- * However, these feature test macros should not be needed on other
- * systems where the osh package is already known to compile.
+ * _XOPEN_SOURCE and/or _BSD_SOURCE should be defined only if needed
+ * to avoid compilation errors or warnings for the osh package on a
+ * given system.  The systems where these feature test macros are
+ * (known to be) needed are defined in the mkconfig script.
+ *
+ * This includes only Linux and SunOS (Solaris/OpenSolaris)
+ * at the present time.
  *
  *	Configured for: $UNAME_SRM
  */
@@ -85,7 +88,7 @@ SunOS)
 /*
  * WARNING: $UNAME_SRM: Unknown system
  *
- * Please consider reporting this result to the developer if possible.
+ * Please report this result to the developer if possible.
  */
 EOI
 	;;
