@@ -77,7 +77,6 @@ OSH_RCSID("@(#)$Id$");
 
 #include <errno.h>
 #include <fcntl.h>
-#include <inttypes.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -88,9 +87,6 @@ OSH_RCSID("@(#)$Id$");
 #include "pexec.h"
 #include "sasignal.h"
 
-/*
- * Constants
- */
 #define	LINEMAX		2048	/* 1000 in the original Sixth Edition shell */
 #define	WORDMAX		1024	/*   50 ...                                 */
 
@@ -110,69 +106,69 @@ OSH_RCSID("@(#)$Id$");
 #define	FD1		STDOUT_FILENO
 #define	FD2		STDERR_FILENO
 
-/*
- * Signal child flags (see sig_child)
- */
-#define	SC_SIGINT	01
-#define	SC_SIGQUIT	02
-#define	SC_SIGTERM	04
-
 #define	FC_ERR		124	/* fatal child error (changed in pwait()) */
 #define	SH_ERR		2	/* shell-detected error (default value)   */
 
 #define	ASCII		0177
 #define	QUOTE		0200
 
-/*
- * Macros
- */
 #define	DOLDIGIT(d, c)	((d) >= 0 && (d) <= 9 && "0123456789"[(d) % 10] == (c))
 #define	DOLSUB		true
 #define	EQUAL(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
 #define	EXIT(s)		((getpid() == spid) ? exit((s)) : _exit((s)))
 
 /*
- * Shell command-tree structure
+ * Signal child flags
  */
-struct tnode {
-/*@null@*/struct tnode	 *nleft;	/* Pointer to left node.           */
-/*@null@*/struct tnode	 *nright;	/* Pointer to right node.          */
-/*@null@*/struct tnode	 *nsub;		/* Pointer to TSUBSHELL node.      */
-/*@null@*/char		**nav;		/* Argument vector for TCOMMAND.   */
-/*@null@*/char		 *nfin;		/* Pointer to input file (<).      */
-/*@null@*/char		 *nfout;	/* Pointer to output file (>, >>). */
-	  uint8_t	  ntype;	/* Node type (see below).          */
-	  uint8_t	  nflags;	/* Node/command flags (see below). */
+enum scflags {
+	SC_SIGINT  = 01,
+	SC_SIGQUIT = 02,
+	SC_SIGTERM = 04
 };
 
 /*
- * Node type
+ * Shell command tree node flags
  */
-#define	TLIST		1	/* pipelines separated by `;', `&', or `\n' */
-#define	TPIPE		2	/* commands separated by `|' or `^'         */
-#define	TCOMMAND	3	/* command  [arg ...]  [< in]  [> [>] out]  */
-#define	TSUBSHELL	4	/* ( list )            [< in]  [> [>] out]  */
+enum tnflags {
+	FAND    = 0001,		/* A `&'  designates asynchronous execution.  */
+	FCAT    = 0002,		/* A `>>' appends output to file.             */
+	FFIN    = 0004,		/* A `<'  redirects input from file.          */
+	FPIN    = 0010,		/* A `|' or `^' redirects input from pipe.    */
+	FPOUT   = 0020,		/* A `|' or `^' redirects output to pipe.     */
+	FNOFORK = 0040,		/* No fork(2) for last command in `( list )'. */
+	FINTR   = 0100,		/* Child process ignores SIGINT and SIGQUIT.  */
+	FPRS    = 0200		/* Print process ID of child as a string.     */
+};
 
 /*
- * Node/command flags
+ * Shell command tree node structure
  */
-#define	FAND		0001	/* A `&'  designates asynchronous execution.  */
-#define	FCAT		0002	/* A `>>' appends output to file.             */
-#define	FFIN		0004	/* A `<'  redirects input from file.          */
-#define	FPIN		0010	/* A `|' or `^' redirects input from pipe.    */
-#define	FPOUT		0020	/* A `|' or `^' redirects output to pipe.     */
-#define	FNOFORK		0040	/* No fork(2) for last command in `( list )'. */
-#define	FINTR		0100	/* Child process ignores SIGINT and SIGQUIT.  */
-#define	FPRS		0200	/* Print process ID of child as a string.     */
+struct tnode {
+/*@null@*/struct tnode	 *nleft;	/* Pointer to left node.            */
+/*@null@*/struct tnode	 *nright;	/* Pointer to right node.           */
+/*@null@*/struct tnode	 *nsub;		/* Pointer to TSUBSHELL node.       */
+/*@null@*/char		**nav;		/* Argument vector for TCOMMAND.    */
+/*@null@*/char		 *nfin;		/* Pointer to input file (<).       */
+/*@null@*/char		 *nfout;	/* Pointer to output file (>, >>).  */
+	  enum {
+		TLIST     = 1,	/* pipelines separated by `;', `&', or `\n' */
+		TPIPE     = 2,	/* commands separated by `|' or `^'         */
+		TCOMMAND  = 3,	/* command  [arg ...]  [< in]  [> [>] out]  */
+		TSUBSHELL = 4	/* ( list )            [< in]  [> [>] out]  */
+	  } ntype;			/* Shell command tree node type.    */
+	  enum   tnflags  nflags;	/* Shell command tree node flags.   */
+};
 
 /*
- * Global variable declarations
+ * ==== Global variables ====
  */
-#define	XNSIG		14
-static	const char *const sig[XNSIG] = {
-	NULL,
+/*
+ * Shell signal messages
+ */
+static	const char *const sig[] = {
+	" -- Core dumped",
 	"Hangup",
-	NULL,
+	"",
 	"Quit",
 	"Illegal instruction",
 	"Trace/BPT trap",
@@ -185,6 +181,7 @@ static	const char *const sig[XNSIG] = {
 	"Bad system call",
 	NULL
 };
+#define	XNSIG		((int)(sizeof(sig) / sizeof(sig[0])))
 
 static	char		apid[6];	/* $$ - ASCII shell process ID      */
 /*@null@*/
@@ -205,14 +202,14 @@ static	int		one_line_flag;	/* one-line flag for `-t' option    */
 static	char		peekc;		/* just-read, pushed-back character */
 /*@null@*/ /*@observer@*/
 static	const char	*prompt;	/* interactive-shell prompt pointer */
-static	int		sig_child;	/* SIG(INT|QUIT|TERM) child flags   */
+static	enum scflags	sig_child;	/* SIG(INT|QUIT|TERM) child flags   */
 static	pid_t		spid;		/* shell process ID                 */
 static	int		status;		/* shell exit status                */
 static	char		*word[WORDMAX];	/* argument/word pointer array      */
 static	char		**wordp;
 
 /*
- * Function prototypes
+ * ==== Function prototypes ====
  */
 static	void		rpx_line(void);
 static	void		get_word(void);
@@ -261,6 +258,7 @@ static	void		*xmalloc(size_t);
 int
 main(int argc, char **argv)
 {
+	bool dosigs = false;
 
 	sh_init();
 	if (argv[0] == NULL || *argv[0] == '\0')
@@ -273,7 +271,7 @@ main(int argc, char **argv)
 		dolv = &argv[1];
 		dolc = argc - 1;
 		if (*argv[1] == '-') {
-			sig_child = 1;
+			dosigs = true;
 			if (argv[1][1] == 'c' && argc > 2) {
 				dolv  += 1;
 				dolc  -= 1;
@@ -290,12 +288,11 @@ main(int argc, char **argv)
 				goto done;
 		}
 	} else {
-		sig_child = 1;
+		dosigs = true;
 		if (isatty(FD0) != 0 && isatty(FD2) != 0)
 			prompt = (geteuid() != 0) ? "% " : "# ";
 	}
-	if (sig_child != 0) {
-		sig_child = 0;
+	if (dosigs) {
 		if (sasignal(SIGINT, SIG_IGN) == SIG_DFL)
 			sig_child |= SC_SIGINT;
 		if (sasignal(SIGQUIT, SIG_IGN) == SIG_DFL)
@@ -702,7 +699,7 @@ static struct tnode *
 syn3(char **p1, char **p2)
 {
 	struct tnode *t;
-	uint8_t flags;
+	enum tnflags flags;
 	int ac, c, n, subcnt;
 	char **p, **lp, **rp;
 	char *fin, *fout;
@@ -869,8 +866,8 @@ static void
 execute(struct tnode *t, int *pin, int *pout)
 {
 	struct tnode *t1;
+	enum tnflags f;
 	pid_t cpid;
-	uint8_t f;
 	int i, pfd[2];
 	const char **gav;
 	const char *cmd, *p;
@@ -1192,7 +1189,7 @@ pwait(pid_t cp)
 						prn(e);
 					}
 					if (WCOREDUMP(s))
-						prs(" -- Core dumped");
+						prs(sig[0]);
 				}
 				status = 128 + e;
 			} else if (WIFEXITED(s) != 0)
