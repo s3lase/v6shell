@@ -30,9 +30,10 @@
  */
 /*
  *	Derived from:
- *		- osh-20080629/if.c   (r465 2008-06-25 22:11:58Z jneitzel)
- *		- osh-20080629/goto.c (r465 2008-06-25 22:11:58Z jneitzel)
- *		- osh-20080629/fd2.c  (r404 2008-05-09 16:52:15Z jneitzel)
+ *		- osh-20080629:
+ *			if.c   (r465 2008-06-25 22:11:58Z jneitzel)
+ *			goto.c (r465 2008-06-25 22:11:58Z jneitzel)
+ *			fd2.c  (r404 2008-05-09 16:52:15Z jneitzel)
  */
 /*-
  * Copyright (C) Caldera International Inc.  2001-2002.  All rights reserved.
@@ -88,15 +89,22 @@ OSH_RCSID("@(#)$Id$");
 
 #include "osh.h"
 #include "pexec.h"
+#include "sasignal.h"
 
-static	const char	*argv0;
+#define	DEBUG	0
 
+static	const char	*utilname;
+
+/*@noreturn@*/
 static	void	uerr(int, /*@null@*/ const char *, /*@printflike@*/ ...);
-static	int	imain(int, char **);
-static	int	gmain(int, char **);
-static	int	fmain(int, char **);
+static	int	(*util)(int, char **);
+static	int	sbi_if(int, char **);
+static	int	sbi_goto(int, char **);
+static	int	sbi_fd2(int, char **);
 
-/* ==== if ==== */
+/*
+ * ==== Used by if (see sbi_if()) ====
+ */
 #define	F_GZ		1	/* for the `-s' primary           */
 #define	F_OT		2	/* for the `-ot' primary          */
 #define	F_NT		3	/* for the `-nt' primary          */
@@ -105,17 +113,16 @@ static	int	fmain(int, char **);
 #define	FORKED		true
 #define	RETERR		true
 
-static	int		ac;
-static	int		ap;
-static	char		**av;
+static	int		iac;
+static	int		iap;
+static	char		**iav;
 
-/*@noreturn@*/
+/*@maynotreturn@*/
 static	void	doex(bool);
 static	bool	e1(void);
 static	bool	e2(void);
 static	bool	e3(void);
 static	bool	equal(/*@null@*/ const char *, /*@null@*/ const char *);
-/*@noreturn@*/
 static	bool	expr(void);
 static	bool	ifaccess(/*@null@*/ const char *, int);
 static	bool	ifstat1(/*@null@*/ const char *, mode_t);
@@ -123,7 +130,9 @@ static	bool	ifstat2(/*@null@*/ const char *, /*@null@*/ const char *, int);
 /*@null@*/
 static	char	*nxtarg(bool);
 
-/* ==== goto ==== */
+/*
+ * ==== Used by goto (see sbi_goto()) ====
+ */
 #define	LABELSIZE	64	/* size of the label buffer */
 
 static	off_t	offset;
@@ -131,42 +140,59 @@ static	off_t	offset;
 static	bool	getlabel(/*@out@*/ char *, int, size_t);
 static	int	xgetc(void);
 
-/* ==== fd2 ==== */
+/*
+ * ==== Used by fd2 (see sbi_fd2()) ====
+ */
 /*@noreturn@*/
 static	void	usage(void);
 
+/*
+ * Execute the shell utility specified by key w/ the argument count
+ * ac and the argument vector pointed to by av.
+ */
 int
 uexec(enum sbikey key, int ac, char **av)
 {
-	static int ccnt, lcnt, ss;
 	int r;
+	static int cnt, last, s;
 
-	lcnt = ccnt++;
+	last = cnt++;
 
+#if DEBUG
 	switch (key) {
-	case SBI_IF: case SBI_GOTO: case SBI_FD2:
+	case SBI_FD2: case SBI_GOTO: case SBI_IF:
 		(void)fprintf(stderr, "%2d, %2d) uexec(%d, %d, %p);\n",
-			ccnt, lcnt, key, ac, (void *)av);
+			cnt, last, key, ac, (void *)av);
 		break;
 	default:
 		break;
 	}
+#endif
 
 	switch (key) {
-	case SBI_IF:	r = imain(ac, av);	break;
-	case SBI_GOTO:	r = gmain(ac, av);	break;
-	case SBI_FD2:	r = fmain(ac, av);	break;
-	default:	r = SH_FALSE;
+	case SBI_FD2:	util = sbi_fd2;		break;
+	case SBI_GOTO:	util = sbi_goto;	break;
+	case SBI_IF:	util = sbi_if;		break;
+	default:
+		uerr(FC_ERR, "uexec: Invalid utility\n");
 	}
 
-	if (ccnt > lcnt)
-		ss = r;
-	(void)fprintf(stderr,"%2d, %2d) r == %d, ss = %d\n",ccnt,lcnt,r,ss);
-	ccnt--;
+	r = util(ac, av);
 
-	return ss;
+	if (cnt-- > last)
+		s = r;
+
+#if DEBUG
+	(void)fprintf(stderr,"%2d, %2d) r == %d, s == %d\n",cnt+1,last,r,s);
+#endif
+
+	return s;
 }
 
+/*
+ * Exit the shell utility child process w/ the specified exit status
+ * and any specified message on error.
+ */
 static void
 uerr(int es, const char *msgfmt, ...)
 {
@@ -191,23 +217,23 @@ uerr(int es, const char *msgfmt, ...)
  *	See the if(1) manual page for full details.
  */
 static int
-imain(int argc, char **argv)
+sbi_if(int argc, char **argv)
 {
 	bool re;		/* return value of expr() */
 
-	argv0 = argv[0];
+	utilname = argv[0];
 
 	if (argc > 1) {
-		ac = argc;
-		av = argv;
-		ap = 1;
-		re = expr();
-		if (re && ap < ac)
+		iac = argc;
+		iav = argv;
+		iap = 1;
+		re  = expr();
+		if (re && iap < iac)
 			doex(!FORKED);
 	} else
 		re = false;
 
-	return re ? 0 : 1;
+	return re ? SH_TRUE : SH_FALSE;
 }
 
 /*
@@ -222,7 +248,7 @@ expr(void)
 	re = e1();
 	if (equal(nxtarg(RETERR), "-o"))
 		return re | expr();
-	ap--;
+	iap--;
 	return re;
 }
 
@@ -234,7 +260,7 @@ e1(void)
 	re = e2();
 	if (equal(nxtarg(RETERR), "-a"))
 		return re & e1();
-	ap--;
+	iap--;
 	return re;
 }
 
@@ -244,7 +270,7 @@ e2(void)
 
 	if (equal(nxtarg(RETERR), "!"))
 		return !e3();
-	ap--;
+	iap--;
 	return e3();
 }
 
@@ -257,7 +283,7 @@ e3(void)
 	char *a, *b;
 
 	if ((a = nxtarg(RETERR)) == NULL)
-		uerr(FC_ERR, FMT3S, argv0, av[ap - 2], "expression expected");
+		uerr(FC_ERR, FMT3S, utilname, iav[iap - 2], ERR_EXPR);
 
 	/*
 	 * Deal w/ parentheses for grouping.
@@ -265,7 +291,7 @@ e3(void)
 	if (equal(a, "(")) {
 		re = expr();
 		if (!equal(nxtarg(RETERR), ")"))
-			uerr(FC_ERR, FMT3S, argv0, a, ") expected");
+			uerr(FC_ERR, FMT3S, utilname, a, ERR_PAREN);
 		return re;
 	}
 
@@ -273,8 +299,9 @@ e3(void)
 	 * Execute command within braces to obtain its exit status.
 	 */
 	if (equal(a, "{")) {
+		(void)sasignal(SIGCHLD, SIG_DFL);
 		if ((cpid = fork()) == -1)
-			uerr(FC_ERR, FMT2S, argv0, "Cannot fork - try again");
+			uerr(FC_ERR, FMT2S, utilname, ERR_FORK);
 		if (cpid == 0)
 			/**** Child! ****/
 			doex(FORKED);
@@ -284,7 +311,7 @@ e3(void)
 			while ((a = nxtarg(RETERR)) != NULL && !equal(a, "}"))
 				;	/* nothing */
 			if (a == NULL)
-				ap--;
+				iap--;
 			return (tpid == cpid && cstat == 0) ? true : false;
 		}
 	}
@@ -316,20 +343,20 @@ e3(void)
 		/* Does the descriptor refer to a terminal device? */
 		b = nxtarg(RETERR);
 		if (b == NULL || *b == '\0')
-			uerr(FC_ERR, FMT3S, argv0, a, "digit expected");
+			uerr(FC_ERR, FMT3S, utilname, a, ERR_DIGIT);
 		if (*b >= '0' && *b <= '9' && *(b + 1) == '\0') {
 			d = *b - '0';
 			if (d >= 0 && d <= 9 && "0123456789"[d % 10] == *b)
 				return isatty(d) != 0;
 		}
-		uerr(FC_ERR, FMT3S, argv0, b, "not a digit");
+		uerr(FC_ERR, FMT3S, utilname, b, ERR_NOTDIGIT);
 	}
 
 	/*
 	 * binary comparisons
 	 */
 	if ((b = nxtarg(RETERR)) == NULL)
-		uerr(FC_ERR, FMT3S, argv0, a, "operator expected");
+		uerr(FC_ERR, FMT3S, utilname, a, ERR_OPERATOR);
 	if (equal(b,  "="))
 		return  equal(a, nxtarg(!RETERR));
 	if (equal(b, "!="))
@@ -340,7 +367,7 @@ e3(void)
 		return ifstat2(a, nxtarg(!RETERR), F_NT);
 	if (equal(b, "-ef"))
 		return ifstat2(a, nxtarg(!RETERR), F_EF);
-	uerr(FC_ERR, FMT3S, argv0, b, "unknown operator");
+	uerr(FC_ERR, FMT3S, utilname, b, ERR_OPUNKNOWN);
 	/*NOTREACHED*/
 	return false;
 }
@@ -351,29 +378,29 @@ doex(bool forked)
 	enum sbikey xak;
 	char **xap, **xav;
 
-	if (ap < 2 || ap > ac)	/* should never be true */
-		uerr(FC_ERR, FMT2S, argv0, "Invalid argv index");
+	if (iap < 2 || iap > iac)	/* should never be true */
+		uerr(FC_ERR, FMT2S, utilname, ERR_AVIINVAL);
 
-	xav = xap = &av[ap];
+	xav = xap = &iav[iap];
 	while (*xap != NULL) {
 		if (forked && equal(*xap, "}"))
 			break;
 		xap++;
 	}
 	if (forked && xap - xav > 0 && !equal(*xap, "}"))
-		uerr(FC_ERR, FMT3S, argv0, av[ap - 1], "} expected");
+		uerr(FC_ERR, FMT3S, utilname, iav[iap - 1], ERR_BRACE);
 	*xap = NULL;
 	if (xav[0] == NULL)
-		uerr(FC_ERR, FMT3S, argv0, av[ap - 1], "command expected");
+		uerr(FC_ERR, FMT3S, utilname, iav[iap - 1], ERR_COMMAND);
 
-	/* Use a built-in exit since there is no external exit utility. */
+	/* Invoke a special "exit" utility in this case. */
 	if (equal(xav[0], "exit")) {
 		(void)lseek(FD0, (off_t)0, SEEK_END);
-		_exit(0);
+		_exit(SH_TRUE);
 	}
 
 	xak = cmd_key_lookup(xav[0]);
-	if (xak == SBI_IF || xak == SBI_GOTO || xak == SBI_FD2) {
+	if (xak == SBI_FD2 || xak == SBI_GOTO || xak == SBI_IF) {
 		if (forked)
 			_exit(uexec(xak, xap - xav, xav));
 		else
@@ -383,10 +410,10 @@ doex(bool forked)
 
 	(void)pexec(xav[0], xav);
 	if (errno == ENOEXEC)
-		uerr(125, FMT3S, argv0, xav[0], "No shell!");
+		uerr(125, FMT3S, utilname, xav[0], ERR_NOSHELL);
 	if (errno != ENOENT && errno != ENOTDIR)
-		uerr(126, FMT3S, argv0, xav[0], "cannot execute");
-	uerr(127, FMT3S, argv0, xav[0], "not found");
+		uerr(126, FMT3S, utilname, xav[0], ERR_EXEC);
+	uerr(127, FMT3S, utilname, xav[0], ERR_NOTFOUND);
 }
 
 /*
@@ -479,18 +506,18 @@ nxtarg(bool reterr)
 {
 	char *nap;
 
-	if (ap < 1 || ap > ac)	/* should never be true */
-		uerr(FC_ERR, FMT2S, argv0, "Invalid argv index");
+	if (iap < 1 || iap > iac)	/* should never be true */
+		uerr(FC_ERR, FMT2S, utilname, ERR_AVIINVAL);
 
-	if (ap == ac) {
+	if (iap == iac) {
 		if (reterr) {
-			ap++;
+			iap++;
 			return NULL;
 		}
-		uerr(FC_ERR, FMT3S, argv0, av[ap - 1], "argument expected");
+		uerr(FC_ERR, FMT3S, utilname, iav[iap - 1], ERR_ARGUMENT);
 	}
-	nap = av[ap];
-	ap++;
+	nap = iav[iap];
+	iap++;
 	return nap;
 }
 
@@ -514,31 +541,27 @@ equal(const char *a, const char *b)
  *	See the goto(1) manual page for full details.
  */
 static int
-gmain(int argc, char **argv)
+sbi_goto(int argc, char **argv)
 {
 	size_t siz;
 	char label[LABELSIZE];
 
-	argv0 = argv[0];
+	utilname = argv[0];
 
-	if (argc < 2 || *argv[1] == '\0' || isatty(STDIN_FILENO) != 0) {
-		uerr(FC_ERR, "%s: error\n", argv0);
-	}
-	if ((siz = strlen(argv[1]) + 1) > sizeof(label)) {
-		uerr(FC_ERR, "%s: %s: label too long\n", argv0, argv[1]);
-	}
-	if (lseek(STDIN_FILENO, (off_t)0, SEEK_SET) == -1) {
-		uerr(FC_ERR, "%s: cannot seek\n", argv0);
-	}
+	if (argc < 2 || *argv[1] == '\0' || isatty(FD0) != 0)
+		uerr(FC_ERR, FMT2S, utilname, ERR_GENERIC);
+	if ((siz = strlen(argv[1]) + 1) > sizeof(label))
+		uerr(FC_ERR, FMT3S, utilname, argv[1], ERR_LABTOOLONG);
+	if (lseek(FD0, (off_t)0, SEEK_SET) == -1)
+		uerr(FC_ERR, FMT2S, utilname, ERR_SEEK);
 
 	while (getlabel(label, *argv[1] & 0377, siz))
 		if (strcmp(label, argv[1]) == 0) {
-			(void)lseek(STDIN_FILENO, offset, SEEK_SET);
+			(void)lseek(FD0, offset, SEEK_SET);
 			return SH_TRUE;
 		}
 
-	uerr(SH_FALSE, "%s: %s: label not found\n", argv0, argv[1]);
-	/*NOTREACHED*/
+	fd_print(FD2, FMT3S, utilname, argv[1], ERR_LABNOTFOUND);
 	return SH_FALSE;
 }
 
@@ -626,13 +649,13 @@ xgetc(void)
  *	See the fd2(1) manual page for full details.
  */
 static int
-fmain(int argc, char **argv)
+sbi_fd2(int argc, char **argv)
 {
 	enum sbikey key;
 	int nfd, opt;
 	char *file;
 
-	argv0 = argv[0];
+	utilname = argv[0];
 
 	/*
 	 * If the `-f' option is specified, file descriptor 2 is
@@ -656,27 +679,27 @@ fmain(int argc, char **argv)
 
 	if (file != NULL) {
 		if ((nfd = open(file, O_WRONLY|O_APPEND|O_CREAT, 0666)) == -1)
-			uerr(FC_ERR, FMT3S, argv0, file, "cannot create");
+			uerr(FC_ERR, FMT3S, utilname, file, ERR_CREATE);
 		if (dup2(nfd, FD2) == -1)
-			uerr(FC_ERR, FMT2S, argv0, strerror(errno));
+			uerr(FC_ERR, FMT2S, utilname, strerror(errno));
 		(void)close(nfd);
 	} else
 		if (dup2(FD1, FD2) == -1)
-			uerr(FC_ERR, FMT2S, argv0, strerror(errno));
+			uerr(FC_ERR, FMT2S, utilname, strerror(errno));
 
 	/*
 	 * Try to execute the specified command.
 	 */
 	key = cmd_key_lookup(argv[0]);
-	if (key == SBI_IF || key == SBI_GOTO || key == SBI_FD2)
+	if (key == SBI_FD2 || key == SBI_GOTO || key == SBI_IF)
 		return uexec(key, argc, argv);
 
 	(void)pexec(argv[0], argv);
 	if (errno == ENOEXEC)
-		uerr(125, FMT3S, argv0, argv[0], "No shell!");
+		uerr(125, FMT3S, utilname, argv[0], ERR_NOSHELL);
 	if (errno != ENOENT && errno != ENOTDIR)
-		uerr(126, FMT3S, argv0, argv[0], "cannot execute");
-	uerr(127, FMT3S, argv0, argv[0], "not found");
+		uerr(126, FMT3S, utilname, argv[0], ERR_EXEC);
+	uerr(127, FMT3S, utilname, argv[0], ERR_NOTFOUND);
 	/*NOTREACHED*/
 	return FC_ERR;
 }
@@ -685,5 +708,5 @@ static void
 usage(void)
 {
 
-	uerr(FC_ERR, "usage: %s [-f file] command [arg ...]\n", argv0);
+	uerr(FC_ERR, "usage: %s [-f file] command [arg ...]\n", utilname);
 }

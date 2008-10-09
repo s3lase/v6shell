@@ -31,15 +31,14 @@
 /*
  *	Derived from:
  *		- osh-20061230:
- *			@(#)sh6.c	1.3 (jneitzel) 2006/09/15
- *		- osh-20061230:
- *			@(#)glob6.c	1.3 (jneitzel) 2006/09/23
+ *			sh6.c   (1.3 (jneitzel) 2006/09/15)
+ *			glob6.c (1.3 (jneitzel) 2006/09/23)
  *		- osh-060124:
- *			@(#)osh.h	1.8 (jneitzel) 2006/01/20
- *			@(#)osh.c	1.108 (jneitzel) 2006/01/20
- *			@(#)osh-parse.c	1.8 (jneitzel) 2006/01/20
- *			@(#)osh-exec.c	1.7 (jneitzel) 2006/01/20
- *			@(#)osh-misc.c	1.5 (jneitzel) 2006/01/20
+ *			osh.h       (1.8 (jneitzel) 2006/01/20)
+ *			osh.c       (1.108 (jneitzel) 2006/01/20)
+ *			osh-parse.c (1.8 (jneitzel) 2006/01/20)
+ *			osh-exec.c  (1.7 (jneitzel) 2006/01/20)
+ *			osh-misc.c  (1.5 (jneitzel) 2006/01/20)
  */
 /*-
  * Copyright (C) Caldera International Inc.  2001-2002.  All rights reserved.
@@ -99,6 +98,7 @@ OSH_RCSID("@(#)$Id$");
 #include <string.h>
 #include <unistd.h>
 
+#include "osh.h"
 #include "pexec.h"
 #include "sasignal.h"
 
@@ -128,14 +128,6 @@ OSH_RCSID("@(#)$Id$");
 #define	FDFREEMIN	20	/* Value is the same as _POSIX_OPEN_MAX.  */
 #endif
 #define	FDFREEMAX	65536	/* Arbitrary maximum value for fd_free(). */
-
-/*
- * Following standard conventions, file descriptors 0, 1, and 2 are used
- * for standard input, standard output, and standard error respectively.
- */
-#define	FD0		STDIN_FILENO
-#define	FD1		STDOUT_FILENO
-#define	FD2		STDERR_FILENO
 
 /*
  * The following file descriptors are reserved for special use by osh.
@@ -179,49 +171,8 @@ OSH_RCSID("@(#)$Id$");
 #define	NSIG		32
 #endif
 
-/*
- * Non-zero exit status values
- */
-#define	FC_ERR		124	/* fatal child error (changed in pwait()) */
-#define	SH_ERR		2	/* shell-detected error (default value)   */
-
-/*
- * Diagnostics
- */
-#define	ERR_ALINVAL	"Invalid argument list"
-#define	ERR_ALTOOLONG	"Arg list too long"
-#define	ERR_ARGCOUNT	"arg count"
-#define	ERR_BADDIR	"bad directory"
-#define	ERR_BADMASK	"bad mask"
-#define	ERR_BADNAME	"bad name"
-#define	ERR_BADSIGNAL	"bad signal"
-#define	ERR_CREATE	"cannot create"
-#define	ERR_EXEC	"cannot execute"
-#define	ERR_FORK	"Cannot fork - try again"
-#define	ERR_GENERIC	"error"
-#define	ERR_NOARGS	"no args"
-#define	ERR_NODIR	"No directory"
-#define	ERR_NOHOMEDIR	"No home directory"
-#define	ERR_NOMATCH	"No match"
-#define	ERR_NOMEM	"Out of memory"
-#define	ERR_NOPWD	"No previous directory"
-#define	ERR_NOSHELL	"No shell!"
-#define	ERR_NOTFOUND	"not found"
-#define	ERR_NOTTY	"No terminal!"
-#define	ERR_OPEN	"cannot open"
-#define	ERR_PIPE	"Cannot pipe - try again"
-#define	ERR_SETID	"Set-ID execution denied"
-#define	ERR_SYNTAX	"syntax error"
-#define	ERR_TMARGS	"Too many args"
-#define	ERR_TMCHARS	"Too many characters"
-#define	ERR_TRIM	"Cannot trim"
-#define	FMT1S		"%s\n"
-#define	FMT2S		"%s: %s\n"
-#define	FMT3S		"%s: %s: %s\n"
-
 #define	DOLDIGIT(d, c)	((d) >= 0 && (d) <= 9 && "0123456789"[(d) % 10] == (c))
 #define	DOLSUB		true
-#define	EQUAL(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
 #define	ESTATUS		((getpid() == shpid) ? SH_ERR : FC_ERR)
 #define	EXIT(s)		((getpid() == shpid) ? exit((s)) : _exit((s)))
 #define	HALT		true
@@ -272,37 +223,30 @@ enum tnflags {
 };
 
 /*
- * Shell special built-in (sbi) command keys
- */
-enum sbikey {
-	SBI_NULL, SBI_CHDIR,  SBI_EXIT,   SBI_LOGIN,    SBI_NEWGRP, SBI_SHIFT,
-	SBI_WAIT, SBI_SIGIGN, SBI_SETENV, SBI_UNSETENV, SBI_UMASK,  SBI_SOURCE,
-	SBI_EXEC, SBI_UNKNOWN = -1
-};
-
-/*
  * Shell command tree node structure
  */
 struct tnode {
 /*@null@*/struct tnode	 *nleft;	/* Pointer to left node.            */
 /*@null@*/struct tnode	 *nright;	/* Pointer to right node.           */
 /*@null@*/struct tnode	 *nsub;		/* Pointer to TSUBSHELL node.       */
-/*@null@*/char		**nav;		/* Argument vector for TCOMMAND.    */
 /*@null@*/char		 *nfin;		/* Pointer to input file (<).       */
 /*@null@*/char		 *nfout;	/* Pointer to output file (>, >>).  */
+/*@null@*/char		**nav;		/* Argument vector for TCOMMAND.    */
+	  enum	 sbikey	  nkey;		/* Shell sbi command key.           */
+	  enum	 tnflags  nflags;	/* Shell command tree node flags.   */
 	  enum {
 		TLIST     = 1,	/* pipelines separated by `;', `&', or `\n' */
 		TPIPE     = 2,	/* commands separated by `|' or `^'         */
 		TCOMMAND  = 3,	/* command  [arg ...]  [< in]  [> [>] out]  */
 		TSUBSHELL = 4	/* ( list )            [< in]  [> [>] out]  */
 	  } ntype;			/* Shell command tree node type.    */
-	  enum   tnflags  nflags;	/* Shell command tree node flags.   */
-	  enum   sbikey   nkey;		/* Shell sbi command key.           */
 };
 
 /*
  * ==== Global variables ====
  */
+uid_t	euid;	/* effective shell user ID */
+
 /*
  * Shell sbi command structure array
  */
@@ -312,24 +256,27 @@ static	const struct sbicmd {
 } sbi[] = {
 	{ ":",		SBI_NULL     },
 	{ "chdir",	SBI_CHDIR    },
+	{ "exec",	SBI_EXEC     },
 	{ "exit",	SBI_EXIT     },
+	{ "fd2",	SBI_FD2      },
+	{ "goto",	SBI_GOTO     },
+	{ "if",		SBI_IF       },
 	{ "login",	SBI_LOGIN    },
 	{ "newgrp",	SBI_NEWGRP   },
-	{ "shift",	SBI_SHIFT    },
-	{ "wait",	SBI_WAIT     },
-	{ "sigign",	SBI_SIGIGN   },
 	{ "setenv",	SBI_SETENV   },
-	{ "unsetenv",	SBI_UNSETENV },
-	{ "umask",	SBI_UMASK    },
+	{ "shift",	SBI_SHIFT    },
+	{ "sigign",	SBI_SIGIGN   },
 	{ "source",	SBI_SOURCE   },
-	{ "exec",	SBI_EXEC     },
-	{ NULL,		SBI_UNKNOWN  }
+	{ "umask",	SBI_UMASK    },
+	{ "unsetenv",	SBI_UNSETENV },
+	{ "wait",	SBI_WAIT     }
 };
+#define	NSBICMD		((int)(sizeof(sbi) / sizeof(sbi[0])))
 
 /*
  * Shell signal messages
  */
-static	const char *const sig[] = {
+static	const char *const sigmsg[] = {
 	" -- Core dumped",
 	"Hangup",
 	"",
@@ -345,7 +292,7 @@ static	const char *const sig[] = {
 	"Bad system call",
 	"Broken pipe"
 };
-#define	XNSIG		((int)(sizeof(sig) / sizeof(sig[0])))
+#define	NSIGMSG		((int)(sizeof(sigmsg) / sizeof(sigmsg[0])))
 
 /*@null@*/
 static	const char	*argv2p;	/* string for `-c' option           */
@@ -359,7 +306,6 @@ static	bool		error;		/* error flag for read/parse errors */
 /*@observer@*/
 static	const char	*error_message;	/* error message for read errors    */
 static	bool		error_source;	/* error flag for `source' command  */
-static	uid_t		euid;		/* effective shell user ID          */
 static	bool		is_login;	/* login shell flag (true if login) */
 static	char		line[LINEMAX];	/* command-line buffer              */
 static	char		*linep;
@@ -386,7 +332,6 @@ static	char		**wordp;
 /*
  * ==== Function prototypes ====
  */
-static	enum sbikey	cmd_key_lookup(const char *);
 static	void		cmd_loop(bool);
 static	void		cmd_verbose(void);
 static	int		rpx_line(void);
@@ -408,6 +353,7 @@ static	struct tnode	*syn3(char **, char **);
 static	bool		any(int, const char *);
 static	bool		vtglob(char **);
 static	void		vtrim(char **);
+static	int		vacount(char **);
 static	void		execute(/*@null@*/ struct tnode *,
 				/*@null@*/ int *, /*@null@*/ int *);
 static	void		exec1(struct tnode *);
@@ -429,10 +375,8 @@ static	char		*rc_build(/*@out@*/ /*@returned@*/ char *,
 				  const char *, size_t);
 /*@maynotreturn@*/
 static	bool		rc_open(/*@null@*/ const char *);
-static	void		omsg(int, const char *, va_list);
 static	void		err(int, /*@null@*/ const char *, /*@printflike@*/ ...);
 static	void		fd_free(void);
-static	void		fd_print(int, const char *, /*@printflike@*/ ...);
 static	bool		fd_type(int, mode_t);
 static	void		atrim(char *);
 static	char		*gtrim(/*@returned@*/ char *);
@@ -585,30 +529,34 @@ done:
  * Determine whether or not the string pointed to by cmd
  * is a special built-in command.  Return the key value.
  */
-static enum sbikey
+enum sbikey
 cmd_key_lookup(const char *cmd)
 {
-	const struct sbicmd *cp;
+	const struct sbicmd *bp, *ep, *mp;
+	int d;
 
-	for (cp = sbi; cp->sbi_command != NULL; cp++) {
-
+	for (bp = sbi, ep = &sbi[NSBICMD]; bp < ep; /* nothing */) {
+		mp = bp + (ep - bp) / 2;
 #if DEBUG
 		(void)fprintf(stderr,
-			"cp->sbi_command == (%p) \"%s\",\tcp->sbi_key == %2d\n",
-			(void *)&cp->sbi_command,cp->sbi_command,cp->sbi_key);
+			"mp->sbi_command == (%p) \"%s\",%smp->sbi_key == %2d\n",
+			(void *)&mp->sbi_command,mp->sbi_command,
+			(strlen(mp->sbi_command) < 4) ? "\t\t" : "\t",
+			mp->sbi_key);
 #endif
-
-		if (EQUAL(cmd, cp->sbi_command))
-			return cp->sbi_key;
+		if ((d = strcmp(cmd, mp->sbi_command)) == 0)
+			return mp->sbi_key;
+		if (d > 0)
+			bp = mp + 1;
+		else
+			ep = mp;
 	}
 
 #if DEBUG
-	(void)fprintf(stderr,
-		"cp->sbi_command == (%p) NULL,\tcp->sbi_key == %2d\n",
-		(void *)&cp->sbi_command,cp->sbi_key);
+	(void)fprintf(stderr,"mp->sbi_key     == %2d\n",SBI_UNKNOWN);
 #endif
 
-	return cp->sbi_key;
+	return SBI_UNKNOWN;
 }
 
 /*
@@ -969,12 +917,12 @@ talloc(void)
 	t->nleft  = NULL;
 	t->nright = NULL;
 	t->nsub   = NULL;
-	t->nav    = NULL;
 	t->nfin   = NULL;
 	t->nfout  = NULL;
-	t->ntype  = 0;
-	t->nflags = 0;
+	t->nav    = NULL;
 	t->nkey   = 0;
+	t->nflags = 0;
+	t->ntype  = 0;
 	return t;
 }
 
@@ -995,18 +943,18 @@ tfree(struct tnode *t)
 		tfree(t->nright);
 		break;
 	case TCOMMAND:
+		xfree(t->nfin);
+		xfree(t->nfout);
 		if (t->nav != NULL) {
 			for (p = t->nav; *p != NULL; p++)
 				free(*p);
 			free(t->nav);
 		}
-		xfree(t->nfin);
-		xfree(t->nfout);
 		break;
 	case TSUBSHELL:
-		tfree(t->nsub);
 		xfree(t->nfin);
 		xfree(t->nfout);
+		tfree(t->nsub);
 		break;
 	}
 	xfree(t);
@@ -1265,6 +1213,20 @@ vtrim(char **vp)
 }
 
 /*
+ * Return number of arguments in argument vector pointed to by vp.
+ */
+static int
+vacount(char **vp)
+{
+	char **p;
+
+	for (p = vp; *p != NULL; p++)
+		;	/* nothing */
+
+	return p - vp;
+}
+
+/*
  * Try to execute the shell command tree pointed to by t.
  */
 static void
@@ -1314,11 +1276,9 @@ execute(struct tnode *t, int *pin, int *pout)
 			err(-1, "execute: Invalid command\n");
 			return;
 		}
-		if (t->nkey != SBI_UNKNOWN && t->nkey != SBI_EXEC) {
-			exec1(t);
-			return;
-		}
-		if (t->nkey == SBI_EXEC) {
+exec_again:
+		switch (t->nkey) {
+		case SBI_EXEC:
 			/*
 			 * Replace the current shell w/ an instance of
 			 * the specified command.
@@ -1329,9 +1289,17 @@ execute(struct tnode *t, int *pin, int *pout)
 				err(-1, FMT2S, t->nav[0], ERR_ARGCOUNT);
 				return;
 			}
+			/* NOTE: Never free() this t->nav instance. */
+			t->nav++;
+			t->nkey    = cmd_key_lookup(t->nav[0]);
 			t->nflags |= FNOFORK;
-			t->nav     = &t->nav[1];	/* never free()d */
 			(void)sasignal(SIGCHLD, SIG_IGN);
+			goto exec_again;
+		case SBI_FD2: case SBI_GOTO: case SBI_IF: case SBI_UNKNOWN:
+			break;
+		default:
+			exec1(t);
+			return;
 		}
 		/*FALLTHROUGH*/
 
@@ -1427,41 +1395,6 @@ exec1(struct tnode *t)
 		emsg = ERR_EXEC;
 		break;
 
-	case SBI_SHIFT:
-		/*
-		 * Shift all positional-parameter values to the left by 1.
-		 * The value of $0 does not shift.
-		 */
-		if (dolc > 1) {
-			dolv = &dolv[1];
-			dolc--;
-			status = 0;
-			return;
-		}
-		emsg = ERR_NOARGS;
-		break;
-
-	case SBI_WAIT:
-		/*
-		 * Wait for all asynchronous processes to terminate,
-		 * reporting on abnormal terminations.
-		 */
-		pwait(-1);
-		return;
-
-	case SBI_SIGIGN:
-		/*
-		 * Ignore (or unignore) the specified signals, or
-		 * print a list of those signals which are ignored
-		 * because of a previous invocation of `sigign' in
-		 * the current shell.
-		 *
-		 * usage: sigign [+ | - signal_number ...]
-		 */
-		vtrim(t->nav);
-		do_sigign(t->nav);
-		return;
-
 	case SBI_SETENV:
 		/*
 		 * Set the specified environment variable.
@@ -1489,26 +1422,43 @@ exec1(struct tnode *t)
 		emsg = ERR_ARGCOUNT;
 		break;
 
-	case SBI_UNSETENV:
+	case SBI_SHIFT:
 		/*
-		 * Unset the specified environment variable.
-		 *
-		 * usage: unsetenv name
+		 * Shift all positional-parameter values to the left by 1.
+		 * The value of $0 does not shift.
 		 */
-		if (t->nav[1] != NULL && t->nav[2] == NULL) {
-
-			atrim(t->nav[1]);
-			for (p = t->nav[1]; *p != '=' && *p != '\0'; p++)
-				;	/* nothing */
-			if (*t->nav[1] == '\0' || *p == '=') {
-				err(-1,FMT3S,t->nav[0],t->nav[1],ERR_BADNAME);
-				return;
-			}
-			unsetenv(t->nav[1]);
-
+		if (dolc > 1) {
+			dolv = &dolv[1];
+			dolc--;
 			status = 0;
 			return;
+		}
+		emsg = ERR_NOARGS;
+		break;
 
+	case SBI_SIGIGN:
+		/*
+		 * Ignore (or unignore) the specified signals, or
+		 * print a list of those signals which are ignored
+		 * because of a previous invocation of `sigign' in
+		 * the current shell.
+		 *
+		 * usage: sigign [+ | - signal_number ...]
+		 */
+		vtrim(t->nav);
+		do_sigign(t->nav);
+		return;
+
+	case SBI_SOURCE:
+		/*
+		 * Read and execute commands from file and return.
+		 *
+		 * usage: source file [arg1 ...]
+		 */
+		if (t->nav[1] != NULL) {
+			vtrim(t->nav);
+			do_source(t->nav);
+			return;
 		}
 		emsg = ERR_ARGCOUNT;
 		break;
@@ -1540,19 +1490,37 @@ exec1(struct tnode *t)
 		status = 0;
 		return;
 
-	case SBI_SOURCE:
+	case SBI_UNSETENV:
 		/*
-		 * Read and execute commands from file and return.
+		 * Unset the specified environment variable.
 		 *
-		 * usage: source file [arg1 ...]
+		 * usage: unsetenv name
 		 */
-		if (t->nav[1] != NULL) {
-			vtrim(t->nav);
-			do_source(t->nav);
+		if (t->nav[1] != NULL && t->nav[2] == NULL) {
+
+			atrim(t->nav[1]);
+			for (p = t->nav[1]; *p != '=' && *p != '\0'; p++)
+				;	/* nothing */
+			if (*t->nav[1] == '\0' || *p == '=') {
+				err(-1,FMT3S,t->nav[0],t->nav[1],ERR_BADNAME);
+				return;
+			}
+			unsetenv(t->nav[1]);
+
+			status = 0;
 			return;
+
 		}
 		emsg = ERR_ARGCOUNT;
 		break;
+
+	case SBI_WAIT:
+		/*
+		 * Wait for all asynchronous processes to terminate,
+		 * reporting on abnormal terminations.
+		 */
+		pwait(-1);
+		return;
 
 	default:
 		emsg = ERR_EXEC;
@@ -1572,7 +1540,7 @@ exec2(struct tnode *t, int *pin, int *pout)
 	enum tnflags f;
 	int i;
 	const char *cmd;
-	char **glob_av;
+	char **av, **gav;
 
 	f = t->nflags;
 
@@ -1661,14 +1629,23 @@ exec2(struct tnode *t, int *pin, int *pout)
 		/*NOTREACHED*/
 	}
 	if (vtglob(t->nav)) {
-		glob_av = glob(t->nav);
-		cmd = glob_av[0];
-		(void)pexec(cmd, (char *const *)glob_av);
+		gav = glob(t->nav);
+		av  = gav;
+		cmd = av[0];
 	} else {
 		vtrim(t->nav);
-		cmd = t->nav[0];
-		(void)pexec(cmd, (char *const *)t->nav);
+		av  = t->nav;
+		cmd = av[0];
 	}
+#if DEBUG
+	(void)fprintf(stderr,
+		"exec2: argc == %d, argv == %p\n",
+		vacount(av), (void *)av);
+#endif
+	if (t->nkey == SBI_UNKNOWN)
+		(void)pexec(cmd, (char *const *)av);
+	else
+		_exit(uexec(t->nkey, vacount(av), av));
 	if (errno == ENOEXEC)
 		err(125, FMT2S, cmd, ERR_NOSHELL);
 	if (errno == E2BIG)
@@ -2015,9 +1992,9 @@ prsig(int s, pid_t tp, pid_t cp)
 	const char *c, *m;
 
 	e = WTERMSIG(s);
-	if (e >= XNSIG || (e >= 0 && sig[e] != NULL)) {
-		if (e < XNSIG)
-			m = sig[e];
+	if (e >= NSIGMSG || (e >= 0 && sigmsg[e] != NULL)) {
+		if (e < NSIGMSG)
+			m = sigmsg[e];
 		else {
 			r = snprintf(buf, sizeof(buf), "Sig %u", (unsigned)e);
 			m = (r < 0 || r >= (int)sizeof(buf))  ?
@@ -2026,7 +2003,7 @@ prsig(int s, pid_t tp, pid_t cp)
 		}
 		c = "";
 		if (WCOREDUMP(s))
-			c = sig[0];
+			c = sigmsg[0];
 		if (tp != cp)
 			fd_print(FD2, "%u: %s%s\n", (unsigned)tp, m, c);
 		else
@@ -2275,7 +2252,7 @@ rc_open(const char *file)
  * Create and output the message specified by err() or fd_print() to
  * the file descriptor ofd.  A diagnostic is written to FD2 on error.
  */
-static void
+void
 omsg(int ofd, const char *msgfmt, va_list va)
 {
 	int r;
@@ -2361,7 +2338,7 @@ fd_free(void)
 /*
  * Print any specified message to the file descriptor pfd.
  */
-static void
+void
 fd_print(int pfd, const char *msgfmt, ...)
 {
 	va_list va;
