@@ -147,16 +147,16 @@ struct tnode {
 /*@null@*/struct tnode	 *nleft;	/* Pointer to left node.            */
 /*@null@*/struct tnode	 *nright;	/* Pointer to right node.           */
 /*@null@*/struct tnode	 *nsub;		/* Pointer to TSUBSHELL node.       */
-/*@null@*/char		**nav;		/* Argument vector for TCOMMAND.    */
 /*@null@*/char		 *nfin;		/* Pointer to input file (<).       */
 /*@null@*/char		 *nfout;	/* Pointer to output file (>, >>).  */
-	  enum {
+/*@null@*/char		**nav;		/* Argument vector for TCOMMAND.    */
+	  enum	 tnflags  nflags;	/* Shell command tree node flags.   */
+	  enum {			/* Shell command tree node type.    */
 		TLIST     = 1,	/* pipelines separated by `;', `&', or `\n' */
 		TPIPE     = 2,	/* commands separated by `|' or `^'         */
 		TCOMMAND  = 3,	/* command  [arg ...]  [< in]  [> [>] out]  */
 		TSUBSHELL = 4	/* ( list )            [< in]  [> [>] out]  */
-	  } ntype;			/* Shell command tree node type.    */
-	  enum   tnflags  nflags;	/* Shell command tree node flags.   */
+	  } ntype;
 };
 
 /*
@@ -549,11 +549,11 @@ talloc(void)
 	t->nleft  = NULL;
 	t->nright = NULL;
 	t->nsub   = NULL;
-	t->nav    = NULL;
 	t->nfin   = NULL;
 	t->nfout  = NULL;
-	t->ntype  = 0;
+	t->nav    = NULL;
 	t->nflags = 0;
+	t->ntype  = 0;
 	return t;
 }
 
