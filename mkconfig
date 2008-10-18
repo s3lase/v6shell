@@ -47,6 +47,9 @@ fi
 
 cat <<EOI >$CONFIG_H
 /*
+ * osh - an enhanced port of the Sixth Edition (V6) UNIX Thompson shell
+ */
+/*
  * _XOPEN_SOURCE and/or _BSD_SOURCE should be defined only if needed
  * to avoid compilation errors or warnings for the osh package on a
  * given system.  The systems where these feature test macros are
