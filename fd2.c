@@ -46,13 +46,8 @@ OSH_RCSID("@(#)$Id$");
 #include <string.h>
 #include <unistd.h>
 
+#include "defs.h"
 #include "pexec.h"
-
-#define	FD0	STDIN_FILENO
-#define	FD1	STDOUT_FILENO
-#define	FD2	STDERR_FILENO
-
-#define	FD2_ERR	124
 
 /*@noreturn@*/
 static	void	err(int, /*@null@*/ const char *, const char *);
@@ -62,10 +57,10 @@ static	void	usage(void);
 
 /*
  * NAME
- *	fd2 - redirect file descriptor 2
+ *	fd2 - redirect from/to file descriptor 2
  *
  * SYNOPSIS
- *	fd2 [-f file] command [arg ...]
+ *	fd2 [-e] [-f file] command [arg ...]
  *
  * DESCRIPTION
  *	See the fd2(1) manual page for full details.
@@ -73,36 +68,34 @@ static	void	usage(void);
 int
 main(int argc, char **argv)
 {
-	int nfd, opt;
+	int efd, nfd, ofd, opt;
 	char *file;
 
 	/*
 	 * Set-ID execution is not supported.
 	 */
 	if (geteuid() != getuid() || getegid() != getgid())
-		err(FD2_ERR, NULL, "Set-ID execution denied");
+		err(FC_ERR, NULL, ERR_SETID);
 
 	/*
 	 * File descriptors 0, 1, and 2 must be open.
 	 */
 	if (!fd_isopen(FD0) || !fd_isopen(FD1) || !fd_isopen(FD2))
-		err(FD2_ERR, NULL, strerror(errno));
+		err(FC_ERR, NULL, strerror(errno));
 
-	/*
-	 * If the `-f' option is specified, file descriptor 2 is
-	 * redirected to the specified file.  Otherwise, it is
-	 * redirected to file descriptor 1 by default.
-	 */
 	file = NULL;
-	while ((opt = getopt(argc, argv, "f:")) != -1) {
+	ofd = FD1, efd = FD2;
+	while ((opt = getopt(argc, argv, ":ef:")) != -1)
 		switch (opt) {
+		case 'e':
+			ofd = FD2, efd = FD1;
+			break;
 		case 'f':
 			file = optarg;
 			break;
 		default:
 			usage();
 		}
-	}
 	argc -= optind;
 	argv += optind;
 	if (argc < 1)
@@ -110,25 +103,25 @@ main(int argc, char **argv)
 
 	if (file != NULL) {
 		if ((nfd = open(file, O_WRONLY|O_APPEND|O_CREAT, 0666)) == -1)
-			err(FD2_ERR, file, "cannot create");
-		if (dup2(nfd, FD2) == -1)
-			err(FD2_ERR, NULL, strerror(errno));
+			err(FC_ERR, file, ERR_CREATE);
+		if (dup2(nfd, efd) == -1)
+			err(FC_ERR, NULL, strerror(errno));
 		(void)close(nfd);
 	} else
-		if (dup2(FD1, FD2) == -1)
-			err(FD2_ERR, NULL, strerror(errno));
+		if (dup2(ofd, efd) == -1)
+			err(FC_ERR, NULL, strerror(errno));
 
 	/*
 	 * Try to execute the specified command.
 	 */
 	(void)pexec(argv[0], argv);
 	if (errno == ENOEXEC)
-		err(125, argv[0], "No shell!");
+		err(125, argv[0], ERR_NOSHELL);
 	if (errno != ENOENT && errno != ENOTDIR)
-		err(126, argv[0], "cannot execute");
-	err(127, argv[0], "not found");
+		err(126, argv[0], ERR_EXEC);
+	err(127, argv[0], ERR_NOTFOUND);
 	/*NOTREACHED*/
-	return FD2_ERR;
+	return FC_ERR;
 }
 
 static void
@@ -154,6 +147,6 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: fd2 [-f file] command [arg ...]\n");
-	exit(FD2_ERR);
+	(void)fprintf(stderr, "usage: fd2 [-e] [-f file] command [arg ...]\n");
+	exit(FC_ERR);
 }
