@@ -1,5 +1,5 @@
 /*
- * util.c - special built-in versions of the shell utilities for osh
+ * util.c - special built-in shell utilities for osh
  */
 /*-
  * Copyright (c) 2004-2008
@@ -31,9 +31,9 @@
 /*
  *	Derived from:
  *		- osh-20080629:
- *			if.c   (r465 2008-06-25 22:11:58Z jneitzel)
- *			goto.c (r465 2008-06-25 22:11:58Z jneitzel)
  *			fd2.c  (r404 2008-05-09 16:52:15Z jneitzel)
+ *			goto.c (r465 2008-06-25 22:11:58Z jneitzel)
+ *			if.c   (r465 2008-06-25 22:11:58Z jneitzel)
  */
 /*-
  * Copyright (C) Caldera International Inc.  2001-2002.  All rights reserved.
@@ -87,31 +87,291 @@ OSH_RCSID("@(#)$Id$");
 #include <string.h>
 #include <unistd.h>
 
+#include "defs.h"
 #include "osh.h"
 #include "pexec.h"
-#include "sasignal.h"
 
-#define	DEBUG	0
+#define	IS_SBI(k)	\
+	((k) == SBI_ECHO || (k) == SBI_FD2 || (k) == SBI_GOTO || (k) == SBI_IF)
 
 static	const char	*utilname;
 
-/*@noreturn@*/
 static	void	uerr(int, /*@null@*/ const char *, /*@printflike@*/ ...);
 static	int	(*util)(int, char **);
-static	int	sbi_if(int, char **);
-static	int	sbi_goto(int, char **);
+static	int	sbi_echo(int, char **);
 static	int	sbi_fd2(int, char **);
+static	int	sbi_goto(int, char **);
+static	int	sbi_if(int, char **);
 
 /*
- * ==== Used by if (see sbi_if()) ====
+ * Execute the shell utility specified by key w/ the argument
+ * count ac and the argument vector pointed to by av.
+ * Return status s of the last call in the chain.
  */
-#define	F_GZ		1	/* for the `-s' primary           */
-#define	F_OT		2	/* for the `-ot' primary          */
-#define	F_NT		3	/* for the `-nt' primary          */
-#define	F_EF		4	/* for the `-ef' primary          */
+int
+uexec(enum sbikey key, int ac, char **av)
+{
+	int r;
+	static int cnt, cnt1, s;
 
-#define	FORKED		true
-#define	RETERR		true
+	switch (key) {
+	case SBI_ECHO:	util = sbi_echo;	break;
+	case SBI_FD2:	util = sbi_fd2;		break;
+	case SBI_GOTO:	util = sbi_goto;	break;
+	case SBI_IF:	util = sbi_if;		break;
+	default:
+		uerr(FC_ERR, "uexec: Invalid utility\n");
+	}
+
+	cnt1 = cnt++;
+
+	r = util(ac, av);
+
+	if (cnt-- > cnt1)
+		s = r;
+
+	return s;
+}
+
+/*
+ * Exit the shell utility child process on error w/ the
+ * specified exit status and any specified message.
+ */
+static void
+uerr(int es, const char *msgfmt, ...)
+{
+	va_list va;
+
+	va_start(va, msgfmt);
+	omsg(FD2, msgfmt, va);
+	va_end(va);
+	_exit(es);
+}
+
+/*
+ * NAME
+ *	echo - write arguments to standard output
+ *
+ * SYNOPSIS
+ *	echo [-n] [string ...]
+ *
+ * DESCRIPTION
+ *	Echo writes its string arguments (if any) separated by
+ *	blanks and terminated by a newline to the standard output.
+ *	If `-n' is specified, the terminating newline is not written.
+ */
+static int
+sbi_echo(int argc, char **argv)
+{
+	bool nopt;
+	char **avp, **ave;
+
+	argc--, argv++;
+	if (*argv != NULL && EQUAL(*argv, "-n")) {
+		argc--, argv++;
+		nopt = true;
+	} else
+		nopt = false;
+
+	avp = argv;
+	ave = &argv[argc];
+	while (avp < ave) {
+		fd_print(FD1, "%s", *avp);
+		if (++avp < ave)
+			fd_print(FD1, " ");
+	}
+	if (!nopt)
+		fd_print(FD1, "\n");
+
+	return SH_TRUE;
+}
+
+/*@noreturn@*/
+static	void	usage(void);
+
+/*
+ * NAME
+ *	fd2 - redirect from/to file descriptor 2
+ *
+ * SYNOPSIS
+ *	fd2 [-e] [-f file] command [arg ...]
+ *
+ * DESCRIPTION
+ *	See the fd2(1) manual page for full details.
+ */
+static int
+sbi_fd2(int argc, char **argv)
+{
+	enum sbikey key;
+	int efd, nfd, ofd, opt;
+	char *file;
+
+	utilname = argv[0];
+
+	file = NULL;
+	ofd = FD1, efd = FD2;
+	while ((opt = getopt(argc, argv, ":ef:")) != -1)
+		switch (opt) {
+		case 'e':
+			ofd = FD2, efd = FD1;
+			break;
+		case 'f':
+			file = optarg;
+			break;
+		default:
+			usage();
+		}
+	argc -= optind;
+	argv += optind;
+	if (argc < 1)
+		usage();
+
+	if (file != NULL) {
+		if ((nfd = open(file, O_WRONLY|O_APPEND|O_CREAT, 0666)) == -1)
+			uerr(FC_ERR, FMT3S, utilname, file, ERR_CREATE);
+		if (dup2(nfd, efd) == -1)
+			uerr(FC_ERR, FMT2S, utilname, strerror(errno));
+		(void)close(nfd);
+	} else
+		if (dup2(ofd, efd) == -1)
+			uerr(FC_ERR, FMT2S, utilname, strerror(errno));
+
+	/*
+	 * Try to execute the specified command.
+	 */
+	key = cmd_lookup(argv[0]);
+	if (IS_SBI(key))
+		return uexec(key, argc, argv);
+
+	(void)pexec(argv[0], argv);
+	if (errno == ENOEXEC)
+		uerr(125, FMT3S, utilname, argv[0], ERR_NOSHELL);
+	if (errno != ENOENT && errno != ENOTDIR)
+		uerr(126, FMT3S, utilname, argv[0], ERR_EXEC);
+	uerr(127, FMT3S, utilname, argv[0], ERR_NOTFOUND);
+	/*NOTREACHED*/
+	return FC_ERR;
+}
+
+static void
+usage(void)
+{
+
+	uerr(FC_ERR, "usage: %s [-e] [-f file] command [arg ...]\n", utilname);
+}
+
+static	off_t	offset;
+
+static	bool	getlabel(/*@out@*/ char *, int, size_t);
+static	int	xgetc(void);
+
+/*
+ * NAME
+ *	goto - transfer command
+ *
+ * SYNOPSIS
+ *	goto label
+ *
+ * DESCRIPTION
+ *	See the goto(1) manual page for full details.
+ */
+static int
+sbi_goto(int argc, char **argv)
+{
+	size_t siz;
+	char label[LABELSIZE];
+
+	utilname = argv[0];
+
+	if (argc < 2 || *argv[1] == '\0' || isatty(FD0) != 0)
+		uerr(FC_ERR, FMT2S, utilname, ERR_GENERIC);
+	if ((siz = strlen(argv[1]) + 1) > sizeof(label))
+		uerr(FC_ERR, FMT3S, utilname, argv[1], ERR_LABTOOLONG);
+	if (lseek(FD0, (off_t)0, SEEK_SET) == -1)
+		uerr(FC_ERR, FMT2S, utilname, ERR_SEEK);
+
+	while (getlabel(label, *argv[1] & 0377, siz))
+		if (strcmp(label, argv[1]) == 0) {
+			(void)lseek(FD0, offset, SEEK_SET);
+			return SH_TRUE;
+		}
+
+	fd_print(FD2, FMT3S, utilname, argv[1], ERR_LABNOTFOUND);
+	return SH_FALSE;
+}
+
+/*
+ * Search for the first occurrence of a possible label with both
+ * the same first character (fc) and the same length (siz - 1)
+ * as argv[1], and copy this possible label to buf.
+ * Return true  (1) if possible label found.
+ * Return false (0) at end-of-file.
+ */
+static bool
+getlabel(char *buf, int fc, size_t siz)
+{
+	int c;
+	char *b;
+
+	while ((c = xgetc()) != EOF) {
+		/* `:' may be preceded by blanks. */
+		while (c == ' ' || c == '\t')
+			c = xgetc();
+		if (c != ':') {
+			while (c != '\n' && c != EOF)
+				c = xgetc();
+			continue;
+		}
+
+		/* Prepare for possible label. */
+		while ((c = xgetc()) == ' ' || c == '\t')
+			;	/* nothing   */
+		if (c != fc)	/* not label */
+			continue;
+
+		/*
+		 * Try to copy possible label (first word only)
+		 * to buf, ignoring it if it becomes too long.
+		 */
+		b = buf;
+		do {
+			if (c == '\n' || c == ' ' || c == '\t' || c == EOF) {
+				*b = '\0';
+				break;
+			}
+			*b = c;
+			c = xgetc();
+		} while (++b < &buf[siz]);
+
+		/* Ignore any remaining characters on labelled line. */
+		while (c != '\n' && c != EOF)
+			c = xgetc();
+		if (c == EOF)
+			break;
+
+		if ((size_t)(b - buf) != siz - 1)	/* not label */
+			continue;
+		return true;
+	}
+
+	*buf = '\0';
+	return false;
+}
+
+/*
+ * If not at end-of-file, return the next character from the standard
+ * input as an unsigned char converted to an int while incrementing
+ * the global offset.  Otherwise, return EOF at end-of-file.
+ */
+static int
+xgetc(void)
+{
+	int nc;
+
+	offset++;
+	nc = getchar();
+	return (nc != EOF) ? nc & 0377 : EOF;
+}
 
 static	int		iac;
 static	int		iap;
@@ -131,87 +391,11 @@ static	bool	ifstat2(/*@null@*/ const char *, /*@null@*/ const char *, int);
 static	char	*nxtarg(bool);
 
 /*
- * ==== Used by goto (see sbi_goto()) ====
- */
-#define	LABELSIZE	64	/* size of the label buffer */
-
-static	off_t	offset;
-
-static	bool	getlabel(/*@out@*/ char *, int, size_t);
-static	int	xgetc(void);
-
-/*
- * ==== Used by fd2 (see sbi_fd2()) ====
- */
-/*@noreturn@*/
-static	void	usage(void);
-
-/*
- * Execute the shell utility specified by key w/ the argument count
- * ac and the argument vector pointed to by av.
- */
-int
-uexec(enum sbikey key, int ac, char **av)
-{
-	int r;
-	static int cnt, last, s;
-
-	last = cnt++;
-
-#if DEBUG
-	switch (key) {
-	case SBI_FD2: case SBI_GOTO: case SBI_IF:
-		(void)fprintf(stderr, "%2d, %2d) uexec(%d, %d, %p);\n",
-			cnt, last, key, ac, (void *)av);
-		break;
-	default:
-		break;
-	}
-#endif
-
-	switch (key) {
-	case SBI_FD2:	util = sbi_fd2;		break;
-	case SBI_GOTO:	util = sbi_goto;	break;
-	case SBI_IF:	util = sbi_if;		break;
-	default:
-		uerr(FC_ERR, "uexec: Invalid utility\n");
-	}
-
-	r = util(ac, av);
-
-	if (cnt-- > last)
-		s = r;
-
-#if DEBUG
-	(void)fprintf(stderr,"%2d, %2d) r == %d, s == %d\n",cnt+1,last,r,s);
-#endif
-
-	return s;
-}
-
-/*
- * Exit the shell utility child process w/ the specified exit status
- * and any specified message on error.
- */
-static void
-uerr(int es, const char *msgfmt, ...)
-{
-	va_list va;
-
-	if (msgfmt != NULL) {
-		va_start(va, msgfmt);
-		omsg(FD2, msgfmt, va);
-		va_end(va);
-	}
-	_exit(es);
-}
-
-/*
  * NAME
  *	if - conditional command
  *
  * SYNOPSIS
- *	if expr [command [arg ...]]
+ *	if expression [command [arg ...]]
  *
  * DESCRIPTION
  *	See the if(1) manual page for full details.
@@ -299,7 +483,6 @@ e3(void)
 	 * Execute command within braces to obtain its exit status.
 	 */
 	if (equal(a, "{")) {
-		(void)sasignal(SIGCHLD, SIG_DFL);
 		if ((cpid = fork()) == -1)
 			uerr(FC_ERR, FMT2S, utilname, ERR_FORK);
 		if (cpid == 0)
@@ -346,7 +529,7 @@ e3(void)
 			uerr(FC_ERR, FMT3S, utilname, a, ERR_DIGIT);
 		if (*b >= '0' && *b <= '9' && *(b + 1) == '\0') {
 			d = *b - '0';
-			if (d >= 0 && d <= 9 && "0123456789"[d % 10] == *b)
+			if (DOLDIGIT(d, *b))
 				return isatty(d) != 0;
 		}
 		uerr(FC_ERR, FMT3S, utilname, b, ERR_NOTDIGIT);
@@ -399,8 +582,8 @@ doex(bool forked)
 		_exit(SH_TRUE);
 	}
 
-	xak = cmd_key_lookup(xav[0]);
-	if (xak == SBI_FD2 || xak == SBI_GOTO || xak == SBI_IF) {
+	xak = cmd_lookup(xav[0]);
+	if (IS_SBI(xak)) {
 		if (forked)
 			_exit(uexec(xak, xap - xav, xav));
 		else
@@ -528,185 +711,4 @@ equal(const char *a, const char *b)
 	if (a == NULL || b == NULL)
 		return false;
 	return EQUAL(a, b);
-}
-
-/*
- * NAME
- *	goto - transfer command
- *
- * SYNOPSIS
- *	goto label
- *
- * DESCRIPTION
- *	See the goto(1) manual page for full details.
- */
-static int
-sbi_goto(int argc, char **argv)
-{
-	size_t siz;
-	char label[LABELSIZE];
-
-	utilname = argv[0];
-
-	if (argc < 2 || *argv[1] == '\0' || isatty(FD0) != 0)
-		uerr(FC_ERR, FMT2S, utilname, ERR_GENERIC);
-	if ((siz = strlen(argv[1]) + 1) > sizeof(label))
-		uerr(FC_ERR, FMT3S, utilname, argv[1], ERR_LABTOOLONG);
-	if (lseek(FD0, (off_t)0, SEEK_SET) == -1)
-		uerr(FC_ERR, FMT2S, utilname, ERR_SEEK);
-
-	while (getlabel(label, *argv[1] & 0377, siz))
-		if (strcmp(label, argv[1]) == 0) {
-			(void)lseek(FD0, offset, SEEK_SET);
-			return SH_TRUE;
-		}
-
-	fd_print(FD2, FMT3S, utilname, argv[1], ERR_LABNOTFOUND);
-	return SH_FALSE;
-}
-
-/*
- * Search for the first occurrence of a possible label with both
- * the same first character (fc) and the same length (siz - 1)
- * as argv[1], and copy this possible label to buf.
- * Return true  (1) if possible label found.
- * Return false (0) at end-of-file.
- */
-static bool
-getlabel(char *buf, int fc, size_t siz)
-{
-	int c;
-	char *b;
-
-	while ((c = xgetc()) != EOF) {
-		/* `:' may be preceded by blanks. */
-		while (c == ' ' || c == '\t')
-			c = xgetc();
-		if (c != ':') {
-			while (c != '\n' && c != EOF)
-				c = xgetc();
-			continue;
-		}
-
-		/* Prepare for possible label. */
-		while ((c = xgetc()) == ' ' || c == '\t')
-			;	/* nothing   */
-		if (c != fc)	/* not label */
-			continue;
-
-		/*
-		 * Try to copy possible label (first word only)
-		 * to buf, ignoring it if it becomes too long.
-		 */
-		b = buf;
-		do {
-			if (c == '\n' || c == ' ' || c == '\t' || c == EOF) {
-				*b = '\0';
-				break;
-			}
-			*b = c;
-			c = xgetc();
-		} while (++b < &buf[siz]);
-
-		/* Ignore any remaining characters on labelled line. */
-		while (c != '\n' && c != EOF)
-			c = xgetc();
-		if (c == EOF)
-			break;
-
-		if ((size_t)(b - buf) != siz - 1)	/* not label */
-			continue;
-		return true;
-	}
-
-	*buf = '\0';
-	return false;
-}
-
-/*
- * If not at end-of-file, return the next character from the standard
- * input as an unsigned char converted to an int while incrementing
- * the global offset.  Otherwise, return EOF at end-of-file.
- */
-static int
-xgetc(void)
-{
-	int nc;
-
-	offset++;
-	nc = getchar();
-	return (nc != EOF) ? nc & 0377 : EOF;
-}
-
-/*
- * NAME
- *	fd2 - redirect file descriptor 2
- *
- * SYNOPSIS
- *	fd2 [-f file] command [arg ...]
- *
- * DESCRIPTION
- *	See the fd2(1) manual page for full details.
- */
-static int
-sbi_fd2(int argc, char **argv)
-{
-	enum sbikey key;
-	int nfd, opt;
-	char *file;
-
-	utilname = argv[0];
-
-	/*
-	 * If the `-f' option is specified, file descriptor 2 is
-	 * redirected to the specified file.  Otherwise, it is
-	 * redirected to file descriptor 1 by default.
-	 */
-	file = NULL;
-	while ((opt = getopt(argc, argv, "f:")) != -1) {
-		switch (opt) {
-		case 'f':
-			file = optarg;
-			break;
-		default:
-			usage();
-		}
-	}
-	argc -= optind;
-	argv += optind;
-	if (argc < 1)
-		usage();
-
-	if (file != NULL) {
-		if ((nfd = open(file, O_WRONLY|O_APPEND|O_CREAT, 0666)) == -1)
-			uerr(FC_ERR, FMT3S, utilname, file, ERR_CREATE);
-		if (dup2(nfd, FD2) == -1)
-			uerr(FC_ERR, FMT2S, utilname, strerror(errno));
-		(void)close(nfd);
-	} else
-		if (dup2(FD1, FD2) == -1)
-			uerr(FC_ERR, FMT2S, utilname, strerror(errno));
-
-	/*
-	 * Try to execute the specified command.
-	 */
-	key = cmd_key_lookup(argv[0]);
-	if (key == SBI_FD2 || key == SBI_GOTO || key == SBI_IF)
-		return uexec(key, argc, argv);
-
-	(void)pexec(argv[0], argv);
-	if (errno == ENOEXEC)
-		uerr(125, FMT3S, utilname, argv[0], ERR_NOSHELL);
-	if (errno != ENOENT && errno != ENOTDIR)
-		uerr(126, FMT3S, utilname, argv[0], ERR_EXEC);
-	uerr(127, FMT3S, utilname, argv[0], ERR_NOTFOUND);
-	/*NOTREACHED*/
-	return FC_ERR;
-}
-
-static void
-usage(void)
-{
-
-	uerr(FC_ERR, "usage: %s [-f file] command [arg ...]\n", utilname);
 }

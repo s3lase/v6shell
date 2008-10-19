@@ -98,11 +98,10 @@ OSH_RCSID("@(#)$Id$");
 #include <string.h>
 #include <unistd.h>
 
+#include "defs.h"
 #include "osh.h"
 #include "pexec.h"
 #include "sasignal.h"
-
-#define	DEBUG	0
 
 #ifdef	__GNUC__
 #define	IS_UNUSED	__attribute__((__unused__))
@@ -110,24 +109,8 @@ OSH_RCSID("@(#)$Id$");
 #define	IS_UNUSED	/* nothing */
 #endif
 
-#define	LINEMAX		2048	/* 1000 in the original Sixth Edition shell */
-#define	WORDMAX		1024	/*   50 ...                                 */
-
-#ifdef	PATH_MAX
-#define	PATHMAX		PATH_MAX
-#else
-#define	PATHMAX		1024
-#endif
-
 #define	FMTSIZE		64
 #define	MSGSIZE		(FMTSIZE + LINEMAX)
-
-#ifdef	_POSIX_OPEN_MAX
-#define	FDFREEMIN	_POSIX_OPEN_MAX
-#else
-#define	FDFREEMIN	20	/* Value is the same as _POSIX_OPEN_MAX.  */
-#endif
-#define	FDFREEMAX	65536	/* Arbitrary maximum value for fd_free(). */
 
 /*
  * The following file descriptors are reserved for special use by osh.
@@ -171,8 +154,6 @@ OSH_RCSID("@(#)$Id$");
 #define	NSIG		32
 #endif
 
-#define	DOLDIGIT(d, c)	((d) >= 0 && (d) <= 9 && "0123456789"[(d) % 10] == (c))
-#define	DOLSUB		true
 #define	ESTATUS		((getpid() == shpid) ? SH_ERR : FC_ERR)
 #define	EXIT(s)		((getpid() == shpid) ? exit((s)) : _exit((s)))
 #define	HALT		true
@@ -234,12 +215,12 @@ struct tnode {
 /*@null@*/char		**nav;		/* Argument vector for TCOMMAND.    */
 	  enum	 sbikey	  nkey;		/* Shell sbi command key.           */
 	  enum	 tnflags  nflags;	/* Shell command tree node flags.   */
-	  enum {
+	  enum {			/* Shell command tree node type.    */
 		TLIST     = 1,	/* pipelines separated by `;', `&', or `\n' */
 		TPIPE     = 2,	/* commands separated by `|' or `^'         */
 		TCOMMAND  = 3,	/* command  [arg ...]  [< in]  [> [>] out]  */
 		TSUBSHELL = 4	/* ( list )            [< in]  [> [>] out]  */
-	  } ntype;			/* Shell command tree node type.    */
+	  } ntype;
 };
 
 /*
@@ -256,6 +237,7 @@ static	const struct sbicmd {
 } sbi[] = {
 	{ ":",		SBI_NULL     },
 	{ "chdir",	SBI_CHDIR    },
+	{ "echo",	SBI_ECHO     },
 	{ "exec",	SBI_EXEC     },
 	{ "exit",	SBI_EXIT     },
 	{ "fd2",	SBI_FD2      },
@@ -412,13 +394,6 @@ main(int argc, char **argv)
 	if (fd_type(FD0, FD_ISDIR))
 		goto done;
 
-#if DEBUG
-	(void)fprintf(stderr, "sizeof(struct tnode) == %lu\n",
-		(unsigned long)sizeof(struct tnode));
-	(void)fprintf(stderr, "sizeof(sbi)          == %lu\n",
-		(unsigned long)sizeof(sbi));
-#endif
-
 	if (argc > 1 && *argv[1] == '-' && argv[1][1] == 'v') {
 		verbose_flag = true;
 		av0p = argv[0], argv = &argv[1], argv[0] = av0p;
@@ -530,33 +505,60 @@ done:
  * is a special built-in command.  Return the key value.
  */
 enum sbikey
-cmd_key_lookup(const char *cmd)
+cmd_lookup(const char *cmd)
 {
-	const struct sbicmd *bp, *ep, *mp;
+	const struct sbicmd *lp, *mp, *rp;
 	int d;
 
-	for (bp = sbi, ep = &sbi[NSBICMD]; bp < ep; /* nothing */) {
-		mp = bp + (ep - bp) / 2;
-#if DEBUG
-		(void)fprintf(stderr,
-			"mp->sbi_command == (%p) \"%s\",%smp->sbi_key == %2d\n",
-			(void *)&mp->sbi_command,mp->sbi_command,
-			(strlen(mp->sbi_command) < 4) ? "\t\t" : "\t",
-			mp->sbi_key);
-#endif
+	for (lp = sbi, rp = &sbi[NSBICMD]; lp < rp; /* nothing */) {
+		mp = lp + (rp - lp) / 2;
 		if ((d = strcmp(cmd, mp->sbi_command)) == 0)
 			return mp->sbi_key;
 		if (d > 0)
-			bp = mp + 1;
+			lp = mp + 1;
 		else
-			ep = mp;
+			rp = mp;
 	}
 
-#if DEBUG
-	(void)fprintf(stderr,"mp->sbi_key     == %2d\n",SBI_UNKNOWN);
-#endif
-
 	return SBI_UNKNOWN;
+}
+
+/*
+ * Print any specified message to the file descriptor pfd.
+ */
+void
+fd_print(int pfd, const char *msgfmt, ...)
+{
+	va_list va;
+
+	va_start(va, msgfmt);
+	omsg(pfd, msgfmt, va);
+	va_end(va);
+}
+
+/*
+ * Create and output the message specified by err() or fd_print() to
+ * the file descriptor ofd.  A diagnostic is written to FD2 on error.
+ */
+void
+omsg(int ofd, const char *msgfmt, va_list va)
+{
+	int r;
+	char fmt[FMTSIZE];
+	char msg[MSGSIZE];
+	const char *e;
+
+	e = "omsg: Internal error\n";
+	r = snprintf(fmt, sizeof(fmt), "%s", msgfmt);
+	if (r > 0 && r < (int)sizeof(fmt)) {
+		r = vsnprintf(msg, sizeof(msg), fmt, va);
+		if (r > 0 && r < (int)sizeof(msg)) {
+			if (write(ofd, msg, strlen(msg)) == -1)
+				(void)write(FD2, e, strlen(e));
+		} else
+			(void)write(FD2, e, strlen(e));
+	} else
+		(void)write(FD2, e, strlen(e));
 }
 
 /*
@@ -576,7 +578,7 @@ cmd_loop(bool halt)
 			(void)write(FD2, (euid != 0) ? "% " : "# ", (size_t)2);
 		if (rpx_line() == EOF) {
 			if (!gz)
-				status = 0;
+				status = SH_TRUE;
 			break;
 		}
 		if (halt && error_source)
@@ -1148,7 +1150,7 @@ syn3(char **p1, char **p2)
 		for (ac = 0; ac < n; ac++)
 			t->nav[ac] = xstrdup(p1[ac]);
 		t->nav[ac] = NULL;
-		t->nkey    = cmd_key_lookup(t->nav[0]);
+		t->nkey    = cmd_lookup(t->nav[0]);
 	} else {
 		if (n != 0)
 			goto synerr;
@@ -1278,10 +1280,12 @@ execute(struct tnode *t, int *pin, int *pout)
 		}
 exec_again:
 		switch (t->nkey) {
+		case SBI_ECHO:
+			break;
 		case SBI_EXEC:
 			/*
 			 * Replace the current shell w/ an instance of
-			 * the specified command.
+			 * the specified external command.
 			 *
 			 * usage: exec command [arg ...]
 			 */
@@ -1289,9 +1293,12 @@ exec_again:
 				err(-1, FMT2S, t->nav[0], ERR_ARGCOUNT);
 				return;
 			}
+			if ((t->nkey = cmd_lookup(t->nav[1])) != SBI_UNKNOWN) {
+				err(-1, FMT3S, t->nav[0], t->nav[1], ERR_EXEC);
+				return;
+			}
 			/* NOTE: Never free() this t->nav instance. */
 			t->nav++;
-			t->nkey    = cmd_key_lookup(t->nav[0]);
 			t->nflags |= FNOFORK;
 			(void)sasignal(SIGCHLD, SIG_IGN);
 			goto exec_again;
@@ -1349,7 +1356,7 @@ exec1(struct tnode *t)
 		/*
 		 * Do nothing and set the exit status to zero.
 		 */
-		status = 0;
+		status = SH_TRUE;
 		return;
 
 	case SBI_CHDIR:
@@ -1415,7 +1422,7 @@ exec1(struct tnode *t)
 			if (setenv(t->nav[1], p, 1) == -1)
 				err(ESTATUS, FMT1S, ERR_NOMEM);
 
-			status = 0;
+			status = SH_TRUE;
 			return;
 
 		}
@@ -1430,7 +1437,7 @@ exec1(struct tnode *t)
 		if (dolc > 1) {
 			dolv = &dolv[1];
 			dolc--;
-			status = 0;
+			status = SH_TRUE;
 			return;
 		}
 		emsg = ERR_NOARGS;
@@ -1487,7 +1494,7 @@ exec1(struct tnode *t)
 			}
 			(void)umask(m);
 		}
-		status = 0;
+		status = SH_TRUE;
 		return;
 
 	case SBI_UNSETENV:
@@ -1507,7 +1514,7 @@ exec1(struct tnode *t)
 			}
 			unsetenv(t->nav[1]);
 
-			status = 0;
+			status = SH_TRUE;
 			return;
 
 		}
@@ -1637,11 +1644,6 @@ exec2(struct tnode *t, int *pin, int *pout)
 		av  = t->nav;
 		cmd = av[0];
 	}
-#if DEBUG
-	(void)fprintf(stderr,
-		"exec2: argc == %d, argv == %p\n",
-		vacount(av), (void *)av);
-#endif
 	if (t->nkey == SBI_UNKNOWN)
 		(void)pexec(cmd, (char *const *)av);
 	else
@@ -1708,7 +1710,7 @@ do_chdir(char **av)
 	} else
 		if (close(pwd) != -1)
 			pwd = -1;
-	status = 0;
+	status = SH_TRUE;
 	return;
 
 chdirerr:
@@ -1831,7 +1833,7 @@ do_sigign(char **av)
 sigdone:
 	(void)sigprocmask(SIG_SETMASK, &old_mask, NULL);
 	if (sigerr == 0)
-		status = 0;
+		status = SH_TRUE;
 	else if (sigerr == 1)
 		err(-1, FMT2S, av[0], ERR_GENERIC);
 	else
@@ -1974,7 +1976,7 @@ pwait(pid_t cp)
 				err(0, NULL);
 			}
 		} else
-			status = 0;
+			status = SH_TRUE;
 		if (tp == cp)
 			break;
 	}
@@ -2249,31 +2251,6 @@ rc_open(const char *file)
 }
 
 /*
- * Create and output the message specified by err() or fd_print() to
- * the file descriptor ofd.  A diagnostic is written to FD2 on error.
- */
-void
-omsg(int ofd, const char *msgfmt, va_list va)
-{
-	int r;
-	char fmt[FMTSIZE];
-	char msg[MSGSIZE];
-	const char *e;
-
-	e = "omsg: Internal error\n";
-	r = snprintf(fmt, sizeof(fmt), "%s", msgfmt);
-	if (r > 0 && r < (int)sizeof(fmt)) {
-		r = vsnprintf(msg, sizeof(msg), fmt, va);
-		if (r > 0 && r < (int)sizeof(msg)) {
-			if (write(ofd, msg, strlen(msg)) == -1)
-				(void)write(FD2, e, strlen(e));
-		} else
-			(void)write(FD2, e, strlen(e));
-	} else
-		(void)write(FD2, e, strlen(e));
-}
-
-/*
  * Handle all errors detected by the shell.  This includes printing any
  * specified message to the standard error and setting the exit status.
  * This function may or may not return depending on the context of the
@@ -2333,19 +2310,6 @@ fd_free(void)
 		(void)close(fd);
 	for (fd--; fd > FD2; fd--)
 		(void)close(fd);
-}
-
-/*
- * Print any specified message to the file descriptor pfd.
- */
-void
-fd_print(int pfd, const char *msgfmt, ...)
-{
-	va_list va;
-
-	va_start(va, msgfmt);
-	omsg(pfd, msgfmt, va);
-	va_end(va);
 }
 
 /*
@@ -2580,17 +2544,6 @@ xstrdup(const char *src)
 	(void)memcpy(dst, src, siz);
 	return dst;
 }
-
-#ifdef	ARG_MAX
-#define	GAVMAX		ARG_MAX
-#else
-#define	GAVMAX		1048576
-#endif
-#define	GAVNEW		128	/* # of new arguments per gav allocation */
-
-typedef	unsigned char	UChar;
-#define	UCHAR(c)	((UChar)c)
-#define	EOS		UCHAR('\0')
 
 static	char		**gavp;	/* points to current gav position     */
 static	char		**gave;	/* points to current gav end          */
