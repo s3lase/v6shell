@@ -36,18 +36,20 @@
  * Shell special built-in (sbi) command keys
  */
 enum sbikey {
-	SBI_NULL,   SBI_CHDIR,  SBI_ECHO,     SBI_EXEC,
-	SBI_EXIT,   SBI_FD2,    SBI_GOTO,     SBI_IF,
-	SBI_LOGIN,  SBI_NEWGRP, SBI_SETENV,   SBI_SHIFT,
-	SBI_SIGIGN, SBI_SOURCE, SBI_UMASK,    SBI_UNSETENV,
-	SBI_WAIT,   SBI_UNKNOWN
+	SBI_NULL,     SBI_CHDIR, SBI_ECHO,   SBI_EXEC,   SBI_EXIT,
+	SBI_FD2,      SBI_GOTO,  SBI_IF,     SBI_LOGIN,  SBI_NEWGRP,
+	SBI_SETENV,   SBI_SHIFT, SBI_SIGIGN, SBI_SOURCE, SBI_UMASK,
+	SBI_UNSETENV, SBI_WAIT,  SBI_UNKNOWN
 };
 
 extern	uid_t	euid;	/* effective shell user ID */
 
+/* osh.c */
 enum sbikey	cmd_lookup(const char *);
 void		fd_print(int, const char *, /*@printflike@*/ ...);
 void		omsg(int, const char *, va_list);
+
+/* util.c */
 int		uexec(enum sbikey, int, char **);
 
 #endif	/* !OSH_H */
