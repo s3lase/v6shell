@@ -76,6 +76,8 @@ OSH_RCSID("@(#)$Id$");
 #include <string.h>
 #include <unistd.h>
 
+#include "defs.h"
+
 #define	LABELSIZE	64	/* size of the label buffer */
 
 static	off_t	offset;
@@ -99,27 +101,27 @@ main(int argc, char **argv)
 	size_t siz;
 	char label[LABELSIZE];
 
-	if (argc < 2 || *argv[1] == '\0' || isatty(STDIN_FILENO) != 0) {
-		(void)fprintf(stderr, "goto: error\n");
-		return 124;
+	if (argc < 2 || *argv[1] == '\0' || isatty(FD0) != 0) {
+		(void)fprintf(stderr, "goto: %s\n", ERR_GENERIC);
+		return FC_ERR;
 	}
 	if ((siz = strlen(argv[1]) + 1) > sizeof(label)) {
-		(void)fprintf(stderr, "goto: %s: label too long\n", argv[1]);
-		return 124;
+		(void)fprintf(stderr,"goto: %s: %s\n", argv[1], ERR_LABTOOLONG);
+		return FC_ERR;
 	}
-	if (lseek(STDIN_FILENO, (off_t)0, SEEK_SET) == -1) {
-		(void)fprintf(stderr, "goto: cannot seek\n");
-		return 124;
+	if (lseek(FD0, (off_t)0, SEEK_SET) == -1) {
+		(void)fprintf(stderr, "goto: %s\n", ERR_SEEK);
+		return FC_ERR;
 	}
 
 	while (getlabel(label, *argv[1] & 0377, siz))
 		if (strcmp(label, argv[1]) == 0) {
-			(void)lseek(STDIN_FILENO, offset, SEEK_SET);
-			return 0;
+			(void)lseek(FD0, offset, SEEK_SET);
+			return SH_TRUE;
 		}
 
-	(void)fprintf(stderr, "goto: %s: label not found\n", argv[1]);
-	return 1;
+	(void)fprintf(stderr, "goto: %s: %s\n", argv[1], ERR_LABNOTFOUND);
+	return SH_FALSE;
 }
 
 /*

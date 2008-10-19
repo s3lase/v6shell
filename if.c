@@ -83,13 +83,13 @@ OSH_RCSID("@(#)$Id$");
 #include <string.h>
 #include <unistd.h>
 
+#include "defs.h"
 #include "pexec.h"
 
-#define	IF_ERR		124	/* default exit status for errors */
-#define	F_GZ		1	/* for the `-s' primary           */
-#define	F_OT		2	/* for the `-ot' primary          */
-#define	F_NT		3	/* for the `-nt' primary          */
-#define	F_EF		4	/* for the `-ef' primary          */
+#define	F_GZ		1	/* for the `-s' primary  */
+#define	F_OT		2	/* for the `-ot' primary */
+#define	F_NT		3	/* for the `-nt' primary */
+#define	F_EF		4	/* for the `-ef' primary */
 
 #define	EXIT(s)		((getpid() == ifpid) ? exit((s)) : _exit((s)))
 #define	FORKED		true
@@ -121,7 +121,7 @@ static	char	*nxtarg(bool);
  *	if - conditional command
  *
  * SYNOPSIS
- *	if expr [command [arg ...]]
+ *	if expression [command [arg ...]]
  *
  * DESCRIPTION
  *	See the if(1) manual page for full details.
@@ -138,7 +138,7 @@ main(int argc, char **argv)
 	 * Set-ID execution is not supported.
 	 */
 	if (ifeuid != getuid() || getegid() != getgid())
-		err(IF_ERR, NULL, "Set-ID execution denied");
+		err(FC_ERR, NULL, ERR_SETID);
 
 	if (argc > 1) {
 		ac = argc;
@@ -200,7 +200,7 @@ e3(void)
 	char *a, *b;
 
 	if ((a = nxtarg(RETERR)) == NULL)
-		err(IF_ERR, av[ap - 2], "expression expected");
+		err(FC_ERR, av[ap - 2], ERR_EXPR);
 
 	/*
 	 * Deal w/ parentheses for grouping.
@@ -208,7 +208,7 @@ e3(void)
 	if (equal(a, "(")) {
 		re = expr();
 		if (!equal(nxtarg(RETERR), ")"))
-			err(IF_ERR, a, ") expected");
+			err(FC_ERR, a, ERR_PAREN);
 		return re;
 	}
 
@@ -217,7 +217,7 @@ e3(void)
 	 */
 	if (equal(a, "{")) {
 		if ((cpid = fork()) == -1)
-			err(IF_ERR, NULL, "Cannot fork - try again");
+			err(FC_ERR, NULL, ERR_FORK);
 		if (cpid == 0)
 			/**** Child! ****/
 			doex(FORKED);
@@ -259,20 +259,20 @@ e3(void)
 		/* Does the descriptor refer to a terminal device? */
 		b = nxtarg(RETERR);
 		if (b == NULL || *b == '\0')
-			err(IF_ERR, a, "digit expected");
+			err(FC_ERR, a, ERR_DIGIT);
 		if (*b >= '0' && *b <= '9' && *(b + 1) == '\0') {
 			d = *b - '0';
-			if (d >= 0 && d <= 9 && "0123456789"[d % 10] == *b)
+			if (DOLDIGIT(d, *b))
 				return isatty(d) != 0;
 		}
-		err(IF_ERR, b, "not a digit");
+		err(FC_ERR, b, ERR_NOTDIGIT);
 	}
 
 	/*
 	 * binary comparisons
 	 */
 	if ((b = nxtarg(RETERR)) == NULL)
-		err(IF_ERR, a, "operator expected");
+		err(FC_ERR, a, ERR_OPERATOR);
 	if (equal(b,  "="))
 		return  equal(a, nxtarg(!RETERR));
 	if (equal(b, "!="))
@@ -283,7 +283,7 @@ e3(void)
 		return ifstat2(a, nxtarg(!RETERR), F_NT);
 	if (equal(b, "-ef"))
 		return ifstat2(a, nxtarg(!RETERR), F_EF);
-	err(IF_ERR, b, "unknown operator");
+	err(FC_ERR, b, ERR_OPUNKNOWN);
 	/*NOTREACHED*/
 	return false;
 }
@@ -294,7 +294,7 @@ doex(bool forked)
 	char **xap, **xav;
 
 	if (ap < 2 || ap > ac)	/* should never be true */
-		err(IF_ERR, NULL, "Invalid argv index");
+		err(FC_ERR, NULL, ERR_AVIINVAL);
 
 	xav = xap = &av[ap];
 	while (*xap != NULL) {
@@ -303,23 +303,23 @@ doex(bool forked)
 		xap++;
 	}
 	if (forked && xap - xav > 0 && !equal(*xap, "}"))
-		err(IF_ERR, av[ap - 1], "} expected");
+		err(FC_ERR, av[ap - 1], ERR_BRACE);
 	*xap = NULL;
 	if (xav[0] == NULL)
-		err(IF_ERR, forked ? av[ap - 1] : NULL, "command expected");
+		err(FC_ERR, forked ? av[ap - 1] : NULL, ERR_COMMAND);
 
-	/* Use a built-in exit since there is no external exit utility. */
+	/* Invoke a special "exit" utility in this case. */
 	if (equal(xav[0], "exit")) {
-		(void)lseek(STDIN_FILENO, (off_t)0, SEEK_END);
+		(void)lseek(FD0, (off_t)0, SEEK_END);
 		EXIT(0);
 	}
 
 	(void)pexec(xav[0], xav);
 	if (errno == ENOEXEC)
-		err(125, xav[0], "No shell!");
+		err(125, xav[0], ERR_NOSHELL);
 	if (errno != ENOENT && errno != ENOTDIR)
-		err(126, xav[0], "cannot execute");
-	err(127, xav[0], "not found");
+		err(126, xav[0], ERR_EXEC);
+	err(127, xav[0], ERR_NOTFOUND);
 }
 
 /*
@@ -413,14 +413,14 @@ nxtarg(bool reterr)
 	char *nap;
 
 	if (ap < 1 || ap > ac)	/* should never be true */
-		err(IF_ERR, NULL, "Invalid argv index");
+		err(FC_ERR, NULL, ERR_AVIINVAL);
 
 	if (ap == ac) {
 		if (reterr) {
 			ap++;
 			return NULL;
 		}
-		err(IF_ERR, av[ap - 1], "argument expected");
+		err(FC_ERR, av[ap - 1], ERR_ARGUMENT);
 	}
 	nap = av[ap];
 	ap++;
@@ -431,9 +431,9 @@ static bool
 equal(const char *a, const char *b)
 {
 
-	if (a == NULL || b == NULL || *a != *b)
+	if (a == NULL || b == NULL)
 		return false;
-	return strcmp(a, b) == 0;
+	return EQUAL(a, b);
 }
 
 static void

@@ -80,29 +80,8 @@ OSH_RCSID("@(#)$Id$");
 #include <string.h>
 #include <unistd.h>
 
+#include "defs.h"
 #include "pexec.h"
-
-#ifdef	ARG_MAX
-#define	GAVMAX		ARG_MAX
-#else
-#define	GAVMAX		1048576
-#endif
-#define	GAVNEW		128	/* # of new arguments per gav allocation */
-
-#ifdef	PATH_MAX
-#define	PATHMAX		PATH_MAX
-#else
-#define	PATHMAX		1024
-#endif
-
-#define	GLOB6_ERR	2
-
-#define	ASCII		0177
-#define	QUOTE		0200
-
-typedef	unsigned char	UChar;
-#define	UCHAR(c)	((UChar)c)
-#define	EOS		UCHAR('\0')
 
 static	char		**gavp;	/* points to current gav position     */
 static	char		**gave;	/* points to current gav end          */
@@ -138,13 +117,13 @@ main(int argc, char **argv)
 	 * Set-ID execution is not supported.
 	 */
 	if (geteuid() != getuid() || getegid() != getgid())
-		gerr("Set-ID execution denied\n");
+		gerr(ERR_SETID);
 
 	if (argc < 2)
-		gerr("Arg count\n");
+		gerr(ERR_GARGCOUNT);
 
 	if ((gav = malloc(GAVNEW * sizeof(char *))) == NULL)
-		gerr("Out of memory\n");
+		gerr(ERR_NOMEM);
 
 	*gav = NULL, gavp = gav;
 	gave = &gav[GAVNEW - 1];
@@ -153,16 +132,16 @@ main(int argc, char **argv)
 	gavp = NULL;
 
 	if (pmc == 0)
-		gerr("No match\n");
+		gerr(ERR_NOMATCH);
 
 	(void)pexec(gav[0], gav);
 	if (errno == ENOEXEC)
-		gerr("No shell!\n");
+		gerr(ERR_NOSHELL);
 	if (errno == E2BIG)
-		gerr("Arg list too long\n");
-	gerr("Command not found.\n");
+		gerr(ERR_ALTOOLONG);
+	gerr(ERR_GNOTFOUND);
 	/*NOTREACHED*/
-	return GLOB6_ERR;
+	return SH_ERR;
 }
 
 static char **
@@ -176,7 +155,7 @@ gavnew(char **gav)
 		gidx = (ptrdiff_t)(gavp - gav);
 		siz  = (size_t)((gidx + 1 + GAVNEW) * sizeof(char *));
 		if ((nav = realloc(gav, siz)) == NULL)
-			gerr("Out of memory\n");
+			gerr(ERR_NOMEM);
 		gav  = nav;
 		gavp = gav + gidx;
 		gave = &gav[gidx + GAVNEW];
@@ -194,7 +173,7 @@ gcat(const char *src1, const char *src2)
 	*buf = '\0', b = buf, s = src1;
 	while ((c = *s++) != '\0') {
 		if (b >= &buf[PATHMAX - 1])
-			gerr("File name too long\n");
+			gerr(ERR_NAMTOOLONG);
 		if ((c &= ASCII) == '\0') {
 			*b++ = '/';
 			break;
@@ -205,16 +184,16 @@ gcat(const char *src1, const char *src2)
 	s = src2;
 	do {
 		if (b >= &buf[PATHMAX])
-			gerr("File name too long\n");
+			gerr(ERR_NAMTOOLONG);
 		*b++ = c = *s++;
 	} while (c != '\0');
 
 	siz = b - buf;
 	gavtot += siz;
 	if (gavtot > GAVMAX)
-		gerr("Arg list too long\n");
+		gerr(ERR_ALTOOLONG);
 	if ((dst = malloc(siz)) == NULL)
-		gerr("Out of memory\n");
+		gerr(ERR_NOMEM);
 
 	(void)memcpy(dst, buf, siz);
 	return dst;
@@ -224,8 +203,9 @@ static void
 gerr(const char *msg)
 {
 
-	(void)write(STDERR_FILENO, msg, strlen(msg));
-	exit(GLOB6_ERR);
+	(void)write(FD2, msg, strlen(msg));
+	(void)write(FD2, "\n", (size_t)1);
+	exit(SH_ERR);
 }
 
 static char **
@@ -246,7 +226,7 @@ glob1(char **gav, char *as, int *pmc)
 			return gav;
 		}
 	if (strlen(as) >= PATHMAX)
-		gerr("Pattern too long\n");
+		gerr(ERR_PATTOOLONG);
 	for (;;) {
 		if (ps == ds) {
 			ds = "";
@@ -261,7 +241,7 @@ glob1(char **gav, char *as, int *pmc)
 		}
 	}
 	if ((dirp = gopendir(*ds != '\0' ? ds : ".")) == NULL)
-		gerr("No directory\n");
+		gerr(ERR_NODIR);
 	gidx = (ptrdiff_t)(gavp - gav);
 	while ((entry = readdir(dirp)) != NULL) {
 		if (entry->d_name[0] == '.' && (*ps & ASCII) != '.')

@@ -77,15 +77,8 @@ OSH_RCSID("@(#)$Id$");
 #include <string.h>
 #include <unistd.h>
 
+#include "defs.h"
 #include "pexec.h"
-
-#ifdef	PATH_MAX
-#define	PATHMAX		PATH_MAX
-#else
-#define	PATHMAX		1024
-#endif
-
-#define	FD2		STDERR_FILENO
 
 extern char **environ;
 
@@ -153,11 +146,11 @@ pexec(const char *file, char *const *argv)
 		 */
 		if (dlen + flen + 1 >= sizeof(pnbuf)) {
 			struct iovec msg[3];
-			msg[0].iov_base = "pexec: ";
+			msg[0].iov_base = (char *)"pexec: ";
 			msg[0].iov_len  = (size_t)7;
 			msg[1].iov_base = (char *)d;
 			msg[1].iov_len  = dlen;
-			msg[2].iov_base = ": path too long\n";
+			msg[2].iov_base = (char *)": path too long\n";
 			msg[2].iov_len  = (size_t)16;
 			(void)writev(FD2, msg, 3);
 			continue;

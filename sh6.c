@@ -84,37 +84,12 @@ OSH_RCSID("@(#)$Id$");
 #include <string.h>
 #include <unistd.h>
 
+#include "defs.h"
 #include "pexec.h"
 #include "sasignal.h"
 
-#define	LINEMAX		2048	/* 1000 in the original Sixth Edition shell */
-#define	WORDMAX		1024	/*   50 ...                                 */
-
-#ifdef	_POSIX_OPEN_MAX
-#define	FDFREEMIN	_POSIX_OPEN_MAX
-#else
-#define	FDFREEMIN	20	/* Value is the same as _POSIX_OPEN_MAX.  */
-#endif
-#define	FDFREEMAX	65536	/* Arbitrary maximum value for fd_free(). */
 #define	PIDMAX		99999	/* Maximum value for both prn() and apid. */
 
-/*
- * Following standard conventions, file descriptors 0, 1, and 2 are used
- * for standard input, standard output, and standard error respectively.
- */
-#define	FD0		STDIN_FILENO
-#define	FD1		STDOUT_FILENO
-#define	FD2		STDERR_FILENO
-
-#define	FC_ERR		124	/* fatal child error (changed in pwait()) */
-#define	SH_ERR		2	/* shell-detected error (default value)   */
-
-#define	ASCII		0177
-#define	QUOTE		0200
-
-#define	DOLDIGIT(d, c)	((d) >= 0 && (d) <= 9 && "0123456789"[(d) % 10] == (c))
-#define	DOLSUB		true
-#define	EQUAL(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
 #define	EXIT(s)		((getpid() == spid) ? exit((s)) : _exit((s)))
 
 /*
@@ -233,7 +208,7 @@ static	bool		any(int, const char *);
 static	void		execute(/*@null@*/ struct tnode *,
 				/*@null@*/ int *, /*@null@*/ int *);
 /*@maynotreturn@*/
-static	void		err(/*@null@*/ const char *, int);
+static	void		err(int, /*@null@*/ const char *);
 static	void		prn(int);
 static	void		prs(/*@null@*/ const char *);
 static	void		xputc(int);
@@ -262,7 +237,7 @@ main(int argc, char **argv)
 
 	sh_init();
 	if (argv[0] == NULL || *argv[0] == '\0')
-		err("Invalid argument list", SH_ERR);
+		err(SH_ERR, ERR_ALINVAL);
 	if (fd_isdir(FD0))
 		goto done;
 
@@ -282,7 +257,7 @@ main(int argc, char **argv)
 			(void)close(FD0);
 			if (open(argv[1], O_RDONLY) != FD0) {
 				prs(argv[1]);
-				err(": cannot open", SH_ERR);
+				err(SH_ERR, COLON ERR_OPEN);
 			}
 			if (fd_isdir(FD0))
 				goto done;
@@ -334,7 +309,7 @@ rpx_line(void)
 	} while (*wp != '\n');
 
 	if (error) {
-		err(error_message, SH_ERR);
+		err(SH_ERR, error_message);
 		return;
 	}
 
@@ -345,7 +320,7 @@ rpx_line(void)
 		t = syntax(word, wordp);
 		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 		if (error)
-			err("syntax error", SH_ERR);
+			err(SH_ERR, ERR_SYNTAX);
 		else
 			execute(t, NULL, NULL);
 		tfree(t);
@@ -377,7 +352,7 @@ loop:
 		while ((c = xgetc(!DOLSUB)) != c1) {
 			if (c == '\n') {
 				if (!error)
-					error_message = "syntax error";
+					error_message = ERR_SYNTAX;
 				peekc = c;
 				*linep++ = '\0';
 				error = true;
@@ -457,7 +432,7 @@ xgetc(bool dolsub)
 		while (xgetc(!DOLSUB) != '\n')
 			;	/* nothing */
 		wordp += 4;
-		error_message = "Too many args";
+		error_message = ERR_TMARGS;
 		goto geterr;
 	}
 	if (linep >= &line[LINEMAX - 5]) {
@@ -465,7 +440,7 @@ xgetc(bool dolsub)
 		while (xgetc(!DOLSUB) != '\n')
 			;	/* nothing */
 		linep += 10;
-		error_message = "Too many characters";
+		error_message = ERR_TMCHARS;
 		goto geterr;
 	}
 
@@ -493,7 +468,7 @@ getd:
 	/* Ignore all NUL characters. */
 	if (c == '\0') do {
 		if (++nul_count >= LINEMAX) {
-			error_message = "Too many characters";
+			error_message = ERR_TMCHARS;
 			goto geterr;
 		}
 		c = readc();
@@ -887,7 +862,7 @@ execute(struct tnode *t, int *pin, int *pout)
 
 	case TPIPE:
 		if (pipe(pfd) == -1) {
-			err("Cannot pipe - try again", SH_ERR);
+			err(SH_ERR, ERR_PIPE);
 			if (pin != NULL) {
 				(void)close(pin[0]);
 				(void)close(pin[1]);
@@ -908,24 +883,24 @@ execute(struct tnode *t, int *pin, int *pout)
 	case TCOMMAND:
 		if (t->nav == NULL || t->nav[0] == NULL) {
 			/* should never be true */
-			err("execute: Invalid command", SH_ERR);
+			err(SH_ERR, "execute: Invalid command");
 			return;
 		}
 		cmd = t->nav[0];
 		if (EQUAL(cmd, ":")) {
-			status = 0;
+			status = SH_TRUE;
 			return;
 		}
 		if (EQUAL(cmd, "chdir")) {
 			ascan(t->nav[1], trim);
 			if (t->nav[1] == NULL) {
 				prs(cmd);
-				err(": arg count", SH_ERR);
+				err(SH_ERR, COLON ERR_ARGCOUNT);
 			} else if (chdir(t->nav[1]) == -1) {
 				prs(cmd);
-				err(": bad directory", SH_ERR);
+				err(SH_ERR, COLON ERR_BADDIR);
 			} else
-				status = 0;
+				status = SH_TRUE;
 			return;
 		}
 		if (EQUAL(cmd, "exit")) {
@@ -946,18 +921,18 @@ execute(struct tnode *t, int *pin, int *pout)
 				(void)sasignal(SIGQUIT, SIG_IGN);
 			}
 			prs(cmd);
-			err(": cannot execute", SH_ERR);
+			err(SH_ERR, COLON ERR_EXEC);
 			return;
 		}
 		if (EQUAL(cmd, "shift")) {
 			if (dolc > 1) {
 				dolv = &dolv[1];
 				dolc--;
-				status = 0;
+				status = SH_TRUE;
 				return;
 			}
 			prs(cmd);
-			err(": no args", SH_ERR);
+			err(SH_ERR, COLON ERR_NOARGS);
 			return;
 		}
 		if (EQUAL(cmd, "wait")) {
@@ -969,7 +944,7 @@ execute(struct tnode *t, int *pin, int *pout)
 	case TSUBSHELL:
 		f = t->nflags;
 		if ((cpid = ((f & FNOFORK) != 0) ? 0 : fork()) == -1) {
-			err("Cannot fork - try again", SH_ERR);
+			err(SH_ERR, ERR_FORK);
 			return;
 		}
 		/**** Parent! ****/
@@ -994,7 +969,7 @@ execute(struct tnode *t, int *pin, int *pout)
 		 */
 		if (pin != NULL && (f & FPIN) != 0) {
 			if (dup2(pin[0], FD0) == -1)
-				err("Cannot dup2", FC_ERR);
+				err(FC_ERR, ERR_DUP2);
 			(void)close(pin[0]);
 			(void)close(pin[1]);
 		}
@@ -1003,7 +978,7 @@ execute(struct tnode *t, int *pin, int *pout)
 		 */
 		if (pout != NULL && (f & FPOUT) != 0) {
 			if (dup2(pout[1], FD1) == -1)
-				err("Cannot dup2", FC_ERR);
+				err(FC_ERR, ERR_DUP2);
 			(void)close(pout[0]);
 			(void)close(pout[1]);
 		}
@@ -1015,10 +990,10 @@ execute(struct tnode *t, int *pin, int *pout)
 			ascan(t->nfin, trim);
 			if ((i = open(t->nfin, O_RDONLY)) == -1) {
 				prs(t->nfin);
-				err(": cannot open", FC_ERR);
+				err(FC_ERR, COLON ERR_OPEN);
 			}
 			if (dup2(i, FD0) == -1)
-				err("Cannot dup2", FC_ERR);
+				err(FC_ERR, ERR_DUP2);
 			(void)close(i);
 		}
 		/*
@@ -1032,10 +1007,10 @@ execute(struct tnode *t, int *pin, int *pout)
 			ascan(t->nfout, trim);
 			if ((i = open(t->nfout, i, 0666)) == -1) {
 				prs(t->nfout);
-				err(": cannot create", FC_ERR);
+				err(FC_ERR, COLON ERR_CREATE);
 			}
 			if (dup2(i, FD1) == -1)
-				err("Cannot dup2", FC_ERR);
+				err(FC_ERR, ERR_DUP2);
 			(void)close(i);
 		}
 		/*
@@ -1049,7 +1024,7 @@ execute(struct tnode *t, int *pin, int *pout)
 				(void)close(FD0);
 				if (open("/dev/null", O_RDONLY) != FD0) {
 					prs("/dev/null");
-					err(": cannot open", FC_ERR);
+					err(FC_ERR, COLON ERR_OPEN);
 				}
 			}
 		} else {
@@ -1083,13 +1058,13 @@ execute(struct tnode *t, int *pin, int *pout)
 			(void)pexec(cmd, (char *const *)t->nav);
 		}
 		if (errno == ENOEXEC)
-			err("No shell!", 125);
+			err(125, ERR_NOSHELL);
 		if (errno != ENOENT && errno != ENOTDIR) {
 			prs(cmd);
-			err(": cannot execute", 126);
+			err(126, COLON ERR_EXEC);
 		}
 		prs(cmd);
-		err(": not found", 127);
+		err(127, COLON ERR_NOTFOUND);
 		/*NOTREACHED*/
 	}
 }
@@ -1098,14 +1073,14 @@ execute(struct tnode *t, int *pin, int *pout)
  * Handle all errors detected by the shell.
  */
 static void
-err(const char *msg, int es)
+err(int es, const char *msg)
 {
 
 	if (msg != NULL) {
 		prs(msg);
 		prs("\n");
-		status = es;
 	}
+	status = es;
 	if (prompt == NULL) {
 		(void)lseek(FD0, (off_t)0, SEEK_END);
 		EXIT(status);
@@ -1197,10 +1172,10 @@ pwait(pid_t cp)
 			if (status >= FC_ERR) {
 				if (status == FC_ERR)
 					status = SH_ERR;
-				err((status > 128) ? "" : NULL, status);
+				err(status, (status > 128) ? "" : NULL);
 			}
 		} else
-			status = 0;
+			status = SH_TRUE;
 		if (tp == cp)
 			break;
 	}
@@ -1220,7 +1195,7 @@ sh_init(void)
 	 * Set-ID execution is not supported.
 	 */
 	if (geteuid() != getuid() || getegid() != getgid())
-		err("Set-ID execution denied", SH_ERR);
+		err(SH_ERR, ERR_SETID);
 
 	/*
 	 * Save the process ID of the shell both as an integer (spid)
@@ -1239,7 +1214,7 @@ sh_init(void)
 	for (i = 0; i < 3; i++)
 		if (fstat(i, &sb) == -1) {
 			prn(i);
-			err(": Bad file descriptor", SH_ERR);
+			err(SH_ERR, COLON ERR_BADDESCR);
 		}
 
 	/*
@@ -1267,7 +1242,7 @@ sh_magic(void)
 			for (len = 2; len < LINEMAX; len++)
 				if (readc() == '\n')
 					return;
-			err("Too many characters", SH_ERR);
+			err(SH_ERR, ERR_TMCHARS);
 		}
 		(void)lseek(FD0, (off_t)0, SEEK_SET);
 	}
@@ -1314,7 +1289,7 @@ xmalloc(size_t s)
 	void *mp;
 
 	if ((mp = malloc(s)) == NULL) {
-		err("Out of memory", SH_ERR);
+		err(SH_ERR, ERR_NOMEM);
 		exit(SH_ERR);
 	}
 	return mp;
