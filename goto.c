@@ -78,8 +78,6 @@ OSH_RCSID("@(#)$Id$");
 
 #include "defs.h"
 
-#define	LABELSIZE	64	/* size of the label buffer */
-
 static	off_t	offset;
 
 static	bool	getlabel(/*@out@*/ char *, int, size_t);

@@ -86,14 +86,7 @@ OSH_RCSID("@(#)$Id$");
 #include "defs.h"
 #include "pexec.h"
 
-#define	F_GZ		1	/* for the `-s' primary  */
-#define	F_OT		2	/* for the `-ot' primary */
-#define	F_NT		3	/* for the `-nt' primary */
-#define	F_EF		4	/* for the `-ef' primary */
-
 #define	EXIT(s)		((getpid() == ifpid) ? exit((s)) : _exit((s)))
-#define	FORKED		true
-#define	RETERR		true
 
 static	int	ac;
 static	int	ap;

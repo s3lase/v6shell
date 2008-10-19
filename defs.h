@@ -43,7 +43,6 @@
 #else
 #define	GAVMAX		1048576
 #endif
-
 #define	GAVNEW		128	/* # of new arguments per gav allocation    */
 
 #ifdef	_POSIX_OPEN_MAX
@@ -129,9 +128,18 @@
 #define	FMT2S		"%s: %s\n"
 #define	FMT3S		"%s: %s: %s\n"
 
+#define	LABELSIZE	64	/* label buffer size for the goto(1) utility */
+
+#define	F_GZ		1	/* `-s'  primary for the if(1) utility       */
+#define	F_OT		2	/* `-ot' primary for the if(1) utility       */
+#define	F_NT		3	/* `-nt' primary for the if(1) utility       */
+#define	F_EF		4	/* `-ef' primary for the if(1) utility       */
+
 #define	DOLDIGIT(d, c)	((d) >= 0 && (d) <= 9 && "0123456789"[(d) % 10] == (c))
 #define	DOLSUB		true
 #define	EQUAL(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
+#define	FORKED		true
+#define	RETERR		true
 
 typedef	unsigned char	UChar;
 #define	UCHAR(c)	((UChar)c)
