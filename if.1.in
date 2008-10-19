@@ -63,11 +63,11 @@
 if \- conditional command
 .SH SYNOPSIS
 .B if
-\fIexpr\fR [\fIcommand\fR [\fIarg ...\fR]]
+\fIexpression\fR [\fIcommand\fR [\fIarg ...\fR]]
 .SH DESCRIPTION
 .I If
-evaluates the expression
-.IR expr ,
+evaluates
+.IR expression ,
 and if its value is true,
 returns a zero exit status or executes the specified
 .I command
@@ -75,7 +75,7 @@ with the given arguments.
 Otherwise, a non-zero exit status is returned.
 .PP
 The following primaries are used to construct
-.IR expr :
+.IR expression :
 .TP 10
 \fB{\fR \fIcommand\fR [\fIarg ...\fR] \fB}\fR
 The specified \fIcommand\fR is executed with the
@@ -146,22 +146,22 @@ are not equal.
 These primaries may also be combined
 with the following operators:
 .TP 10
-.BI ! \ expr
+.BI ! \ expression
 unary
 .I negation
 operator
 .TP
-.IB expr1 \ \-a \ expr2
+.IB expression1 \ \-a \ expression2
 binary
 .I and
 operator
 .TP
-.IB expr1 \ \-o \ expr2
+.IB expression1 \ \-o \ expression2
 binary
 .I or
 operator
 .TP
-.BI ( \ expr \ )
+.BI ( \ expression \ )
 parentheses for grouping
 .PP
 .B \-a
