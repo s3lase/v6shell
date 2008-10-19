@@ -263,7 +263,7 @@ is never subject to redirection by the shell itself.
 Thus,
 commands may write diagnostics to a location
 where they have a chance to be seen.
-However, if necessary,
+However,
 .IR fd2 (1)
 provides a way to redirect the diagnostic output
 to another location.
@@ -416,7 +416,7 @@ Take the following two shell invocations for example:
 In the first invocation,
 the `>' in the value substituted by `$1'
 retains its special meaning.
-This causes output from
+This causes all output from
 .IR echo (1)
 to be redirected to `/dev/null'.
 However,

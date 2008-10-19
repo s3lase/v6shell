@@ -320,8 +320,8 @@ is never subject to redirection by the shell itself.
 Thus,
 commands may write diagnostics to a location
 where they have a chance to be seen.
-However, if necessary,
-.IR fd2 (1)
+However,
+.B fd2
 provides a way to redirect the diagnostic output
 to another location.
 .PP
@@ -520,8 +520,8 @@ Take the following two shell invocations for example:
 In the first invocation,
 the `>' in the value substituted by `$1'
 retains its special meaning.
-This causes output from
-.IR echo (1)
+This causes all output from
+.B echo
 to be redirected to `/dev/null'.
 However,
 in the second invocation,
@@ -531,7 +531,7 @@ This causes the shell to pass `>/dev/null'
 as an argument to echo instead of interpreting
 it as a redirection.
 .SS File name generation
-Prior to executing an external command,
+Prior to executing a command,
 the shell scans each argument for
 unquoted `*', `?', or `[' characters.
 If one or more of these characters appears,
@@ -698,8 +698,7 @@ If the shell is interactive,
 this means it exits when the user
 types an EOT (^D) at the prompt.
 .SS Special commands
-The following commands are special in that they are
-executed by the shell without creating a new process.
+The shell treats the following built-in commands specially.
 .TP
 \fB:\fR [\fIarg ...\fR]
 Does nothing and sets the exit status to zero.
@@ -717,15 +716,44 @@ if
 is not specified,
 the user's home directory is used by default.
 .TP
+\fBecho\fR [\fB\-n\fR] [\fIstring ...\fR] (+)
+Writes its string arguments (if any) separated by blanks
+and terminated by a newline to the standard output.
+If `\-n' is specified, the terminating newline is not written.
+.TP
 \fBexec\fR \fIcommand\fR [\fIarg ...\fR] (+)
-Replaces the current shell with an instance
-of the specified command.
-Pipes and I/O redirection are permitted.
+Replaces the current shell with an instance of
+.IR command ,
+which must be external to the shell.
 .TP
 .B exit
 Causes the shell to cease execution of a file.
 This means exit has no effect at the prompt
 of an interactive shell.
+.TP
+\fBfd2\fR [\fB\-e\fR] [\fB\-f\fR \fIfile\fR] \fIcommand\fR [\fIarg ...\fR] (+)
+Redirects from/to file descriptor 2 for
+.IR command .
+See the
+.IR fd2 (1)
+manual page for full details.
+.TP
+\fBgoto\fR \fIlabel\fR (+)
+Transfers shell control to the `\fB:\fR \fIlabel\fR' line
+of the current command file.
+See the
+.IR goto (1)
+manual page for full details.
+.TP
+\fBif\fR \fIexpression\fR [\fIcommand\fR [\fIarg ...\fR]] (+)
+Evaluates
+.I expression
+and conditionally executes
+.I command
+if appropriate.
+See the
+.IR if (1)
+manual page for full details.
 .TP
 \fBlogin\fR [\fIarg ...\fR]
 Replaces the current interactive shell with
@@ -752,7 +780,7 @@ The value of `$0' does not shift.
 \fBsigign\fR [\fB+\fR | \fB\-\fR \fIsignal_number ...\fR] (+)
 \fB+\fR causes the specified signals
 to be ignored if possible,
-and \fB-\fR causes the specified signals
+and \fB\-\fR causes the specified signals
 to be reset to the default action if possible.
 If a signal was already ignored when
 the shell was invoked,
@@ -943,7 +971,6 @@ system-wide rc logout file for login shells
 user rc logout file for login shells
 .SH "SEE ALSO"
 awk(1),
-echo(1),
 env(1),
 expr(1),
 fd2(1),
