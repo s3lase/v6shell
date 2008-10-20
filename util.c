@@ -96,7 +96,8 @@ OSH_RCSID("@(#)$Id$");
 
 static	const char	*utilname;
 
-static	void	uerr(int, /*@null@*/ const char *, /*@printflike@*/ ...);
+/*@noreturn@*/
+static	void	uerr(int, const char *, /*@printflike@*/ ...);
 static	int	(*util)(int, char **);
 static	int	sbi_echo(int, char **);
 static	int	sbi_fd2(int, char **);
