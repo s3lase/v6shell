@@ -1,4 +1,4 @@
-Welcome to osh-current (20080914)!
+Welcome to osh-20081024!
 
 Osh(1) is an enhanced, backward-compatible port of the Sixth Edition (V6)
 UNIX shell (circa 1975), also known as the Thompson shell.  The original
@@ -37,9 +37,9 @@ systems at the time of this release:
 			Mandriva 2007.0, Slackware 12.1, Xubuntu
 
 If your system is not mentioned above, simply try to build the osh
-package to see if it works or not.  In either case, please consider
-reporting the results to the developer if possible.  The resulting
-"config.h" file and the compiler name/version is most helpful.
+package to see if it works or not.  In either case, please report
+the results to the developer if possible.  The resulting "config.h"
+file and the compiler name/version is most helpful.
 
 Please send osh bug reports to <bugs (at) v6shell (dot) org>.  Before
 reporting a bug, please try to reproduce it with the latest version
@@ -52,6 +52,6 @@ you to contact me via email.  Thanks & Enjoy!
 
 Jeffrey Allen Neitzel
 <jan (at) v6shell (dot) org>
-http://v6shell.org/						2008/09/14
+http://v6shell.org/						2008/10/20
 
 @(#)$Id$

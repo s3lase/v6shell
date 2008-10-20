@@ -23,7 +23,7 @@ if $n != 1 -o X$1 != X-c -a X$1 != X-m if { exit } pusage $0 '"{-c | -m}"'
 
 	: " Do a `make clean' if needed. "
 	ls dosums Makefile mkconfig *.[1ch]* | \
-		wc -w | tr -d ' \t' | grep '^18$' >/dev/null
+		wc -w | tr -d ' \t' | grep '^24$' >/dev/null
 	if $s != 0 make clean >/dev/null
 	if X$1 != X-c goto $1
 	: fallthrough
@@ -35,6 +35,6 @@ if $n != 1 -o X$1 != X-c -a X$1 != X-m if { exit } pusage $0 '"{-c | -m}"'
 : -m - " Make a new SUMS file from the current list of working files. "
 
 	mksums dosums Makefile mkconfig *.[1ch]* >SUMS
-	wc -l <SUMS | tr -d ' \t' | grep '^80$' >/dev/null
+	wc -l <SUMS | tr -d ' \t' | grep '^96$' >/dev/null
 	if $s = 0 exit
 	perror $0 '"SUMS file error - incorrect line count"'
