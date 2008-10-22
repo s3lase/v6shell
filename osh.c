@@ -335,7 +335,7 @@ static	struct tnode	*syn3(char **, char **);
 static	bool		any(int, const char *);
 static	bool		vtglob(char **);
 static	void		vtrim(char **);
-static	int		vacount(char **);
+static	int		vacount(const char **);
 static	void		execute(/*@null@*/ struct tnode *,
 				/*@null@*/ int *, /*@null@*/ int *);
 static	void		exec1(struct tnode *);
@@ -369,7 +369,7 @@ static	void		*xmalloc(size_t);
 static	void		*xrealloc(/*@only@*/ void *, size_t);
 static	char		*xstrdup(const char *);
 /*@maynotreturn@*/
-static	char		**glob(char **);
+static	const char	**glob(char **);
 
 /*
  * NAME
@@ -1218,9 +1218,9 @@ vtrim(char **vp)
  * Return number of arguments in argument vector pointed to by vp.
  */
 static int
-vacount(char **vp)
+vacount(const char **vp)
 {
-	char **p;
+	const char **p;
 
 	for (p = vp; *p != NULL; p++)
 		;	/* nothing */
@@ -1235,8 +1235,8 @@ static void
 execute(struct tnode *t, int *pin, int *pout)
 {
 	struct tnode *t1;
-	pid_t cpid;
 	enum tnflags f;
+	pid_t cpid;
 	int pfd[2];
 
 	if (t == NULL)
@@ -1546,8 +1546,8 @@ exec2(struct tnode *t, int *pin, int *pout)
 	struct tnode *t1;
 	enum tnflags f;
 	int i;
+	const char **av, **gav;
 	const char *cmd;
-	char **av, **gav;
 
 	f = t->nflags;
 
@@ -1641,13 +1641,13 @@ exec2(struct tnode *t, int *pin, int *pout)
 		cmd = av[0];
 	} else {
 		vtrim(t->nav);
-		av  = t->nav;
+		av  = (const char **)t->nav;
 		cmd = av[0];
 	}
 	if (t->nkey == SBI_UNKNOWN)
 		(void)pexec(cmd, (char *const *)av);
 	else
-		_exit(uexec(t->nkey, vacount(av), av));
+		_exit(uexec(t->nkey, vacount(av), (char **)av));
 	if (errno == ENOEXEC)
 		err(125, FMT2S, cmd, ERR_NOSHELL);
 	if (errno == E2BIG)
@@ -2545,15 +2545,15 @@ xstrdup(const char *src)
 	return dst;
 }
 
-static	char		**gavp;	/* points to current gav position     */
-static	char		**gave;	/* points to current gav end          */
+static	const char	**gavp;	/* points to current gav position     */
+static	const char	**gave;	/* points to current gav end          */
 static	size_t		gavtot;	/* total bytes used for all arguments */
 
-static	char		**gavnew(/*@only@*/ char **);
+static	const char	**gavnew(/*@only@*/ const char **);
 static	char		*gcat(const char *, const char *, bool);
-static	char		**glob1(/*@only@*/ char **, char *, int *);
+static	const char	**glob1(/*@only@*/ const char **, char *, int *);
 static	bool		glob2(const UChar *, const UChar *);
-static	void		gsort(char **);
+static	void		gsort(const char **);
 /*@null@*/
 static	DIR		*gopendir(/*@out@*/ char *, const char *);
 
@@ -2562,11 +2562,11 @@ static	DIR		*gopendir(/*@out@*/ char *, const char *);
  * pattern arguments in av.  Return a pointer to a newly allocated
  * argument vector, gav, on success.  Do not return on error.
  */
-static char **
+static const char **
 glob(char **av)
 {
-	char **gav;	/* points to generated argument vector */
-	int pmc = 0;	/* pattern-match count                 */
+	const char **gav;	/* points to generated argument vector */
+	int pmc = 0;		/* pattern-match count                 */
 
 	gav = xmalloc(GAVNEW * sizeof(char *));
 
@@ -2585,18 +2585,20 @@ glob(char **av)
 	return gav;
 }
 
-static char **
-gavnew(char **gav)
+static const char **
+gavnew(const char **gav)
 {
 	size_t siz;
 	ptrdiff_t gidx;
+	static unsigned mult = 1;
 
 	if (gavp == gave) {
-		gidx = (ptrdiff_t)(gavp - gav);
-		siz  = (size_t)((gidx + 1 + GAVNEW) * sizeof(char *));
-		gav  = xrealloc(gav, siz);
-		gavp = gav + gidx;
-		gave = &gav[gidx + GAVNEW];
+		mult *= GAVMULT;
+		gidx  = (ptrdiff_t)(gavp - gav);
+		siz   = (size_t)((gidx + (GAVNEW * mult)) * sizeof(char *));
+		gav   = xrealloc(gav, siz);
+		gavp  = gav + gidx;
+		gave  = &gav[gidx + (GAVNEW * mult) - 1];
 	}
 	return gav;
 }
@@ -2633,8 +2635,8 @@ gcat(const char *src1, const char *src2, bool slash)
 	return dst;
 }
 
-static char **
-glob1(char **gav, char *as, int *pmc)
+static const char **
+glob1(const char **gav, char *as, int *pmc)
 {
 	DIR *dirp;
 	struct dirent *entry;
@@ -2772,9 +2774,9 @@ glob2(const UChar *ename, const UChar *pattern)
 }
 
 static void
-gsort(char **ogavp)
+gsort(const char **ogavp)
 {
-	char **p1, **p2, *sap;
+	const char **p1, **p2, *sap;
 
 	p1 = ogavp;
 	while (gavp - p1 > 1) {

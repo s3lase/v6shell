@@ -83,17 +83,17 @@ OSH_RCSID("@(#)$Id$");
 #include "defs.h"
 #include "pexec.h"
 
-static	char		**gavp;	/* points to current gav position     */
-static	char		**gave;	/* points to current gav end          */
+static	const char	**gavp;	/* points to current gav position     */
+static	const char	**gave;	/* points to current gav end          */
 static	size_t		gavtot;	/* total bytes used for all arguments */
 
-static	char		**gavnew(/*@only@*/ char **);
+static	const char	**gavnew(/*@only@*/ const char **);
 static	char		*gcat(const char *, const char *);
 /*@noreturn@*/
 static	void		gerr(const char *);
-static	char		**glob1(/*@only@*/ char **, char *, int *);
+static	const char	**glob1(/*@only@*/ const char **, char *, int *);
 static	bool		glob2(const UChar *, const UChar *);
-static	void		gsort(char **);
+static	void		gsort(const char **);
 /*@null@*/
 static	DIR		*gopendir(const char *);
 
@@ -110,8 +110,8 @@ static	DIR		*gopendir(const char *);
 int
 main(int argc, char **argv)
 {
-	char **gav;	/* points to generated argument vector */
-	int pmc = 0;	/* pattern-match count                 */
+	const char **gav;	/* points to generated argument vector */
+	int pmc = 0;		/* pattern-match count                 */
 
 	/*
 	 * Set-ID execution is not supported.
@@ -134,7 +134,7 @@ main(int argc, char **argv)
 	if (pmc == 0)
 		gerr(ERR_NOMATCH);
 
-	(void)pexec(gav[0], gav);
+	(void)pexec(gav[0], (char *const *)gav);
 	if (errno == ENOEXEC)
 		gerr(ERR_NOSHELL);
 	if (errno == E2BIG)
@@ -144,21 +144,23 @@ main(int argc, char **argv)
 	return SH_ERR;
 }
 
-static char **
-gavnew(char **gav)
+static const char **
+gavnew(const char **gav)
 {
 	size_t siz;
 	ptrdiff_t gidx;
-	char **nav;
+	const char **nav;
+	static unsigned mult = 1;
 
 	if (gavp == gave) {
-		gidx = (ptrdiff_t)(gavp - gav);
-		siz  = (size_t)((gidx + 1 + GAVNEW) * sizeof(char *));
+		mult *= GAVMULT;
+		gidx  = (ptrdiff_t)(gavp - gav);
+		siz   = (size_t)((gidx + (GAVNEW * mult)) * sizeof(char *));
 		if ((nav = realloc(gav, siz)) == NULL)
 			gerr(ERR_NOMEM);
-		gav  = nav;
-		gavp = gav + gidx;
-		gave = &gav[gidx + GAVNEW];
+		gav   = nav;
+		gavp  = gav + gidx;
+		gave  = &gav[gidx + (GAVNEW * mult) - 1];
 	}
 	return gav;
 }
@@ -208,8 +210,8 @@ gerr(const char *msg)
 	exit(SH_ERR);
 }
 
-static char **
-glob1(char **gav, char *as, int *pmc)
+static const char **
+glob1(const char **gav, char *as, int *pmc)
 {
 	DIR *dirp;
 	struct dirent *entry;
@@ -332,9 +334,9 @@ glob2(const UChar *ename, const UChar *pattern)
 }
 
 static void
-gsort(char **ogavp)
+gsort(const char **ogavp)
 {
-	char **p1, **p2, *sap;
+	const char **p1, **p2, *sap;
 
 	p1 = ogavp;
 	while (gavp - p1 > 1) {

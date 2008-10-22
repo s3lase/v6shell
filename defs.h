@@ -43,7 +43,9 @@
 #else
 #define	GAVMAX		1048576
 #endif
-#define	GAVNEW		128	/* # of new arguments per gav allocation    */
+
+#define	GAVMULT		2U	/* base GAVNEW allocation multiplier          */
+#define	GAVNEW		128U	/* base # of new arguments per gav allocation */
 
 #ifdef	_POSIX_OPEN_MAX
 #define	FDFREEMIN	_POSIX_OPEN_MAX

@@ -1050,7 +1050,7 @@ execute(struct tnode *t, int *pin, int *pout)
 			gav = xmalloc((i + 2) * sizeof(char *));
 			gav[0] = "glob6";
 			cmd = gav[0];
-			(void)memcpy(&gav[1],&t->nav[0],(i+1)*sizeof(char *));
+			(void)memcpy(&gav[1], t->nav, (i + 1) * sizeof(char *));
 			(void)pexec(cmd, (char *const *)gav);
 		} else {
 			vscan(t->nav, trim);
