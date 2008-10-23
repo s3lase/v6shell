@@ -599,13 +599,9 @@ cmd_verbose(void)
 	char **vp;
 
 	if (verbose_flag) {
-		vp = word;
-		while (**vp != '\n') {
-			fd_print(FD2, "%s", *vp++);
-			if (**vp != '\n')
-				fd_print(FD2, " ");
-		}
-		fd_print(FD2, "\n");
+		for (vp = word; **vp != '\n'; vp++)
+			fd_print(FD2, "%s%s",
+			    *vp, (**(vp + 1) != '\n') ? " " : "\n");
 	}
 }
 

@@ -174,13 +174,8 @@ sbi_echo(int argc, char **argv)
 	} else
 		nopt = false;
 
-	avp = argv;
-	ave = &argv[argc];
-	while (avp < ave) {
-		fd_print(FD1, "%s", *avp);
-		if (++avp < ave)
-			fd_print(FD1, " ");
-	}
+	for (avp = argv, ave = &argv[argc]; avp < ave; avp++)
+		fd_print(FD1, "%s%s", *avp, (avp + 1 < ave) ? " " : "");
 	if (!nopt)
 		fd_print(FD1, "\n");
 
