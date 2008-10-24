@@ -30,11 +30,11 @@ made use of the following external utilities:
 
 The functionality of each of the above-mentioned utilities is
 provided here.  However, the `exit' utility is implemented as a
-special built-in command.  See the goto(1) and if(1) manual pages
-for full details regarding the ports of these utilities.
+special built-in command for both osh(1) and sh6(1).
 
-For osh(1), `glob' is built into the shell by using a port of the
-glob6(1) source code.
+For osh(1), ports of `glob', `goto', and `if' are built into the
+shell.  For sh6(1), however, each of these utilities remains as an
+external utility.
 
 For sh6(1), the Thompson-shell port's binary executable has been
 renamed from `sh' to `sh6' to avoid name conflict and confusion
@@ -42,6 +42,9 @@ with the system shell, sh(1), on modern UNIX systems.  Similarly,
 the `glob' utility has been renamed to `glob6' and is installed
 into the same directory as the shell, /usr/local/bin by default,
 rather than being installed into the /etc directory.
+
+Additionally, see the glob6(1), goto(1), and if(1) manual pages for
+full details regarding the ports of the above-mentioned utilities.
 
 -------------------------------
 Compatibility notes for osh(1):
@@ -81,13 +84,19 @@ Further details regarding some of the known differences:
    user can set PATH to a value of `.:/bin:/usr/bin' in order to
    accomplish this.
 
-2) This port of the shell ignores the first line of a command file
+2) This port of the shell integrates the previously external `echo',
+   `fd2', `glob', `goto', and `if' shell utilities as special built-in
+   commands in order to improve shell performance and reliability.
+   This does not change the user-visible behavior of the shell or
+   utilities.
+
+3) This port of the shell ignores the first line of a command file
    if it begins with `#!' in order to play nicely with kernels which
    support the `#!' mechanism.  For example, the first line might be
    `#!/usr/local/bin/osh' or `#!/usr/bin/env osh'.  This is just for
    user convenience in the face of conflicting shell languages.
 
-3) The original implementation of the shell does shell accounting
+4) The original implementation of the shell does shell accounting
    in order to record command execution data; this port does not.
 
 -------------------------------
@@ -140,6 +149,6 @@ Further details regarding the substantial differences:
 3) The original implementation of the shell does shell accounting
    in order to record command execution data; this port does not.
 
-Jeffrey Allen Neitzel						2008/09/14
+Jeffrey Allen Neitzel						2008/10/24
 
 @(#)$Id$

@@ -30,7 +30,7 @@ Osh is hereby distributed under the following license:
 
 ==================================================================
 Additionally, the original license for osh.1, osh.c, sh6.1, sh6.c,
-glob6.1, glob6.c, if.1, if.c, goto.1, and goto.c follows:
+glob6.1, glob6.c, if.1, if.c, goto.1, goto.c, and util.c follows:
 
 /*-
  * Copyright (C) Caldera International Inc.  2001-2002.  All rights reserved.
@@ -140,6 +140,6 @@ of the OpenBSD project.  The original license follows:
  */
 ===
 
-Jeffrey Allen Neitzel						2008/06/18
+Jeffrey Allen Neitzel						2008/10/24
 
 @(#)$Id$

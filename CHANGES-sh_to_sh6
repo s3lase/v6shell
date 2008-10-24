@@ -3,6 +3,26 @@ code for the Sixth Edition (V6) UNIX Thompson shell and global
 command in porting them to run on modern UNIX systems.
 
 -------------------------------------------------------------------------------
+[osh-current]:
+	* Moved common definitions for these programs to "defs.h".
+
+sh6.c:
+	* Synced `struct tnode' w/ osh.c by changing the order of the `nav'
+	  and `nflags' members.
+
+	* Changed calls to err() to use the diagnostics defined in "defs.h".
+
+glob6.c:
+	* Added a base reallocation multiplier to gavnew().  This doubles the
+	  number of new arguments for which to reallocate memory when the
+	  current allocation will not be large enough for the resulting
+	  argument vector.  This reduces the number of realloc()s required
+	  for very large argument vectors while allowing the first malloc()
+	  to remain relatively small.
+
+	* Changed calls to gerr() to use the diagnostics defined in "defs.h".
+
+-------------------------------------------------------------------------------
 [osh-20080629]:
 sh6.c:
 	* Changed the way that the shell deals w/ the SIGTERM signal so that
@@ -303,6 +323,6 @@ glob.c:
     Date: May 14, 1975
     From: Sixth Edition UNIX /usr/source/s1/glob.c
 
-Jeffrey Allen Neitzel						2008/09/14
+Jeffrey Allen Neitzel						2008/10/24
 
 @(#)$Id$

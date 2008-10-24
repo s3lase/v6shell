@@ -2,6 +2,50 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
+[osh-current]:
+	* New files:  defs.h, osh.h, util.c, v.c
+
+	* Moved common definitions for all programs to "defs.h".
+
+	* Added an osh package comment to the top of all header files.
+
+INSTALL, Makefile:
+	* Changed the "oshall" target to only build osh since the utilities
+	  are now built into the shell.
+
+	* Changed the "install-oshall" target to only install osh and its
+	  manual pages.  This includes the utility manual pages since they
+	  are not fully documented elsewhere.
+
+mkconfig:
+	* Changed the comment describing _XOPEN_SOURCE and _BSD_SOURCE for
+	  compiling the osh package to be more neutral.
+
+*.1.in:
+	* Synced the manual pages w/ the code as needed.
+
+osh.c, util.c:
+	* Added a base reallocation multiplier to glob()'s gavnew().  This
+	  doubles the number of new arguments for which to reallocate memory
+	  when the current allocation will not be large enough for the resulting
+	  argument vector.  This reduces the number of realloc()s required
+	  for very large argument vectors while allowing the first malloc()
+	  to remain relatively small.
+
+	* Renamed cmd_index() to cmd_lookup(), and changed the algorithm from
+	  a linear search to a binary search.
+
+	* Integrated the external `if', `goto', and `fd2' shell utilities as
+	  special built-in commands to improve shell performance.  Also, added
+	  `echo' as a special built-in command.  Osh executes each of these
+	  built-ins in a subshell.  Consequently, the I/O for each can be
+	  redirected as before, and the argument list for each can be the
+	  result of a call to glob() as before.
+
+fd2.c:
+	* Added a new `-e' command-line option to fd2.
+
+-------------------------------------------------------------------------------
 [osh-20080629]:
 	* Replaced all instances of "sdf1" w/ "v6shell" in all files since
 	  the osh project website has a new URL, http://v6shell.org/, as of
@@ -1292,6 +1336,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2008/09/14
+Jeffrey Allen Neitzel						2008/10/24
 
 @(#)$Id$

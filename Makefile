@@ -1,4 +1,4 @@
-# Makefile for osh-20081024
+# Makefile for osh-current (20081024)
 #
 # @(#)$Id$
 #
@@ -30,13 +30,15 @@ SHELL=		/bin/sh
 # Preprocessor, compiler, and linker flags
 #
 #	If the compiler gives errors about any of flags specified
-#	by `OPTIONS=' or `WARNINGS=' below, comment the appropriate
+#	by `OPTIONS' or `WARNINGS' below, comment the appropriate
 #	line(s) with a `#' character to fix the compiler errors.
 #	Then, try to rebuild by doing a `make clean ; make'.
 #
 #CPPFLAGS=
 OPTIONS=	-std=c99 -pedantic
+#OPTIONS+=	-fstack-protector
 WARNINGS=	-Wall -W
+#WARNINGS+=	-Wstack-protector
 #CFLAGS+=	-g
 CFLAGS+=	-O2 $(OPTIONS) $(WARNINGS)
 #LDFLAGS+=	-static
@@ -59,7 +61,7 @@ LDFLAGS+=	$(MOXARCH)
 #	osh-YYYYMMDD		== official release
 #
 OSH_DATE=	October 24, 2008
-OSH_VERSION=	osh-20081024
+OSH_VERSION=	osh-current (20081024)
 
 OSH=	osh
 SH6=	sh6 glob6
@@ -191,4 +193,3 @@ clean-obj:
 
 clean: clean-obj
 	rm -f $(OSH) $(SH6) $(UTILS) $(MANDST) config.h
-

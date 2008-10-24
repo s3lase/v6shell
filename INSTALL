@@ -1,4 +1,4 @@
-Build and install instructions for osh-20081024!
+Build and install instructions for osh-current (20081024)!
 
 --------
 SYNOPSIS
@@ -54,8 +54,8 @@ passing the desired variable=value pair(s) on the command line.
 Mac OS X only:
 The following configuration variable specifies the desired target
 architecture(s) for compiling universal binaries and/or 64-bit
-binaries and/or 32-bit binaries for Mac OS X running on Intel and
-PowerPC Macs.
+binaries and/or 32-bit binaries for Mac OS X running on Intel
+and PowerPC Macs.
 
 	MOXARCH		Unset by default.  Possible value(s) may be
 			one or more of the following: -arch x86_64,
@@ -71,11 +71,12 @@ The following targets are available.
 
 	install		Installs all binaries and manual pages.
 
-	oshall		Compiles osh, if, goto, and fd2.
+	oshall		Compiles osh and generates manual pages.
 
-	install-oshall	Installs oshall binaries and manual pages.
+	install-oshall	Installs osh binary and manual pages.
 
-	sh6all		Compiles sh6, glob6, if, goto, and fd2.
+	sh6all		Compiles sh6, glob6, if, goto, fd2 and
+			generates manual pages.
 
 	install-sh6all	Installs sh6all binaries and manual pages.
 
@@ -86,18 +87,16 @@ The following targets are available.
 
 --------
 EXAMPLES
-The following example compiles osh, if, goto, and fd2 for /opt/local.
-It then installs these binaries into /opt/local/bin, their manual
-pages into /opt/local/man/man1, and also sets SYSCONFDIR to
-/opt/local/etc.
+The following example compiles osh for /opt/local.  It then
+installs the osh binary into /opt/local/bin, its manual pages into
+/opt/local/man/man1, and also sets SYSCONFDIR to /opt/local/etc.
 
 	% make PREFIX=/opt/local oshall
 	# make PREFIX=/opt/local install-oshall
 
 The following example compiles sh6, glob6, if, goto, and fd2 for
-/usr/pkg.  It then installs these binaries into /usr/pkg/bin, their
-manual pages into /usr/pkg/man/man1, and also sets SYSCONFDIR to
-/usr/pkg/etc.
+/usr/pkg.  It then installs these binaries into /usr/pkg/bin and
+their manual pages into /usr/pkg/man/man1.
 
 	% make PREFIX=/usr/pkg sh6all
 	# make PREFIX=/usr/pkg install-sh6all
@@ -117,6 +116,6 @@ It then installs the entire osh package into the default location.
 	% make MOXARCH='-arch i386 -arch ppc'
 	# make install
 
-Jeffrey Allen Neitzel						2008/10/20
+Jeffrey Allen Neitzel						2008/10/24
 
 @(#)$Id$
