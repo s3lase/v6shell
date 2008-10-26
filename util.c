@@ -87,8 +87,10 @@ OSH_RCSID("@(#)$Id$");
 #include <string.h>
 #include <unistd.h>
 
+#define	OSH_SHELL
+
+#include "sh.h"
 #include "defs.h"
-#include "osh.h"
 #include "pexec.h"
 
 #define	IS_SBI(k)	\

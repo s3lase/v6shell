@@ -98,8 +98,10 @@ OSH_RCSID("@(#)$Id$");
 #include <string.h>
 #include <unistd.h>
 
+#define	OSH_SHELL
+
+#include "sh.h"
 #include "defs.h"
-#include "osh.h"
 #include "pexec.h"
 #include "sasignal.h"
 
@@ -161,15 +163,6 @@ OSH_RCSID("@(#)$Id$");
 #define	SHTYPE(f)	((shtype & (f)) != 0)
 
 /*
- * Signal child flags
- */
-enum scflags {
-	SC_SIGINT  = 01,
-	SC_SIGQUIT = 02,
-	SC_SIGTERM = 04
-};
-
-/*
  * Signal state flags
  */
 enum ssflags {
@@ -187,40 +180,6 @@ enum stflags {
 	INTERACTIVE  = 004,
 	RC_FILE      = 010,
 	SOURCE       = 020
-};
-
-/*
- * Shell command tree node flags
- */
-enum tnflags {
-	FAND    = 0001,		/* A `&'  designates asynchronous execution.  */
-	FCAT    = 0002,		/* A `>>' appends output to file.             */
-	FFIN    = 0004,		/* A `<'  redirects input from file.          */
-	FPIN    = 0010,		/* A `|' or `^' redirects input from pipe.    */
-	FPOUT   = 0020,		/* A `|' or `^' redirects output to pipe.     */
-	FNOFORK = 0040,		/* No fork(2) for last command in `( list )'. */
-	FINTR   = 0100,		/* Child process ignores SIGINT and SIGQUIT.  */
-	FPRS    = 0200		/* Print process ID of child as a string.     */
-};
-
-/*
- * Shell command tree node structure
- */
-struct tnode {
-/*@null@*/struct tnode	 *nleft;	/* Pointer to left node.            */
-/*@null@*/struct tnode	 *nright;	/* Pointer to right node.           */
-/*@null@*/struct tnode	 *nsub;		/* Pointer to TSUBSHELL node.       */
-/*@null@*/char		 *nfin;		/* Pointer to input file (<).       */
-/*@null@*/char		 *nfout;	/* Pointer to output file (>, >>).  */
-/*@null@*/char		**nav;		/* Argument vector for TCOMMAND.    */
-	  enum	 sbikey	  nkey;		/* Shell sbi command key.           */
-	  enum	 tnflags  nflags;	/* Shell command tree node flags.   */
-	  enum {			/* Shell command tree node type.    */
-		TLIST     = 1,	/* pipelines separated by `;', `&', or `\n' */
-		TPIPE     = 2,	/* commands separated by `|' or `^'         */
-		TCOMMAND  = 3,	/* command  [arg ...]  [< in]  [> [>] out]  */
-		TSUBSHELL = 4	/* ( list )            [< in]  [> [>] out]  */
-	  } ntype;
 };
 
 /*
@@ -831,6 +790,7 @@ readc(void)
 	}
 	if (read(FD0, &c, (size_t)1) != 1)
 		return EOF;
+
 	return c;
 }
 

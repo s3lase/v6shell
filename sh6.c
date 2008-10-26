@@ -84,6 +84,9 @@ OSH_RCSID("@(#)$Id$");
 #include <string.h>
 #include <unistd.h>
 
+#define	SH6_SHELL
+
+#include "sh.h"
 #include "defs.h"
 #include "pexec.h"
 #include "sasignal.h"
@@ -91,48 +94,6 @@ OSH_RCSID("@(#)$Id$");
 #define	PIDMAX		99999	/* Maximum value for both prn() and apid. */
 
 #define	EXIT(s)		((getpid() == spid) ? exit((s)) : _exit((s)))
-
-/*
- * Signal child flags
- */
-enum scflags {
-	SC_SIGINT  = 01,
-	SC_SIGQUIT = 02,
-	SC_SIGTERM = 04
-};
-
-/*
- * Shell command tree node flags
- */
-enum tnflags {
-	FAND    = 0001,		/* A `&'  designates asynchronous execution.  */
-	FCAT    = 0002,		/* A `>>' appends output to file.             */
-	FFIN    = 0004,		/* A `<'  redirects input from file.          */
-	FPIN    = 0010,		/* A `|' or `^' redirects input from pipe.    */
-	FPOUT   = 0020,		/* A `|' or `^' redirects output to pipe.     */
-	FNOFORK = 0040,		/* No fork(2) for last command in `( list )'. */
-	FINTR   = 0100,		/* Child process ignores SIGINT and SIGQUIT.  */
-	FPRS    = 0200		/* Print process ID of child as a string.     */
-};
-
-/*
- * Shell command tree node structure
- */
-struct tnode {
-/*@null@*/struct tnode	 *nleft;	/* Pointer to left node.            */
-/*@null@*/struct tnode	 *nright;	/* Pointer to right node.           */
-/*@null@*/struct tnode	 *nsub;		/* Pointer to TSUBSHELL node.       */
-/*@null@*/char		 *nfin;		/* Pointer to input file (<).       */
-/*@null@*/char		 *nfout;	/* Pointer to output file (>, >>).  */
-/*@null@*/char		**nav;		/* Argument vector for TCOMMAND.    */
-	  enum	 tnflags  nflags;	/* Shell command tree node flags.   */
-	  enum {			/* Shell command tree node type.    */
-		TLIST     = 1,	/* pipelines separated by `;', `&', or `\n' */
-		TPIPE     = 2,	/* commands separated by `|' or `^'         */
-		TCOMMAND  = 3,	/* command  [arg ...]  [< in]  [> [>] out]  */
-		TSUBSHELL = 4	/* ( list )            [< in]  [> [>] out]  */
-	  } ntype;
-};
 
 /*
  * ==== Global variables ====
@@ -507,6 +468,7 @@ readc(void)
 		exit(status);
 	if ((c &= ASCII) == '\n' && one_line_flag == 2)
 		one_line_flag = 1;
+
 	return c;
 }
 

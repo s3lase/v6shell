@@ -88,10 +88,10 @@ sh6all: $(SH6) utils man
 
 utils: $(UTILS) man
 
-osh: config.h defs.h rcsid.h v.c util.c $(PEXSRC) $(SIGSRC) osh.h osh.c
+osh: config.h defs.h rcsid.h sh.h v.c util.c $(PEXSRC) $(SIGSRC) osh.c
 	@$(MAKE) $@bin
 
-sh6: config.h defs.h rcsid.h v.c $(PEXSRC) $(SIGSRC) sh6.c
+sh6: config.h defs.h rcsid.h sh.h v.c $(PEXSRC) $(SIGSRC) sh6.c
 	@$(MAKE) $@bin
 
 glob6: config.h defs.h rcsid.h v.c $(PEXSRC) glob6.c
@@ -107,7 +107,7 @@ fd2: config.h defs.h rcsid.h v.c $(PEXSRC) fd2.c
 	@$(MAKE) $@bin
 
 $(OBJ)                               : config.h defs.h rcsid.h
-osh.o util.o                         : osh.h
+osh.o sh6.o util.o                   : sh.h
 fd2.o glob6.o if.o osh.o sh6.o util.o: pexec.h
 osh.o sh6.o                          : sasignal.h
 pexec.o                              : $(PEXSRC)
