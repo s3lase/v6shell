@@ -29,9 +29,23 @@
  *	@(#)$Id$
  */
 
-#ifndef	OSH_H
-#define	OSH_H
+#ifndef	SH_H
+#define	SH_H
 
+/*
+ * osh.c, util.c, and sh6.c must include this header file.
+ */
+
+/*
+ * Signal child flags
+ */
+enum scflags {
+	SC_SIGINT  = 01,
+	SC_SIGQUIT = 02,
+	SC_SIGTERM = 04
+};
+
+#ifdef	OSH_SHELL
 /*
  * Shell special built-in (sbi) command keys
  */
@@ -41,15 +55,54 @@ enum sbikey {
 	SBI_SETENV,   SBI_SHIFT, SBI_SIGIGN, SBI_SOURCE, SBI_UMASK,
 	SBI_UNSETENV, SBI_WAIT,  SBI_UNKNOWN
 };
+#endif
 
+/*
+ * Shell command tree node flags
+ */
+enum tnflags {
+	FAND    = 0001,		/* A `&'  designates asynchronous execution.  */
+	FCAT    = 0002,		/* A `>>' appends output to file.             */
+	FFIN    = 0004,		/* A `<'  redirects input from file.          */
+	FPIN    = 0010,		/* A `|' or `^' redirects input from pipe.    */
+	FPOUT   = 0020,		/* A `|' or `^' redirects output to pipe.     */
+	FNOFORK = 0040,		/* No fork(2) for last command in `( list )'. */
+	FINTR   = 0100,		/* Child process ignores SIGINT and SIGQUIT.  */
+	FPRS    = 0200		/* Print process ID of child as a string.     */
+};
+
+/*
+ * Shell command tree node structure
+ */
+struct tnode {
+/*@null@*/struct tnode	 *nleft;	/* Pointer to left node.            */
+/*@null@*/struct tnode	 *nright;	/* Pointer to right node.           */
+/*@null@*/struct tnode	 *nsub;		/* Pointer to TSUBSHELL node.       */
+/*@null@*/char		 *nfin;		/* Pointer to input file (<).       */
+/*@null@*/char		 *nfout;	/* Pointer to output file (>, >>).  */
+/*@null@*/char		**nav;		/* Argument vector for TCOMMAND.    */
+#ifdef	OSH_SHELL
+	  enum	 sbikey	  nkey;		/* Shell sbi command key.           */
+#endif
+	  enum	 tnflags  nflags;	/* Shell command tree node flags.   */
+	  enum {			/* Shell command tree node type.    */
+		TLIST     = 1,	/* pipelines separated by `;', `&', or `\n' */
+		TPIPE     = 2,	/* commands separated by `|' or `^'         */
+		TCOMMAND  = 3,	/* command  [arg ...]  [< in]  [> [>] out]  */
+		TSUBSHELL = 4	/* ( list )            [< in]  [> [>] out]  */
+	  } ntype;
+};
+
+#ifdef	OSH_SHELL
+/* osh.c */
 extern	uid_t	euid;	/* effective shell user ID */
 
-/* osh.c */
 enum sbikey	cmd_lookup(const char *);
 void		fd_print(int, const char *, /*@printflike@*/ ...);
 void		omsg(int, const char *, va_list);
 
 /* util.c */
 int		uexec(enum sbikey, int, char **);
+#endif
 
-#endif	/* !OSH_H */
+#endif	/* !SH_H */
