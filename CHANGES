@@ -3,7 +3,7 @@ Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
 [osh-current]:
-	* New files:  defs.h, osh.h, util.c, v.c
+	* New files:  defs.h, sh.h, util.c, v.c
 
 	* Moved common definitions for all programs to "defs.h".
 
@@ -24,16 +24,24 @@ mkconfig:
 *.1.in:
 	* Synced the manual pages w/ the code as needed.
 
-osh.c, util.c:
+osh.c:
+	* Include "sh.h" for needed declarations.
+
+	* See "util.c:" below for integrated shell utilities description.
+
+	* Renamed cmd_index() to cmd_lookup(), and changed the algorithm from
+	  a linear search to a binary search.
+
 	* Added a base reallocation multiplier to glob()'s gavnew().  This
 	  doubles the number of new arguments for which to reallocate memory
 	  when the current allocation will not be large enough for the resulting
 	  argument vector.  This reduces the number of realloc()s required
 	  for very large argument vectors while allowing the first malloc()
-	  to remain relatively small.
+	  to be a relatively small allocation for up to 126 matching
+	  file-name arguments.
 
-	* Renamed cmd_index() to cmd_lookup(), and changed the algorithm from
-	  a linear search to a binary search.
+util.c:
+	* Include "sh.h" for needed declarations.
 
 	* Integrated the external `if', `goto', and `fd2' shell utilities as
 	  special built-in commands to improve shell performance.  Also, added
@@ -1336,6 +1344,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2008/10/24
+Jeffrey Allen Neitzel						2008/10/26
 
 @(#)$Id$
