@@ -3,7 +3,7 @@ code for the Sixth Edition (V6) UNIX Thompson shell and global
 command in porting them to run on modern UNIX systems.
 
 -------------------------------------------------------------------------------
-[osh-current]:
+[osh-20081026]:
 	* Moved common definitions for these programs to "defs.h".
 
 sh6.c:

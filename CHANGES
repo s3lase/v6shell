@@ -2,7 +2,7 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-current]:
+[osh-20081026]:
 	* New files:  defs.h, sh.h, util.c, v.c
 
 	* Moved common definitions for all programs to "defs.h".
