@@ -519,7 +519,6 @@ cmd_lookup(const char *cmd)
 		else
 			rp = mp;
 	}
-
 	return SBI_UNKNOWN;
 }
 
@@ -598,11 +597,10 @@ cmd_verbose(void)
 {
 	char **vp;
 
-	if (verbose_flag) {
-		for (vp = word; **vp != '\n'; vp++)
-			fd_print(FD2, "%s%s",
-			    *vp, (**(vp + 1) != '\n') ? " " : "\n");
-	}
+	if (!verbose_flag)
+		return;
+	for (vp = word; **vp != '\n'; vp++)
+		fd_print(FD2, "%s%s", *vp, (**(vp + 1) != '\n') ? " " : "\n");
 }
 
 /*
