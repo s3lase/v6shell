@@ -16,7 +16,7 @@ Notice that this package also includes the following shell utilities:
 
 	goto(1) - transfer command (ported from Sixth Edition UNIX)
 
-	fd2(1)  - redirect file descriptor 2
+	fd2(1)  - redirect from/to file descriptor 2
 
 -------
 See the INSTALL file for build and install instructions.
@@ -52,6 +52,6 @@ you to contact me via email.  Thanks & Enjoy!
 
 Jeffrey Allen Neitzel
 <jan (at) v6shell (dot) org>
-http://v6shell.org/						2008/10/24
+http://v6shell.org/						2008/10/30
 
 @(#)$Id$

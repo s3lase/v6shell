@@ -72,7 +72,7 @@ OBJ=	fd2.o glob6.o goto.o if.o osh.o pexec.o sasignal.o sh6.o util.o v.o
 MANSRC=	fd2.1.in glob6.1.in goto.1.in if.1.in osh.1.in sh6.1.in
 MANDST=	fd2.1 glob6.1 goto.1 if.1 osh.1 sh6.1
 
-DEFS=	$(DOSH) -DOSH_VERSION='"$(OSH_VERSION)"' -DSYSCONFDIR='"$(SYSCONFDIR)"'
+DEFS=	-DOSH_VERSION='"$(OSH_VERSION)"' -DSYSCONFDIR='"$(SYSCONFDIR)"'
 
 .c.o:
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(DEFS) $<
