@@ -417,7 +417,7 @@ getd:
 		c = readc();
 		if (c >= '0' && c <= '9') {
 			n = c - '0';
-			if (DOLDIGIT(n, c) && n < dolc)
+			if (IS_DIGIT(n, c) && n < dolc)
 				dolp = (n > 0) ? dolv[n] : name;
 			goto getd;
 		}

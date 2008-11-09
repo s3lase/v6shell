@@ -255,7 +255,7 @@ e3(void)
 			err(FC_ERR, a, ERR_DIGIT);
 		if (*b >= '0' && *b <= '9' && *(b + 1) == '\0') {
 			d = *b - '0';
-			if (DOLDIGIT(d, *b))
+			if (IS_DIGIT(d, *b))
 				return isatty(d) != 0;
 		}
 		err(FC_ERR, b, ERR_NOTDIGIT);

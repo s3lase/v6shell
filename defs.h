@@ -43,7 +43,6 @@
 #else
 #define	GAVMAX		1048576
 #endif
-
 #define	GAVMULT		2U	/* base GAVNEW reallocation multiplier        */
 #define	GAVNEW		128U	/* base # of new arguments per gav allocation */
 
@@ -137,11 +136,12 @@
 #define	F_NT		3	/* `-nt' primary for the if(1) utility       */
 #define	F_EF		4	/* `-ef' primary for the if(1) utility       */
 
-#define	DOLDIGIT(d, c)	((d) >= 0 && (d) <= 9 && "0123456789"[(d) % 10] == (c))
 #define	DOLSUB		true
-#define	EQUAL(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
 #define	FORKED		true
 #define	RETERR		true
+
+#define	EQUAL(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
+#define	IS_DIGIT(d, c)	((d) >= 0 && (d) <= 9 && "0123456789"[(d) % 10] == (c))
 
 typedef	unsigned char	UChar;
 #define	UCHAR(c)	((UChar)c)
