@@ -115,7 +115,7 @@ static	const char *const sig[] = {
 	"Bus error",
 	"Memory fault",
 	"Bad system call",
-	NULL
+	""
 };
 #define	XNSIG		((int)(sizeof(sig) / sizeof(sig[0])))
 
@@ -444,10 +444,9 @@ geterr:
 /*
  * Read and return an ASCII-equivalent character from the string
  * pointed to by argv2p or from the standard input.  When reading
- * from argv2p, return the character or `\n' at end-of-string.
- * When reading from the standard input, return the character.
- * Otherwise, exit the shell w/ the current value of the global
- * variable status when appropriate.
+ * from argv2p, return the character or `\n'.  When reading from
+ * the standard input, return the character.  Otherwise, exit w/
+ * the value of the global variable status when appropriate.
  */
 static char
 readc(void)
@@ -455,9 +454,10 @@ readc(void)
 	char c;
 
 	if (argv2p != NULL) {
+		if (argv2p == (char *)-1)
+			exit(status);
 		if ((c = (*argv2p++ & ASCII)) == '\0') {
-			argv2p = NULL;
-			one_line_flag = 1;
+			argv2p = (char *)-1;
 			c = '\n';
 		}
 		return c;
@@ -1114,7 +1114,7 @@ pwait(pid_t cp)
 		if (s != 0) {
 			if (WIFSIGNALED(s) != 0) {
 				e = WTERMSIG(s);
-				if (e >= XNSIG || (e >= 0 && sig[e] != NULL)) {
+				if (e >= XNSIG || (e >= 0 && *sig[e] != '\0')) {
 					if (tp != cp) {
 						prn((int)tp);
 						prs(": ");
