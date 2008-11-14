@@ -3,6 +3,40 @@ Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
 [osh-current]:
+mkconfig:
+	* Added a case for DragonFly BSD (uname -s == DragonFly).
+
+osh.c:
+	* Fixed a bug introduced in osh-20081026 where the shell incorrectly
+	  prints a process ID w/ an empty termination message upon receipt
+	  of the SIGINT signal in certain cases.  For example:
+
+		% sleep 10 | sleep 20 | sleep 30 ; wait
+		^C
+		2845: 
+		2846: 
+
+	  This example should only print three newlines to the standard error
+	  on SIGINT, not one newline and two process IDs w/ empty messages.
+	  Now, it behaves as expected.
+
+	* Fixed a bug introduced in osh-20061230 where the shell incorrectly
+	  handles an unescaped terminating backslash (\) character at the end
+	  of string when the shell is invoked as `osh -c string'.  In this
+	  case, the terminating backslash causes the shell to incorrectly
+	  read from the standard input at the end of string.  For example:
+
+		% osh -c 'echo Hello\'
+		to\
+		you!
+		Hello to you!
+
+	  This example should instead do nothing and exit w/ a zero status.
+	  For `osh -c string', an unescaped terminating backslash should
+	  turn string into a no-op.  Now, it behaves as expected.
+
+-------------------------------------------------------------------------------
+[osh-20081026]:
 	* New files:  defs.h, sh.h, util.c, v.c
 
 	* Moved common definitions for all programs to "defs.h".
@@ -1344,6 +1378,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2008/10/26
+Jeffrey Allen Neitzel						2008/11/14
 
 @(#)$Id$

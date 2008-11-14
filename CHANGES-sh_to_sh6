@@ -4,6 +4,22 @@ command in porting them to run on modern UNIX systems.
 
 -------------------------------------------------------------------------------
 [osh-current]:
+sh6.c:
+	* Fixed a bug introduced in osh-20081026 where the shell incorrectly
+	  prints a process ID w/ an empty termination message upon receipt
+	  of the SIGINT signal in certain cases.  For example:
+
+		% sleep 10 | sleep 20 | sleep 30 ; wait
+		^C
+		2845: 
+		2846: 
+
+	  This example should only print three newlines to the standard error
+	  on SIGINT, not one newline and two process IDs w/ empty messages.
+	  Now, it behaves as expected.
+
+-------------------------------------------------------------------------------
+[osh-20081026]:
 	* Moved common definitions for these programs to "defs.h".
 
 sh6.c:
@@ -326,6 +342,6 @@ glob.c:
     Date: May 14, 1975
     From: Sixth Edition UNIX /usr/source/s1/glob.c
 
-Jeffrey Allen Neitzel						2008/10/26
+Jeffrey Allen Neitzel						2008/11/14
 
 @(#)$Id$
