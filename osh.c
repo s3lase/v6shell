@@ -772,9 +772,8 @@ geterr:
 /*
  * Read and return a character from the string pointed to by
  * argv2p or from the standard input.  When reading from argv2p,
- * return the character or `\n' at end-of-string.  When reading
- * from the standard input, return the character or EOF.  EOF is
- * returned both on end-of-file and on read(2) error.
+ * return the character, `\n', or EOF.  When reading from the
+ * standard input, return the character or EOF.
  */
 static int
 readc(void)
@@ -782,8 +781,10 @@ readc(void)
 	unsigned char c;
 
 	if (argv2p != NULL) {
+		if (argv2p == (char *)-1)
+			return EOF;
 		if ((c = (*argv2p++ & 0377)) == '\0') {
-			argv2p = NULL;
+			argv2p = (char *)-1;
 			c = '\n';
 		}
 		return c;
@@ -1948,7 +1949,7 @@ prsig(int s, pid_t tp, pid_t cp)
 	const char *c, *m;
 
 	e = WTERMSIG(s);
-	if (e >= NSIGMSG || (e >= 0 && sigmsg[e] != NULL)) {
+	if (e >= NSIGMSG || (e >= 0 && *sigmsg[e] != '\0')) {
 		if (e < NSIGMSG)
 			m = sigmsg[e];
 		else {
@@ -1964,7 +1965,8 @@ prsig(int s, pid_t tp, pid_t cp)
 			fd_print(FD2, "%u: %s%s\n", (unsigned)tp, m, c);
 		else
 			fd_print(FD2, "%s%s\n", m, c);
-	}
+	} else
+		fd_print(FD2, "\n");
 
 	return 128 + e;
 }
