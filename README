@@ -1,4 +1,4 @@
-Welcome to osh-current (20081024)!
+Welcome to osh-current (20081115)!
 
 Osh(1) is an enhanced, backward-compatible port of the Sixth Edition (V6)
 UNIX shell (circa 1975), also known as the Thompson shell.  The original
@@ -23,11 +23,12 @@ See the INSTALL file for build and install instructions.
 
 -------
 The osh package should build successfully on any POSIX-compliant
-UNIX system.  It is known to build successfully on the following
-systems at the time of this release:
+UNIX system.  It has been reported to build successfully on the
+following systems:
 
 	System		Releases / Distributions / Additional Info
 	----------------------------------------------------------
+	DragonFly BSD	2.0.1
 	FreeBSD		6.1, 7.0
 	Mac OS X	10.4, 10.5
 	NetBSD		2.1, 3.1.1, 4.0
@@ -36,7 +37,7 @@ systems at the time of this release:
 	GNU/Linux	CentOS 5.2, Debian testing (lenny), Kubuntu,
 			Mandriva 2007.0, Slackware 12.1, Xubuntu
 
-If your system is not mentioned above, simply try to build the osh
+If your system is not reported above, simply try to build the osh
 package to see if it works or not.  In either case, please report
 the results to the developer if possible.  The resulting "config.h"
 file and the compiler name/version is most helpful.
@@ -52,6 +53,6 @@ you to contact me via email.  Thanks & Enjoy!
 
 Jeffrey Allen Neitzel
 <jan (at) v6shell (dot) org>
-http://v6shell.org/						2008/10/30
+http://v6shell.org/						2008/11/15
 
 @(#)$Id$
