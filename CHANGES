@@ -2,7 +2,7 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-current]:
+[osh-20081122]:
 mkconfig:
 	* Added a case for DragonFly BSD (uname -s == DragonFly).
 
@@ -1378,6 +1378,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2008/11/14
+Jeffrey Allen Neitzel						2008/11/16
 
 @(#)$Id$

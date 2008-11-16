@@ -3,7 +3,7 @@ code for the Sixth Edition (V6) UNIX Thompson shell and global
 command in porting them to run on modern UNIX systems.
 
 -------------------------------------------------------------------------------
-[osh-current]:
+[osh-20081122]:
 sh6.c:
 	* Fixed a bug introduced in osh-20081026 where the shell incorrectly
 	  prints a process ID w/ an empty termination message upon receipt
@@ -342,6 +342,6 @@ glob.c:
     Date: May 14, 1975
     From: Sixth Edition UNIX /usr/source/s1/glob.c
 
-Jeffrey Allen Neitzel						2008/11/14
+Jeffrey Allen Neitzel						2008/11/16
 
 @(#)$Id$
