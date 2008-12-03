@@ -1,5 +1,5 @@
 /*
- * fd2.c - redirect file descriptor 2
+ * fd2.c - redirect from/to file descriptor 2
  */
 /*-
  * Copyright (c) 2005-2008
@@ -68,6 +68,7 @@ static	void	usage(void);
 int
 main(int argc, char **argv)
 {
+	bool eopt;
 	int efd, nfd, ofd, opt;
 	char *file;
 
@@ -83,12 +84,12 @@ main(int argc, char **argv)
 	if (!fd_isopen(FD0) || !fd_isopen(FD1) || !fd_isopen(FD2))
 		err(FC_ERR, NULL, strerror(errno));
 
-	file = NULL;
 	ofd = FD1, efd = FD2;
+	eopt = false, file = NULL;
 	while ((opt = getopt(argc, argv, ":ef:")) != -1)
 		switch (opt) {
 		case 'e':
-			ofd = FD2, efd = FD1;
+			eopt = true;
 			break;
 		case 'f':
 			file = optarg;
@@ -106,10 +107,15 @@ main(int argc, char **argv)
 			err(FC_ERR, file, ERR_CREATE);
 		if (dup2(nfd, efd) == -1)
 			err(FC_ERR, NULL, strerror(errno));
+		if (eopt && dup2(efd, ofd) == -1)
+			err(FC_ERR, NULL, strerror(errno));
 		(void)close(nfd);
-	} else
+	} else {
+		if (eopt)
+			ofd = FD2, efd = FD1;
 		if (dup2(ofd, efd) == -1)
 			err(FC_ERR, NULL, strerror(errno));
+	}
 
 	/*
 	 * Try to execute the specified command.

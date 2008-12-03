@@ -200,18 +200,19 @@ static	void	usage(void);
 static int
 sbi_fd2(int argc, char **argv)
 {
+	bool eopt;
 	enum sbikey key;
 	int efd, nfd, ofd, opt;
 	char *file;
 
 	utilname = argv[0];
 
-	file = NULL;
 	ofd = FD1, efd = FD2;
+	eopt = false, file = NULL;
 	while ((opt = getopt(argc, argv, ":ef:")) != -1)
 		switch (opt) {
 		case 'e':
-			ofd = FD2, efd = FD1;
+			eopt = true;
 			break;
 		case 'f':
 			file = optarg;
@@ -229,10 +230,15 @@ sbi_fd2(int argc, char **argv)
 			uerr(FC_ERR, FMT3S, utilname, file, ERR_CREATE);
 		if (dup2(nfd, efd) == -1)
 			uerr(FC_ERR, FMT2S, utilname, strerror(errno));
+		if (eopt && dup2(efd, ofd) == -1)
+			uerr(FC_ERR, FMT2S, utilname, strerror(errno));
 		(void)close(nfd);
-	} else
+	} else {
+		if (eopt)
+			ofd = FD2, efd = FD1;
 		if (dup2(ofd, efd) == -1)
 			uerr(FC_ERR, FMT2S, utilname, strerror(errno));
+	}
 
 	/*
 	 * Try to execute the specified command.
