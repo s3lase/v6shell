@@ -559,7 +559,8 @@ cmd_verbose(void)
 	if (!verbose_flag)
 		return;
 	for (vp = word; **vp != '\n'; vp++)
-		fd_print(FD2, "%s%s", *vp, (**(vp + 1) != '\n') ? " " : "\n");
+		fd_print(FD2, "%s%s", *vp, (**(vp + 1) != '\n') ? " " : "");
+	fd_print(FD2, "\n");
 }
 
 /*
@@ -1252,7 +1253,6 @@ exec_again:
 				err(-1, FMT3S, t->nav[0], t->nav[1], ERR_EXEC);
 				return;
 			}
-			/* NOTE: Never free() this t->nav instance. */
 			t->nav++;
 			t->nflags |= FNOFORK;
 			(void)sasignal(SIGCHLD, SIG_IGN);
