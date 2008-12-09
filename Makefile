@@ -1,4 +1,4 @@
-# Makefile for osh-trunk
+# Makefile for osh-20081213
 #
 # @(#)$Id$
 #
@@ -61,7 +61,7 @@ LDFLAGS+=	$(MOXARCH)
 #	osh-YYYYMMDD	== official release
 #
 OSH_DATE=	December 9, 2008
-OSH_VERSION=	osh-trunk
+OSH_VERSION=	osh-20081213
 
 OSH=	osh
 SH6=	sh6 glob6

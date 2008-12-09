@@ -2,7 +2,7 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-trunk]:
+[osh-20081213]:
 osh.c:
 	* Changed the effect of the `-v' command-line option so that, in
 	  addition to printing non-blank command lines to the standard error,
