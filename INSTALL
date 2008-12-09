@@ -1,4 +1,4 @@
-Build and install instructions for osh-current (20081205)!
+Build and install instructions for osh-trunk!
 
 --------
 SYNOPSIS
@@ -117,6 +117,6 @@ It then installs the entire osh package into the default location.
 	% make MOXARCH='-arch i386 -arch ppc'
 	# make install
 
-Jeffrey Allen Neitzel						2008/12/05
+Jeffrey Allen Neitzel						2008/12/09
 
 @(#)$Id$

@@ -1,4 +1,4 @@
-Welcome to osh-current (20081205)!
+Welcome to osh-trunk!
 
 The osh package provides two ports of the original /bin/sh from
 Sixth Edition (V6) UNIX (circa 1975).
@@ -56,6 +56,6 @@ you to contact me via email.  Thanks & Enjoy!
 
 Jeffrey Allen Neitzel
 <jan (at) v6shell (dot) org>
-http://v6shell.org/						2008/12/05
+http://v6shell.org/						2008/12/09
 
 @(#)$Id$

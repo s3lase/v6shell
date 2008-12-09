@@ -2,12 +2,17 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-current]:
+[osh-trunk]:
+osh.c:
+	* Changed the effect of the `-v' command-line option so that, in
+	  addition to printing non-blank command lines to the standard error,
+	  the shell also prints each blank/empty command line as an empty line.
+
 fd2.c, util.c:
-	* Fixed the fd2 `-e' command-line option so that it reflects the
-	  documented behavior.  For example, this fix causes the invocation
-	  of `fd2 -ef file command' to redirect both conventional output and
-	  diagnostic output from "command" to "file".
+	* Changed the fd2 `-e' command-line option so that it reflects the
+	  documented behavior.  For example, this change causes invocation
+	  of `fd2 -ef file command' to redirect both conventional output
+	  and diagnostic output from "command" to "file".
 
 -------------------------------------------------------------------------------
 [osh-20081122]:
@@ -1386,6 +1391,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2008/12/05
+Jeffrey Allen Neitzel						2008/12/09
 
 @(#)$Id$
