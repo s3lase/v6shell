@@ -301,7 +301,7 @@ static	void		exec1(struct tnode *);
 static	void		exec2(struct tnode *,
 			      /*@null@*/ int *, /*@null@*/ int *);
 static	void		do_chdir(char **);
-static	void		do_sigign(char **);
+static	void		do_sigign(char **, enum tnflags);
 static	void		set_ss_flags(int, action_type);
 static	void		do_source(char **);
 static	void		pwait(pid_t);
@@ -410,7 +410,7 @@ main(int argc, char **argv)
 					is_login = true;
 					rc_flag  = DO_SYSTEM_LOGIN;
 				} else
-					rc_flag = DO_SYSTEM_OSHRC;
+					rc_flag  = DO_SYSTEM_OSHRC;
 			}
 			if (is_login)
 				if (sasignal(SIGHUP, sighup) == SIG_IGN)
@@ -478,6 +478,7 @@ cmd_lookup(const char *cmd)
 		else
 			rp = mp;
 	}
+
 	return SBI_UNKNOWN;
 }
 
@@ -1408,7 +1409,7 @@ exec1(struct tnode *t)
 		 * usage: sigign [+ | - signal_number ...]
 		 */
 		vtrim(t->nav);
-		do_sigign(t->nav);
+		do_sigign(t->nav, t->nflags);
 		return;
 
 	case SBI_SOURCE:
@@ -1576,7 +1577,7 @@ exec2(struct tnode *t, int *pin, int *pout)
 		if ((sig_state&SS_SIGQUIT) == 0 && (sig_child&SC_SIGQUIT) != 0)
 			(void)sasignal(SIGQUIT, SIG_DFL);
 	}
-	/* Set SIGTERM to its default action if needed. */
+	/* Set the SIGTERM signal to its default action if needed. */
 	if ((sig_state&SS_SIGTERM) == 0 && (sig_child&SC_SIGTERM) != 0)
 		(void)sasignal(SIGTERM, SIG_DFL);
 	if (t->ntype == TSUBSHELL) {
@@ -1680,7 +1681,7 @@ chdirerr:
  * of `sigign' in the current shell.
  */
 static void
-do_sigign(char **av)
+do_sigign(char **av, enum tnflags f)
 {
 	struct sigaction act, oact;
 	sigset_t new_mask, old_mask;
@@ -1740,17 +1741,18 @@ do_sigign(char **av)
 			     oact.sa_handler == SIG_DFL))
 				continue;
 
-			/* Set flags for already ignored signals if needed. */
+			/* Set up already ignored signal if needed. */
 			if (ignlst[signo - 1]) {
 				set_ss_flags(signo, act.sa_handler);
-				continue;
+				if (act.sa_handler == SIG_DFL)
+					continue;
 			}
 
 			/* Reinstall SIGHUP signal handler if needed. */
-			if (is_login&&signo==1&&act.sa_handler==SIG_DFL) {
+			if (is_login&&signo==SIGHUP&&act.sa_handler==SIG_DFL) {
 				if (oact.sa_handler == sighup)
 					continue;
-				if (sasignal(SIGHUP, sighup) == SIG_ERR) {
+				if (sasignal(signo, sighup) == SIG_ERR) {
 					sigerr = signo;
 					goto sigdone;
 				}
@@ -1774,14 +1776,14 @@ do_sigign(char **av)
 			if (sigaction(i, NULL, &oact) < 0 ||
 			    oact.sa_handler != SIG_IGN)
 				continue;
-			if (!ignlst[i - 1] ||
-			    (i == SIGINT  && (sig_state & SS_SIGINT)  != 0 &&
-			     (sig_child & SC_SIGINT)  != 0) ||
-			    (i == SIGQUIT && (sig_state & SS_SIGQUIT) != 0 &&
-			     (sig_child & SC_SIGQUIT) != 0) ||
-			    (i == SIGTERM && (sig_state & SS_SIGTERM) != 0 &&
+			if (!ignlst[i - 1] || ((f & FINTR) == 0 &&
+			    ((i == SIGINT  && (sig_state & SS_SIGINT)  != 0 &&
+			     (sig_child & SC_SIGINT)  != 0)   ||
+			     (i == SIGQUIT && (sig_state & SS_SIGQUIT) != 0 &&
+			     (sig_child & SC_SIGQUIT) != 0))) ||
+			     (i == SIGTERM && (sig_state & SS_SIGTERM) != 0 &&
 			     (sig_child & SC_SIGTERM) != 0))
-				fd_print(FD1, "%s + %u\n", av[0], (unsigned)i);
+				fd_print(FD1, "%s + %2u\n", av[0], (unsigned)i);
 		}
 	}
 
