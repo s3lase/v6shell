@@ -1,8 +1,8 @@
-======================================================
-Osh is hereby distributed under the following license:
+==================================================================
+The osh package is hereby distributed under the following license:
 
 /*-
- * Copyright (c) 2003-2008
+ * Copyright (c) 2003-2009
  *	Jeffrey Allen Neitzel <jan (at) v6shell (dot) org>.
  *	All rights reserved.
  *
@@ -140,6 +140,6 @@ of the OpenBSD project.  The original license follows:
  */
 ===
 
-Jeffrey Allen Neitzel						2008/10/24
+Jeffrey Allen Neitzel						2009/02/01
 
 @(#)$Id$
