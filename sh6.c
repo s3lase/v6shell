@@ -995,7 +995,7 @@ execute(struct tnode *t, int *pin, int *pout)
 			if ((sig_child & SC_SIGQUIT) != 0)
 				(void)sasignal(SIGQUIT, SIG_DFL);
 		}
-		/* Set SIGTERM to its default action if needed. */
+		/* Set the SIGTERM signal to its default action if needed. */
 		if ((sig_child & SC_SIGTERM) != 0)
 			(void)sasignal(SIGTERM, SIG_DFL);
 		if (t->ntype == TSUBSHELL) {
