@@ -159,7 +159,7 @@ OSH_RCSID("@(#)$Id$");
 #define	ESTATUS		((getpid() == shpid) ? SH_ERR : FC_ERR)
 #define	EXIT(s)		((getpid() == shpid) ? exit((s)) : _exit((s)))
 #define	HALT		true
-#define	PROMPT		((shtype & 037) == INTERACTIVE)
+#define	PROMPT		(shtype == INTERACTIVE)
 #define	SHTYPE(f)	((shtype & (f)) != 0)
 
 /*
@@ -534,7 +534,7 @@ cmd_loop(bool halt)
 
 	for (error_source = gz = false; ; ) {
 		if (PROMPT)
-			(void)write(FD2, (euid != 0) ? "% " : "# ", (size_t)2);
+			fd_print(FD2, "%s", (euid != 0) ? "% " : "# ");
 		if (rpx_line() == EOF) {
 			if (!gz)
 				status = SH_TRUE;
