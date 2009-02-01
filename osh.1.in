@@ -787,7 +787,7 @@ the shell was invoked,
 it can never be reset with \fB-\fR.
 If no arguments are specified,
 a list is printed of those signals which
-are ignored by sigign in the current shell.
+are ignored by sigign in the current shell context.
 .TP
 \fBsource\fR \fIfile\fR [\fIarg1 ...\fR] (+)
 Causes the shell to read and execute commands
