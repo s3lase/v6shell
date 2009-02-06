@@ -4,6 +4,19 @@ Thompson shell are marked w/ a `C:' in the details below.
 -------------------------------------------------------------------------------
 [osh-trunk]:
 osh.c:
+	* Changed do_sigign() so that an invocation of the `sigign' special
+	  command in a subshell correctly ignores, unignores, and prints the
+	  specified signal(s) independently of the main shell process ($$).
+
+if.c:
+	* Added a call to sasignal() to set the SIGCHLD signal to its default
+	  action so that the { command [arg ...] } primary can obtain and
+	  return the correct exit status of "command" in all cases, even when
+	  the parent process of `if' may ignore SIGCHLD (e.g., sh(1)).
+
+-------------------------------------------------------------------------------
+[osh-20081213]:
+osh.c:
 	* Changed the effect of the `-v' command-line option so that, in
 	  addition to printing non-blank command lines to the standard error,
 	  the shell also prints each blank/empty command line as an empty line.
@@ -1391,6 +1404,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2008/12/09
+Jeffrey Allen Neitzel						2009/02/06
 
 @(#)$Id$

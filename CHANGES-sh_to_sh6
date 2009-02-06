@@ -4,6 +4,10 @@ command in porting them to run on modern UNIX systems.
 
 -------------------------------------------------------------------------------
 [osh-trunk]:
+	* No user-visible changes.
+
+-------------------------------------------------------------------------------
+[osh-20081213]:
 	* No changes.
 
 -------------------------------------------------------------------------------
@@ -346,6 +350,6 @@ glob.c:
     Date: May 14, 1975
     From: Sixth Edition UNIX /usr/source/s1/glob.c
 
-Jeffrey Allen Neitzel						2008/12/09
+Jeffrey Allen Neitzel						2009/02/06
 
 @(#)$Id$
