@@ -85,6 +85,7 @@ OSH_RCSID("@(#)$Id$");
 
 #include "defs.h"
 #include "pexec.h"
+#include "sasignal.h"
 
 #define	EXIT(s)		((getpid() == ifpid) ? exit((s)) : _exit((s)))
 
@@ -133,6 +134,12 @@ main(int argc, char **argv)
 	if (ifeuid != getuid() || getegid() != getgid())
 		err(FC_ERR, NULL, ERR_SETID);
 
+	/*
+	 * Set the SIGCHLD signal to its default action.
+	 * This is required for the { command [arg ...] } primary.
+	 */
+	(void)sasignal(SIGCHLD, SIG_DFL);
+
 	if (argc > 1) {
 		ac = argc;
 		av = argv;
@@ -143,7 +150,7 @@ main(int argc, char **argv)
 	} else
 		re = false;
 
-	return re ? 0 : 1;
+	return re ? SH_TRUE : SH_FALSE;
 }
 
 /*
@@ -206,7 +213,7 @@ e3(void)
 	}
 
 	/*
-	 * Execute command within braces to obtain its exit status.
+	 * Execute { command [arg ...] } to obtain its exit status.
 	 */
 	if (equal(a, "{")) {
 		if ((cpid = fork()) == -1)
@@ -304,7 +311,7 @@ doex(bool forked)
 	/* Invoke a special "exit" utility in this case. */
 	if (equal(xav[0], "exit")) {
 		(void)lseek(FD0, (off_t)0, SEEK_END);
-		EXIT(0);
+		EXIT(SH_TRUE);
 	}
 
 	(void)pexec(xav[0], xav);
