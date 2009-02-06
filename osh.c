@@ -159,7 +159,7 @@ OSH_RCSID("@(#)$Id$");
 #define	ESTATUS		((getpid() == shpid) ? SH_ERR : FC_ERR)
 #define	EXIT(s)		((getpid() == shpid) ? exit((s)) : _exit((s)))
 #define	HALT		true
-#define	PROMPT		((shtype & ST_MASK) == INTERACTIVE)
+#define	PROMPT		((shtype & ST_MASK) == ST_INTERACTIVE)
 #define	SHTYPE(f)	((shtype & (f)) != 0)
 
 /*
@@ -175,12 +175,12 @@ enum ssflags {
  * Shell type flags
  */
 enum stflags {
-	ONE_LINE     = 001,
-	COMMAND_FILE = 002,
-	INTERACTIVE  = 004,
-	RC_FILE      = 010,
-	SOURCE       = 020,
-	ST_MASK      = 037
+	ST_ONELINE     = 001,
+	ST_COMMANDFILE = 002,
+	ST_INTERACTIVE = 004,
+	ST_RCFILE      = 010,
+	ST_SOURCE      = 020,
+	ST_MASK        = 037
 };
 
 /*
@@ -366,25 +366,25 @@ main(int argc, char **argv)
 		if (*argv[1] == '-') {
 			dosigs = true;
 			if (argv[1][1] == 'c' && argc > 2) {
-				shtype = ONE_LINE;
+				shtype = ST_ONELINE;
 				dolv  += 1;
 				dolc  -= 1;
 				argv2p = argv[2];
 			} else if (argv[1][1] == 'i') {
 				rc_flag = DO_SYSTEM_OSHRC;
-				shtype  = INTERACTIVE;
+				shtype  = ST_INTERACTIVE;
 				if (!sh_on_tty())
 					err(SH_ERR, FMT2S, argv[1], ERR_NOTTY);
 			} else if (argv[1][1] == 'l') {
 				is_login = true;
 				rc_flag  = DO_SYSTEM_LOGIN;
-				shtype   = INTERACTIVE;
+				shtype   = ST_INTERACTIVE;
 				if (!sh_on_tty())
 					err(SH_ERR, FMT2S, argv[1], ERR_NOTTY);
 			} else if (argv[1][1] == 't')
-				shtype = ONE_LINE;
+				shtype = ST_ONELINE;
 		} else {
-			shtype = COMMAND_FILE;
+			shtype = ST_COMMANDFILE;
 			(void)close(FD0);
 			if (open(argv[1], O_RDONLY) != FD0)
 				err(SH_ERR, FMT2S, argv[1], ERR_OPEN);
@@ -396,7 +396,7 @@ main(int argc, char **argv)
 		dosigs = true;
 		fd_free();
 		if (sh_on_tty())
-			shtype = INTERACTIVE;
+			shtype = ST_INTERACTIVE;
 	}
 	if (dosigs) {
 		if (sasignal(SIGINT, SIG_IGN) == SIG_DFL)
@@ -420,11 +420,11 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (SHTYPE(ONE_LINE))
+	if (SHTYPE(ST_ONELINE))
 		(void)rpx_line();
 	else {
 		/* Read and execute any rc init files if needed. */
-		while (SHTYPE(RC_FILE)) {
+		while (SHTYPE(ST_RCFILE)) {
 			cmd_loop(!HALT);
 			if (logout_now != 0) {
 				logout_now = 0;
@@ -444,7 +444,7 @@ logout:
 		/* Read and execute any rc logout files if needed. */
 		rc_flag = DO_SYSTEM_LOGOUT;
 		rc_logout(&rc_flag);
-		while (SHTYPE(RC_FILE)) {
+		while (SHTYPE(ST_RCFILE)) {
 			cmd_loop(!HALT);
 			if (logout_now != 0)
 				logout_now = 0;
@@ -1332,10 +1332,10 @@ exec1(struct tnode *t)
 		 * the shell only if the file is not being sourced).
 		 */
 		if (!PROMPT) {
-			if (SHTYPE(ONE_LINE|RC_FILE) && !SHTYPE(SOURCE))
+			if (SHTYPE(ST_ONELINE|ST_RCFILE) && !SHTYPE(ST_SOURCE))
 				EXIT(status);
 			(void)lseek(FD0, (off_t)0, SEEK_END);
-			if (!SHTYPE(SOURCE))
+			if (!SHTYPE(ST_SOURCE))
 				EXIT(status);
 		}
 		return;
@@ -1855,8 +1855,8 @@ do_source(char **av)
 	(void)fcntl(sfd, F_SETFD, FD_CLOEXEC);
 	(void)close(nfd);
 
-	if (!SHTYPE(SOURCE))
-		shtype |= SOURCE;
+	if (!SHTYPE(ST_SOURCE))
+		shtype |= ST_SOURCE;
 
 	/* Save and initialize any positional parameters. */
 	sname = name, sdolv = dolv, sdolc = dolc;
@@ -1882,8 +1882,8 @@ do_source(char **av)
 			if (dup2(SAVFD0, FD0) == -1)
 				err(SH_ERR,FMT3S,av[0],av[1],strerror(errno));
 			(void)close(SAVFD0);
-			shtype &= ~SOURCE;
-			if (!SHTYPE(RC_FILE))
+			shtype &= ~ST_SOURCE;
+			if (!SHTYPE(ST_RCFILE))
 				err(0, NULL);
 			return;
 		}
@@ -1900,7 +1900,7 @@ do_source(char **av)
 	(void)close(sfd);
 
 	if (cnt == 0)
-		shtype &= ~SOURCE;
+		shtype &= ~ST_SOURCE;
 }
 
 /*
@@ -2066,7 +2066,7 @@ sighup(/*@unused@*/ int signo IS_UNUSED)
  * For each call to rc_init(), temporarily assign the shell's
  * standard input to come from a given file in the sequence if
  * possible and return.  When DO_INIT_DONE, restore the shell's
- * original standard input (or die trying), unset the RC_FILE
+ * original standard input (or die trying), unset the ST_RCFILE
  * flag, and return.
  */
 static void
@@ -2095,11 +2095,11 @@ rc_init(int *rc_flag)
 		case DO_INIT_DONE:
 			if (dup2(dupfd0, FD0) == -1)
 				err(SH_ERR, FMT1S, strerror(errno));
-			shtype &= ~RC_FILE;
+			shtype &= ~ST_RCFILE;
 			(*rc_flag)++;
 			return;
 		default:
-			shtype &= ~RC_FILE;
+			shtype &= ~ST_RCFILE;
 			return;
 		}
 		(*rc_flag)++;
@@ -2109,12 +2109,12 @@ rc_init(int *rc_flag)
 }
 
 /*
- * If is_login is false, unset the RC_FILE flag and return.
+ * If is_login is false, unset the ST_RCFILE flag and return.
  * Otherwise, process the sequence of rc logout files used by
  * the shell.  For each call to rc_logout(), temporarily assign
  * the shell's standard input to come from a given file in the
  * sequence if possible and return.  When DO_LOGOUT_DONE, unset
- * the RC_FILE flag and return.
+ * the ST_RCFILE flag and return.
  */
 static void
 rc_logout(int *rc_flag)
@@ -2123,7 +2123,7 @@ rc_logout(int *rc_flag)
 	const char *file;
 
 	if (!is_login) {
-		shtype &= ~RC_FILE;
+		shtype &= ~ST_RCFILE;
 		return;
 	}
 
@@ -2137,11 +2137,11 @@ rc_logout(int *rc_flag)
 			file = rc_build(path, FILE_DOT_LOGOUT, sizeof(path));
 			break;
 		case DO_LOGOUT_DONE:
-			shtype &= ~RC_FILE;
+			shtype &= ~ST_RCFILE;
 			(*rc_flag)++;
 			return;
 		default:
-			shtype &= ~RC_FILE;
+			shtype &= ~ST_RCFILE;
 			return;
 		}
 		(*rc_flag)++;
@@ -2204,7 +2204,7 @@ rc_open(const char *file)
 		err(SH_ERR, FMT2S, file, strerror(errno));
 
 	(void)close(fd);
-	shtype |= RC_FILE;
+	shtype |= ST_RCFILE;
 	return true;
 }
 
@@ -2229,17 +2229,17 @@ err(int es, const char *msgfmt, ...)
 		status = SH_ERR;
 		/*FALLTHROUGH*/
 	case 0:
-		if (SHTYPE(SOURCE)) {
+		if (SHTYPE(ST_SOURCE)) {
 			(void)lseek(FD0, (off_t)0, SEEK_END);
 			error_source = true;
 			return;
 		}
-		if (SHTYPE(RC_FILE) && (status == 130 || status == 131)) {
+		if (SHTYPE(ST_RCFILE) && (status == 130 || status == 131)) {
 			(void)lseek(FD0, (off_t)0, SEEK_END);
 			return;
 		}
-		if (!SHTYPE(INTERACTIVE)) {
-			if (!SHTYPE(ONE_LINE))
+		if (!SHTYPE(ST_INTERACTIVE)) {
+			if (!SHTYPE(ST_ONELINE))
 				(void)lseek(FD0, (off_t)0, SEEK_END);
 			break;
 		}
