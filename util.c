@@ -484,7 +484,7 @@ e3(void)
 	}
 
 	/*
-	 * Execute command within braces to obtain its exit status.
+	 * Execute { command [arg ...] } to obtain its exit status.
 	 */
 	if (equal(a, "{")) {
 		if ((cpid = fork()) == -1)
