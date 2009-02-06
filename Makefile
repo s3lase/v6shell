@@ -1,4 +1,4 @@
-# Makefile for osh-trunk
+# Makefile for osh
 #
 # @(#)$Id$
 #
@@ -57,11 +57,11 @@ LDFLAGS+=	$(MOXARCH)
 
 #
 # The following specifies the osh date and version:
-#	osh-trunk	== osh trunk development snapshot
-#	osh-YYYYMMDD	== official release
+#	osh-trunk (YYYYMMDD)	== development snapshot
+#	osh-YYYYMMDD		== official release
 #
-OSH_DATE=	December 9, 2008
-OSH_VERSION=	osh-trunk
+OSH_DATE=	February 6, 2009
+OSH_VERSION=	osh-trunk (20090206)
 
 OSH=	osh
 SH6=	sh6 glob6
@@ -97,7 +97,7 @@ sh6: config.h defs.h rcsid.h sh.h v.c $(PEXSRC) $(SIGSRC) sh6.c
 glob6: config.h defs.h rcsid.h v.c $(PEXSRC) glob6.c
 	@$(MAKE) $@bin
 
-if: config.h defs.h rcsid.h v.c $(PEXSRC) if.c
+if: config.h defs.h rcsid.h v.c $(PEXSRC) $(SIGSRC) if.c
 	@$(MAKE) $@bin
 
 goto: config.h defs.h rcsid.h v.c goto.c
@@ -109,7 +109,7 @@ fd2: config.h defs.h rcsid.h v.c $(PEXSRC) fd2.c
 $(OBJ)                               : config.h defs.h rcsid.h
 osh.o sh6.o util.o                   : sh.h
 fd2.o glob6.o if.o osh.o sh6.o util.o: pexec.h
-osh.o sh6.o                          : sasignal.h
+if.o osh.o sh6.o                     : sasignal.h
 pexec.o                              : $(PEXSRC)
 sasignal.o                           : $(SIGSRC)
 
@@ -125,8 +125,8 @@ sh6bin: v.o pexec.o sasignal.o sh6.o
 glob6bin: v.o pexec.o glob6.o
 	$(CC) $(LDFLAGS) -o glob6 v.o glob6.o pexec.o $(LIBS)
 
-ifbin: v.o pexec.o if.o
-	$(CC) $(LDFLAGS) -o if v.o if.o pexec.o $(LIBS)
+ifbin: v.o pexec.o sasignal.o if.o
+	$(CC) $(LDFLAGS) -o if v.o if.o pexec.o sasignal.o $(LIBS)
 
 gotobin: v.o goto.o
 	$(CC) $(LDFLAGS) -o goto v.o goto.o $(LIBS)

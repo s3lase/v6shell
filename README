@@ -1,4 +1,4 @@
-Welcome to the osh package!
+Welcome to osh!
 
 The osh package provides two ports of the original /bin/sh from
 Sixth Edition (V6) UNIX (circa 1975).
@@ -56,6 +56,6 @@ you to contact me via email.  Thanks & Enjoy!
 
 Jeffrey Allen Neitzel
 <jan (at) v6shell (dot) org>
-http://v6shell.org/						2009/02/01
+http://v6shell.org/						2009/02/06
 
 @(#)$Id$
