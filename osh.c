@@ -159,7 +159,7 @@ OSH_RCSID("@(#)$Id$");
 #define	ESTATUS		((getpid() == shpid) ? SH_ERR : FC_ERR)
 #define	EXIT(s)		((getpid() == shpid) ? exit((s)) : _exit((s)))
 #define	HALT		true
-#define	PROMPT		(shtype == INTERACTIVE)
+#define	PROMPT		((shtype & ST_MASK) == INTERACTIVE)
 #define	SHTYPE(f)	((shtype & (f)) != 0)
 
 /*
@@ -179,7 +179,8 @@ enum stflags {
 	COMMAND_FILE = 002,
 	INTERACTIVE  = 004,
 	RC_FILE      = 010,
-	SOURCE       = 020
+	SOURCE       = 020,
+	ST_MASK      = 037
 };
 
 /*
@@ -1235,7 +1236,6 @@ execute(struct tnode *t, int *pin, int *pout)
 			err(-1, "execute: Invalid command\n");
 			return;
 		}
-exec_again:
 		switch (t->nkey) {
 		case SBI_ECHO:
 			break;
@@ -1257,7 +1257,7 @@ exec_again:
 			t->nav++;
 			t->nflags |= FNOFORK;
 			(void)sasignal(SIGCHLD, SIG_IGN);
-			goto exec_again;
+			break;
 		case SBI_FD2: case SBI_GOTO: case SBI_IF: case SBI_UNKNOWN:
 			break;
 		default:
