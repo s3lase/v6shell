@@ -77,6 +77,7 @@ OSH_RCSID("@(#)$Id$");
 #include <sys/wait.h>
 
 #include <errno.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -134,10 +135,6 @@ main(int argc, char **argv)
 	if (ifeuid != getuid() || getegid() != getgid())
 		err(FC_ERR, NULL, ERR_SETID);
 
-	/*
-	 * Set the SIGCHLD signal to its default action.
-	 * This is required for the { command [arg ...] } primary.
-	 */
 	(void)sasignal(SIGCHLD, SIG_DFL);
 
 	if (argc > 1) {
