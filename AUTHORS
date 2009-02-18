@@ -29,8 +29,8 @@ since July 2003.  The origin of each one is described below.
 	solution was always destined for eventual replacement.
 ===
 
-=================================
-[osh-20061230 through osh-trunk]:
+===================================
+[osh-20061230 through osh-current]:
 	The second implementation was originally authored by Ken
 	Thompson as Sixth Edition UNIX /usr/source/s2/sh.c and was
 	then ported by Jeffrey Allen Neitzel for personal use in
@@ -54,6 +54,6 @@ I wish to thank the original authors very much for their efforts.
 Without their previous work, none of this software or documentation
 would exist today.
 
-Jeffrey Allen Neitzel						2008/12/09
+Jeffrey Allen Neitzel						2009/02/18
 
 @(#)$Id$

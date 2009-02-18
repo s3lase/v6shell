@@ -2,11 +2,18 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-trunk]:
+[osh-20090218-current]:
+README:
+	* Added OpenSolaris 2008.11 to the reported system list.
+
 osh.c:
-	* Changed do_sigign() so that an invocation of the `sigign' special
-	  command in a subshell correctly ignores, unignores, and prints the
-	  specified signal(s) independently of the main shell process ($$).
+	* Added a new special parameter, $m, which points to the current
+	  value of the environment variable MANPATH when MANPATH is set
+	  or to the empty string when MANPATH is not set.
+
+	* Changed do_sigign() so that invocation of the `sigign' special
+	  command in a subshell correctly ignores, unignores, and prints
+	  signal(s) ignored by sigign relative to the main shell process.
 
 if.c:
 	* Added a call to sasignal() to set the SIGCHLD signal to its default
@@ -1404,6 +1411,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2009/02/06
+Jeffrey Allen Neitzel						2009/02/18
 
 @(#)$Id$

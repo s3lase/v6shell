@@ -32,7 +32,7 @@ SHELL=		/bin/sh
 #	If the compiler gives errors about any of flags specified
 #	by `OPTIONS' or `WARNINGS' below, comment the appropriate
 #	line(s) with a `#' character to fix the compiler errors.
-#	Then, try to rebuild by doing a `make clean ; make'.
+#	Then, try to build again by doing a `make clean ; make'.
 #
 #CPPFLAGS=
 OPTIONS=	-std=c99 -pedantic
@@ -57,11 +57,12 @@ LDFLAGS+=	$(MOXARCH)
 
 #
 # The following specifies the osh date and version:
-#	osh-trunk (YYYYMMDD)	== development snapshot
-#	osh-YYYYMMDD		== official release
 #
-OSH_DATE=	February 6, 2009
-OSH_VERSION=	osh-trunk (20090206)
+#	osh-YYYYMMDD-current == development snapshot
+#	osh-YYYYMMDD         == official release
+#
+OSH_DATE=	February 18, 2009
+OSH_VERSION=	osh-20090218-current
 
 OSH=	osh
 SH6=	sh6 glob6

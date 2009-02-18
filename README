@@ -36,7 +36,7 @@ following systems:
 	Mac OS X	10.4, 10.5
 	NetBSD		2.1, 3.1.1, 4.0, 4.0.1
 	OpenBSD		4.1, 4.2, 4.3, 4.4
-	OpenSolaris	2008.05
+	OpenSolaris	2008.05, 2008.11
 	GNU/Linux	CentOS 5.2, Debian testing (lenny), Kubuntu,
 			Mandriva 2007.0, Slackware 12.1, Xubuntu
 
@@ -56,6 +56,6 @@ you to contact me via email.  Thanks & Enjoy!
 
 Jeffrey Allen Neitzel
 <jan (at) v6shell (dot) org>
-http://v6shell.org/						2009/02/06
+http://v6shell.org/						2009/02/18
 
 @(#)$Id$
