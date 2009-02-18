@@ -834,6 +834,10 @@ get_dolp(int c)
 		if ((v = getenv("HOME")) == NULL)
 			v = dolbuf;
 		break;
+	case 'm':
+		if ((v = getenv("MANPATH")) == NULL)
+			v = dolbuf;
+		break;
 	case 'n':
 		n = (dolc > 1) ? dolc - 1 : 0;
 		r = snprintf(dolbuf, sizeof(dolbuf), "%u", (unsigned)n);

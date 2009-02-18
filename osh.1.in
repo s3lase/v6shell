@@ -457,6 +457,9 @@ The value of the environment variable EXECSHELL.
 $h
 The value of the environment variable HOME.
 .TP
+$m
+The value of the environment variable MANPATH.
+.TP
 $n (*)
 The number of positional parameters currently available
 to the shell.
@@ -923,11 +926,19 @@ If set to a non-empty string,
 the value of this variable is taken as the
 user's home directory.
 Its value is available to the shell via
-the `$h' special parameter
-and is the default directory
-for the
+the `$h' special parameter and is
+the default directory for the
 .B chdir
 special command.
+.TP
+.B MANPATH
+If set,
+the value of this variable is taken as the
+sequence of directories used by
+.IR man (1)
+to search for manual page files.
+Its value is available to the shell via
+the `$m' special parameter.
 .TP
 .B OSHDIR
 If set to a non-empty string,
@@ -979,6 +990,7 @@ grep(1),
 if(1),
 kill(1),
 login(1),
+man(1),
 newgrp(1),
 sed(1),
 sh6(1)
