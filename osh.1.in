@@ -706,6 +706,11 @@ The shell treats the following built-in commands specially.
 \fB:\fR [\fIarg ...\fR]
 Does nothing and sets the exit status to zero.
 .TP
+\fBcd\fR [\fIdir\fR] (+)
+Is a synonym for the
+.B chdir
+special command.
+.TP
 \fBchdir\fR [\fIdir\fR]
 Changes the shell's current working directory to
 .IR dir .

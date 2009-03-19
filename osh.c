@@ -196,6 +196,7 @@ static	const struct sbicmd {
 	const enum sbikey sbi_key;
 } sbi[] = {
 	{ ":",		SBI_NULL     },
+	{ "cd",		SBI_CD       },
 	{ "chdir",	SBI_CHDIR    },
 	{ "echo",	SBI_ECHO     },
 	{ "exec",	SBI_EXEC     },
@@ -1319,6 +1320,7 @@ exec1(struct tnode *t)
 		status = SH_TRUE;
 		return;
 
+	case SBI_CD:
 	case SBI_CHDIR:
 		/*
 		 * Change the shell's current working directory.
