@@ -377,9 +377,9 @@ xgetc(void)
 	return (nc != EOF) ? nc & 0377 : EOF;
 }
 
-static	int		iac;
-static	int		iap;
-static	char		**iav;
+static	int	iac;
+static	int	iap;
+static	char	**iav;
 
 /*@maynotreturn@*/
 static	void	doex(bool);
