@@ -61,8 +61,8 @@ LDFLAGS+=	$(MOXARCH)
 #	osh-YYYYMMDD-current == development snapshot
 #	osh-YYYYMMDD         == official release
 #
-OSH_DATE=	February 19, 2009
-OSH_VERSION=	osh-20090219-current
+OSH_DATE=	March 20, 2009
+OSH_VERSION=	osh-20090320-current
 
 OSH=	osh
 SH6=	sh6 glob6

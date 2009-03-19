@@ -2,11 +2,13 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-20090219-current]:
+[osh-20090320-current]:
 README:
 	* Added OpenSolaris 2008.11 to the reported system list.
 
 osh.c:
+	* Added `cd' as a synonym for the `chdir' special command.
+
 	* Added a new special parameter, $m, which points to the current
 	  value of the environment variable MANPATH when MANPATH is set
 	  or to the empty string when MANPATH is not set.
@@ -20,6 +22,9 @@ if.c:
 	  action so that the { command [arg ...] } primary can obtain and
 	  return the correct exit status of "command" in all cases, even when
 	  the parent process of `if' may ignore SIGCHLD (e.g., sh(1)).
+
+osh.1.in:
+	* Documented the osh(1) code changes as needed.
 
 -------------------------------------------------------------------------------
 [osh-20081213]:
@@ -1411,6 +1416,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2009/02/19
+Jeffrey Allen Neitzel						2009/03/19
 
 @(#)$Id$
