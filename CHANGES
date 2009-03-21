@@ -2,7 +2,7 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-20090320-current]:
+[osh-20090321-current]:
 README:
 	* Added OpenSolaris 2008.11 to the reported system list.
 
@@ -1416,6 +1416,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2009/03/19
+Jeffrey Allen Neitzel						2009/03/21
 
 @(#)$Id$
