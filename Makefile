@@ -70,8 +70,8 @@ UTILS=	fd2 goto if
 PEXSRC=	pexec.h pexec.c
 SIGSRC=	sasignal.h sasignal.c
 OBJ=	fd2.o glob6.o goto.o if.o osh.o pexec.o sasignal.o sh6.o util.o v.o
-MANSRC=	fd2.1.in glob6.1.in goto.1.in if.1.in osh.1.in sh6.1.in
-MANDST=	fd2.1 glob6.1 goto.1 if.1 osh.1 sh6.1
+MANSRC=	fd2.1     glob6.1     goto.1     if.1     osh.1     sh6.1
+MANDST=	fd2.1.out glob6.1.out goto.1.out if.1.out osh.1.out sh6.1.out
 
 DEFS=	-DOSH_VERSION='"$(OSH_VERSION)"' -DSYSCONFDIR='"$(SYSCONFDIR)"'
 
@@ -144,7 +144,7 @@ $(MANDST): $(MANSRC)
 		sed -e 's|@OSH_DATE@|$(OSH_DATE)|' \
 			-e 's|@OSH_VERSION@|$(OSH_VERSION)|' \
 				-e 's|@SYSCONFDIR@|$(SYSCONFDIR)|' \
-					<$$file >$${file%.in} ; \
+					<$${file} >$${file}.out ; \
 	done
 
 #
@@ -159,24 +159,24 @@ install-sh6all: sh6all install-sh6 install-utils
 install-utils: install-ubin install-uman
 
 install-osh: $(OSH) man install-dest
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) osh     $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) osh.1   $(DESTDIR)$(MANDIR)
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) osh         $(DESTDIR)$(BINDIR)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) osh.1.out   $(DESTDIR)$(MANDIR)/osh.1
 
 install-sh6: $(SH6) man install-dest
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) sh6     $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) sh6.1   $(DESTDIR)$(MANDIR)
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) glob6   $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) glob6.1 $(DESTDIR)$(MANDIR)
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) sh6         $(DESTDIR)$(BINDIR)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) sh6.1.out   $(DESTDIR)$(MANDIR)/sh6.1
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) glob6       $(DESTDIR)$(BINDIR)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) glob6.1.out $(DESTDIR)$(MANDIR)/glob6.1
 
 install-ubin: utils install-dest
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) fd2     $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) goto    $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) if      $(DESTDIR)$(BINDIR)
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) fd2         $(DESTDIR)$(BINDIR)
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) goto        $(DESTDIR)$(BINDIR)
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) if          $(DESTDIR)$(BINDIR)
 
 install-uman: man install-dest
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) fd2.1   $(DESTDIR)$(MANDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) goto.1  $(DESTDIR)$(MANDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) if.1    $(DESTDIR)$(MANDIR)
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) fd2.1.out   $(DESTDIR)$(MANDIR)/fd2.1
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) goto.1.out  $(DESTDIR)$(MANDIR)/goto.1
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) if.1.out    $(DESTDIR)$(MANDIR)/if.1
 
 install-dest:
 	test -d $(DESTDIR)$(BINDIR) || { \
