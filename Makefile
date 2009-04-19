@@ -61,19 +61,26 @@ LDFLAGS+=	$(MOXARCH)
 #	osh-YYYYMMDD-current == development snapshot
 #	osh-YYYYMMDD         == official release
 #
-OSH_DATE=	March 21, 2009
-OSH_VERSION=	osh-20090321-current
+OSH_DATE=	April 18, 2009
+OSH_VERSION=	osh-20090418-current
 
 OSH=	osh
 SH6=	sh6 glob6
-UTILS=	fd2 goto if
+UBIN=	fd2 goto if
 PEXSRC=	pexec.h pexec.c
 SIGSRC=	sasignal.h sasignal.c
 OBJ=	fd2.o glob6.o goto.o if.o osh.o pexec.o sasignal.o sh6.o util.o v.o
-MANSRC=	fd2.1     glob6.1     goto.1     if.1     osh.1     sh6.1
-MANDST=	fd2.1.out glob6.1.out goto.1.out if.1.out osh.1.out sh6.1.out
+OSHMAN=	osh.1.out
+SH6MAN=	sh6.1.out glob6.1.out
+UMAN=	fd2.1.out goto.1.out if.1.out
+MANALL=	$(OSHMAN) $(SH6MAN) $(UMAN)
 
 DEFS=	-DOSH_VERSION='"$(OSH_VERSION)"' -DSYSCONFDIR='"$(SYSCONFDIR)"'
+
+.SUFFIXES: .1 .1.out .c .o
+.1.1.out:
+	sed 's|@OSH_DATE@|$(OSH_DATE)| ; s|@OSH_VERSION@|$(OSH_VERSION)| ; \
+	     s|@SYSCONFDIR@|$(SYSCONFDIR)|' <$< >$@
 
 .c.o:
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(DEFS) $<
@@ -83,11 +90,11 @@ DEFS=	-DOSH_VERSION='"$(OSH_VERSION)"' -DSYSCONFDIR='"$(SYSCONFDIR)"'
 #
 all: oshall sh6all
 
-oshall: $(OSH) man
+oshall: $(OSH) $(OSHMAN) $(UMAN)
 
-sh6all: $(SH6) utils man
+sh6all: $(SH6) $(SH6MAN) utils
 
-utils: $(UTILS) man
+utils: $(UBIN) $(UMAN)
 
 osh: config.h defs.h rcsid.h sh.h v.c util.c $(PEXSRC) $(SIGSRC) osh.c
 	@$(MAKE) $@bin
@@ -136,20 +143,10 @@ fd2bin: v.o pexec.o fd2.o
 	$(CC) $(LDFLAGS) -o fd2 v.o fd2.o pexec.o $(LIBS)
 
 #
-# Manual-page targets
-#
-man: $(MANDST)
-$(MANDST): $(MANSRC)
-	@for file in $(MANSRC) ; do \
-		sed -e 's|@OSH_DATE@|$(OSH_DATE)|' \
-			-e 's|@OSH_VERSION@|$(OSH_VERSION)|' \
-				-e 's|@SYSCONFDIR@|$(SYSCONFDIR)|' \
-					<$${file} >$${file}.out ; \
-	done
-
-#
 # Install targets
 #
+DESTBINDIR=	$(DESTDIR)$(BINDIR)
+DESTMANDIR=	$(DESTDIR)$(MANDIR)
 install: install-oshall install-sh6all
 
 install-oshall: oshall install-osh install-uman
@@ -158,33 +155,29 @@ install-sh6all: sh6all install-sh6 install-utils
 
 install-utils: install-ubin install-uman
 
-install-osh: $(OSH) man install-dest
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) osh         $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) osh.1.out   $(DESTDIR)$(MANDIR)/osh.1
+install-osh: $(OSH) $(OSHMAN) install-dest
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) osh         $(DESTBINDIR)/osh
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) osh.1.out   $(DESTMANDIR)/osh.1
 
-install-sh6: $(SH6) man install-dest
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) sh6         $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) sh6.1.out   $(DESTDIR)$(MANDIR)/sh6.1
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) glob6       $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) glob6.1.out $(DESTDIR)$(MANDIR)/glob6.1
+install-sh6: $(SH6) $(SH6MAN) install-dest
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) sh6         $(DESTBINDIR)/sh6
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) sh6.1.out   $(DESTMANDIR)/sh6.1
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) glob6       $(DESTBINDIR)/glob6
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) glob6.1.out $(DESTMANDIR)/glob6.1
 
-install-ubin: utils install-dest
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) fd2         $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) goto        $(DESTDIR)$(BINDIR)
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) if          $(DESTDIR)$(BINDIR)
+install-ubin: $(UBIN) install-dest
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) fd2         $(DESTBINDIR)/fd2
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) goto        $(DESTBINDIR)/goto
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) if          $(DESTBINDIR)/if
 
-install-uman: man install-dest
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) fd2.1.out   $(DESTDIR)$(MANDIR)/fd2.1
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) goto.1.out  $(DESTDIR)$(MANDIR)/goto.1
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) if.1.out    $(DESTDIR)$(MANDIR)/if.1
+install-uman: $(UMAN) install-dest
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) fd2.1.out   $(DESTMANDIR)/fd2.1
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) goto.1.out  $(DESTMANDIR)/goto.1
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) if.1.out    $(DESTMANDIR)/if.1
 
 install-dest:
-	test -d $(DESTDIR)$(BINDIR) || { \
-		umask 0022 ; mkdir -p $(DESTDIR)$(BINDIR) ; \
-	}
-	test -d $(DESTDIR)$(MANDIR) || { \
-		umask 0022 ; mkdir -p $(DESTDIR)$(MANDIR) ; \
-	}
+	test -d $(DESTBINDIR) || { umask 0022 && mkdir -p $(DESTBINDIR) ; }
+	test -d $(DESTMANDIR) || { umask 0022 && mkdir -p $(DESTMANDIR) ; }
 
 #
 # Cleanup targets
@@ -193,4 +186,20 @@ clean-obj:
 	rm -f $(OBJ)
 
 clean: clean-obj
-	rm -f $(OSH) $(SH6) $(UTILS) $(MANDST) config.h
+	rm -f $(OSH) $(SH6) $(UBIN) $(MANALL) config.h
+
+#
+# Create osh source package tarball and checksums.
+#
+OSP=	$(OSH_VERSION)
+OSPROOT=./.osp
+OSPDIR=	$(OSPROOT)/$(OSP)
+OSPSUMS=$(OSP).sums
+OSPTAR=	$(OSP).tar
+OSPTGZ=	$(OSPTAR).gz
+osp: clean
+	rm -rf $(OSPROOT)
+	umask 0022 && mkdir -p $(OSPDIR) && cp -p * $(OSPDIR)/ && \
+	chmod 0644 $(OSPDIR)/* && cd $(OSPROOT) && tar cf $(OSPTAR) $(OSP) && \
+	gzip -9 $(OSPTAR) && mksums $(OSPTGZ) > $(OSPSUMS)
+	rm -rf $(OSPDIR)
