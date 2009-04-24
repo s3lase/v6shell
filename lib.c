@@ -1,5 +1,5 @@
 /*
- * lib.c - a library of common functions
+ * lib.c - a common library for osh and utilities
  */
 /*-
  * Copyright (c) 2004-2009
@@ -37,18 +37,8 @@ OSH_RCSID("@(#)$Id$");
 #include "config.h"
 
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
 
-#include <dirent.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <pwd.h>
-#include <signal.h>
 #include <stdarg.h>
-#include <stdbool.h>
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -57,23 +47,14 @@ OSH_RCSID("@(#)$Id$");
 #include "defs.h"
 #include "lib.h"
 
-/*@noreturn@*/
-static	void	omsg(int, const char *, va_list);
+#define	FMTSIZE		64
+#define	MSGSIZE		(FMTSIZE + LINEMAX)
 
-/*
- * Exit the shell utility child process on error w/ the
- * specified exit status and any specified message.
- */
-void
-uerr(pid_t pid, int es, const char *msgfmt, ...)
-{
-	va_list va;
+#define	UTILNAME	"unknown"	/* used in setmyname() */
 
-	va_start(va, msgfmt);
-	omsg(FD2, msgfmt, va);
-	va_end(va);
-	(getpid() == pid) ? exit(es) : _exit(es);
-}
+/*@observer@*/
+static	const char	*myname = (char *)-1;
+static	pid_t		mypid   = -1;
 
 /*
  * Print any specified message to the file descriptor pfd.
@@ -84,28 +65,113 @@ fd_print(int pfd, const char *msgfmt, ...)
 	va_list va;
 
 	va_start(va, msgfmt);
-	omsg(pfd, msgfmt, va);
+	wmsg(pfd, msgfmt, va);
 	va_end(va);
 }
 
 /*
- * Create and output the message specified by err() or fd_print() to
- * the file descriptor ofd.  A diagnostic is written to FD2 on error.
+ * Return the global myname for use in diagnostics.
+ * Must call the setmyname() function first.
  */
-static void
-omsg(int ofd, const char *msgfmt, va_list va)
+const char *
+getmyname(void)
+{
+
+	if (myname == (char *)-1) {
+		fd_print(FD2, "getmyname: Must call setmyname()\n");
+		return "(null)";
+	}
+
+	return myname;
+}
+
+/*
+ * Set the global myname from the string pointed to by s.
+ */
+void
+setmyname(const char *s)
+{
+	const char *p;
+
+	if (myname != (char *)-1)
+		return;
+
+	if (s != NULL && *s != '\0') {
+		if ((p = strrchr(s, '/')) != NULL)
+			p++;
+		else
+			p = s;
+	} else
+		p = UTILNAME;
+
+	myname = p;
+}
+
+/*
+ * Return the global mypid for use in diagnostic processing.
+ * Must call the setmypid() function first.
+ */
+pid_t
+getmypid(void)
+{
+
+	if (mypid == -1)
+		fd_print(FD2, "getmypid: Must call setmypid()\n");
+
+	return mypid;
+}
+
+/*
+ * Set the global mypid from the process ID p.
+ */
+void
+setmypid(const pid_t p)
+{
+
+	if (mypid != -1)
+		return;
+
+	mypid = p;
+}
+
+/*
+ * Exit the shell utility process on error w/ the
+ * specified exit status and any specified message.
+ */
+void
+uerr(int es, const char *msgfmt, ...)
+{
+	va_list va;
+
+	va_start(va, msgfmt);
+	wmsg(FD2, msgfmt, va);
+	va_end(va);
+
+	fd_print(FD2, "uerr: getpid() == %u, mypid == %u, %s(%d)\n",
+	    (unsigned)getpid(), (unsigned)mypid,
+	    (getpid() == mypid) ? "exit" : "_exit", es);
+
+	(getpid() == mypid) ? exit(es) : _exit(es);
+}
+
+/*
+ * Write the specified message to the file descriptor wfd.
+ * A diagnostic is written to FD2 on error.
+ */
+void
+wmsg(int wfd, const char *msgfmt, va_list va)
 {
 	int r;
 	char fmt[FMTSIZE];
 	char msg[MSGSIZE];
 	const char *e;
 
-	e = "omsg: Internal error\n";
+	e = "wmsg: Internal error\n";
 	r = snprintf(fmt, sizeof(fmt), "%s", msgfmt);
 	if (r > 0 && r < (int)sizeof(fmt)) {
 		r = vsnprintf(msg, sizeof(msg), fmt, va);
 		if (r > 0 && r < (int)sizeof(msg)) {
-			if (write(ofd, msg, strlen(msg)) == -1)
+			if (write(wfd, msg, strlen(msg)) == -1)
 				(void)write(FD2, e, strlen(e));
 		} else
 			(void)write(FD2, e, strlen(e));

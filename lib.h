@@ -32,12 +32,13 @@
 #ifndef	LIB_H
 #define	LIB_H
 
-/*
- * osh.c, util.c, and sh6.c must include this header file.
- */
-
-/* lib.c */
 void		fd_print(int, const char *, /*@printflike@*/ ...);
-void		uerr(pid_t, int, const char *, /*@printflike@*/ ...);
+const char	*getmyname(void);
+void		setmyname(/*@null@*/ const char *);
+pid_t		getmypid(void);
+void		setmypid(const pid_t);
+/*@noreturn@*/
+void		uerr(int, const char *, /*@printflike@*/ ...);
+void		wmsg(int, const char *, va_list);
 
 #endif	/* !LIB_H */
