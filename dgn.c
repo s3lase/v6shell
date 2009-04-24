@@ -1,5 +1,5 @@
 /*
- * lib.c - a common library for osh and utilities
+ * dgn.c - a diagnostic library for osh and utilities
  */
 /*-
  * Copyright (c) 2004-2009
@@ -45,7 +45,7 @@ OSH_RCSID("@(#)$Id$");
 #include <unistd.h>
 
 #include "defs.h"
-#include "lib.h"
+#include "dgn.h"
 
 #define	FMTSIZE		64
 #define	MSGSIZE		(FMTSIZE + LINEMAX)
