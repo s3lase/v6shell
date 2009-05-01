@@ -69,31 +69,13 @@
 OSH_RCSID("@(#)$Id$");
 #endif	/* !lint */
 
-#include "config.h"
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-
-#include <errno.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <signal.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
 #define	SH6_SHELL
 
-#include "sh.h"
 #include "defs.h"
+#include "err.h"
 #include "pexec.h"
 #include "sasignal.h"
-
-#define	PIDMAX		99999	/* Maximum value for both prn() and apid. */
-
-#define	EXIT(s)		((getpid() == spid) ? exit((s)) : _exit((s)))
+#include "sh.h"
 
 /*
  * ==== Global variables ====
@@ -101,7 +83,7 @@ OSH_RCSID("@(#)$Id$");
 /*
  * Shell signal messages
  */
-static	const char *const sig[] = {
+static	const char *const sigmsg[] = {
 	" -- Core dumped",
 	"Hangup",
 	"",
@@ -117,7 +99,7 @@ static	const char *const sig[] = {
 	"Bad system call",
 	""
 };
-#define	XNSIG		((int)(sizeof(sig) / sizeof(sig[0])))
+#define	NSIGMSG		((int)(sizeof(sigmsg) / sizeof(sigmsg[0])))
 
 static	char		apid[6];	/* $$ - ASCII shell process ID      */
 /*@null@*/
@@ -139,7 +121,6 @@ static	char		peekc;		/* just-read, pushed-back character */
 /*@null@*/ /*@observer@*/
 static	const char	*prompt;	/* interactive-shell prompt pointer */
 static	enum scflags	sig_child;	/* SIG(INT|QUIT|TERM) child flags   */
-static	pid_t		spid;		/* shell process ID                 */
 static	int		status;		/* shell exit status                */
 static	char		*word[WORDMAX];	/* argument/word pointer array      */
 static	char		**wordp;
@@ -169,11 +150,9 @@ static	bool		any(int, const char *);
 static	void		execute(/*@null@*/ struct tnode *,
 				/*@null@*/ int *, /*@null@*/ int *);
 /*@maynotreturn@*/
-static	void		err(int, /*@null@*/ const char *);
-static	void		prn(int);
-static	void		prs(/*@null@*/ const char *);
-static	void		xputc(int);
+static	void		sh_errexit(int);
 static	void		pwait(pid_t);
+static	int		prsig(int, pid_t, pid_t);
 static	void		sh_init(void);
 static	void		sh_magic(void);
 static	void		fd_free(void);
@@ -198,7 +177,7 @@ main(int argc, char **argv)
 
 	sh_init();
 	if (argv[0] == NULL || *argv[0] == '\0')
-		err(SH_ERR, ERR_ALINVAL);
+		err(SH_ERR, FMT1S, ERR_ALINVAL);
 	if (fd_isdir(FD0))
 		goto done;
 
@@ -216,10 +195,8 @@ main(int argc, char **argv)
 				one_line_flag = 2;
 		} else {
 			(void)close(FD0);
-			if (open(argv[1], O_RDONLY) != FD0) {
-				prs(argv[1]);
-				err(SH_ERR, COLON ERR_OPEN);
-			}
+			if (open(argv[1], O_RDONLY) != FD0)
+				err(SH_ERR, FMT2S, argv[1], ERR_OPEN);
 			if (fd_isdir(FD0))
 				goto done;
 		}
@@ -242,7 +219,7 @@ main(int argc, char **argv)
 
 loop:
 	if (prompt != NULL)
-		prs(prompt);
+		fd_print(FD2, "%s", prompt);
 	rpx_line();
 	goto loop;
 
@@ -270,7 +247,7 @@ rpx_line(void)
 	} while (*wp != '\n');
 
 	if (error) {
-		err(SH_ERR, error_message);
+		err(SH_ERR, FMT1S, error_message);
 		return;
 	}
 
@@ -281,7 +258,7 @@ rpx_line(void)
 		t = syntax(word, wordp);
 		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 		if (error)
-			err(SH_ERR, ERR_SYNTAX);
+			err(SH_ERR, FMT1S, ERR_SYNTAX);
 		else
 			execute(t, NULL, NULL);
 		tfree(t);
@@ -824,7 +801,7 @@ execute(struct tnode *t, int *pin, int *pout)
 
 	case TPIPE:
 		if (pipe(pfd) == -1) {
-			err(SH_ERR, ERR_PIPE);
+			err(SH_ERR, FMT1S, ERR_PIPE);
 			if (pin != NULL) {
 				(void)close(pin[0]);
 				(void)close(pin[1]);
@@ -845,7 +822,7 @@ execute(struct tnode *t, int *pin, int *pout)
 	case TCOMMAND:
 		if (t->nav == NULL || t->nav[0] == NULL) {
 			/* should never be true */
-			err(SH_ERR, "execute: Invalid command");
+			err(SH_ERR, FMT1S, "execute: Invalid command");
 			return;
 		}
 		cmd = t->nav[0];
@@ -855,13 +832,11 @@ execute(struct tnode *t, int *pin, int *pout)
 		}
 		if (EQUAL(cmd, "chdir")) {
 			ascan(t->nav[1], trim);
-			if (t->nav[1] == NULL) {
-				prs(cmd);
-				err(SH_ERR, COLON ERR_ARGCOUNT);
-			} else if (chdir(t->nav[1]) == -1) {
-				prs(cmd);
-				err(SH_ERR, COLON ERR_BADDIR);
-			} else
+			if (t->nav[1] == NULL)
+				err(SH_ERR, FMT2S, cmd, ERR_ARGCOUNT);
+			else if (chdir(t->nav[1]) == -1)
+				err(SH_ERR, FMT2S, cmd, ERR_BADDIR);
+			else
 				status = SH_TRUE;
 			return;
 		}
@@ -882,8 +857,7 @@ execute(struct tnode *t, int *pin, int *pout)
 				(void)sasignal(SIGINT, SIG_IGN);
 				(void)sasignal(SIGQUIT, SIG_IGN);
 			}
-			prs(cmd);
-			err(SH_ERR, COLON ERR_EXEC);
+			err(SH_ERR, FMT2S, cmd, ERR_EXEC);
 			return;
 		}
 		if (EQUAL(cmd, "shift")) {
@@ -893,8 +867,7 @@ execute(struct tnode *t, int *pin, int *pout)
 				status = SH_TRUE;
 				return;
 			}
-			prs(cmd);
-			err(SH_ERR, COLON ERR_NOARGS);
+			err(SH_ERR, FMT2S, cmd, ERR_NOARGS);
 			return;
 		}
 		if (EQUAL(cmd, "wait")) {
@@ -906,7 +879,7 @@ execute(struct tnode *t, int *pin, int *pout)
 	case TSUBSHELL:
 		f = t->nflags;
 		if ((cpid = ((f & FNOFORK) != 0) ? 0 : fork()) == -1) {
-			err(SH_ERR, ERR_FORK);
+			err(SH_ERR, FMT1S, ERR_FORK);
 			return;
 		}
 		/**** Parent! ****/
@@ -915,10 +888,8 @@ execute(struct tnode *t, int *pin, int *pout)
 				(void)close(pin[0]);
 				(void)close(pin[1]);
 			}
-			if ((f & FPRS) != 0) {
-				prn((int)cpid);
-				prs("\n");
-			}
+			if ((f & FPRS) != 0)
+				fd_print(FD2, "%u\n", (unsigned)cpid);
 			if ((f & FAND) != 0)
 				return;
 			if ((f & FPOUT) == 0)
@@ -931,7 +902,7 @@ execute(struct tnode *t, int *pin, int *pout)
 		 */
 		if (pin != NULL && (f & FPIN) != 0) {
 			if (dup2(pin[0], FD0) == -1)
-				err(FC_ERR, ERR_DUP2);
+				err(FC_ERR, FMT1S, strerror(errno));
 			(void)close(pin[0]);
 			(void)close(pin[1]);
 		}
@@ -940,7 +911,7 @@ execute(struct tnode *t, int *pin, int *pout)
 		 */
 		if (pout != NULL && (f & FPOUT) != 0) {
 			if (dup2(pout[1], FD1) == -1)
-				err(FC_ERR, ERR_DUP2);
+				err(FC_ERR, FMT1S, strerror(errno));
 			(void)close(pout[0]);
 			(void)close(pout[1]);
 		}
@@ -950,12 +921,10 @@ execute(struct tnode *t, int *pin, int *pout)
 		if (t->nfin != NULL && (f & FPIN) == 0) {
 			f |= FFIN;
 			ascan(t->nfin, trim);
-			if ((i = open(t->nfin, O_RDONLY)) == -1) {
-				prs(t->nfin);
-				err(FC_ERR, COLON ERR_OPEN);
-			}
+			if ((i = open(t->nfin, O_RDONLY)) == -1)
+				err(FC_ERR, FMT2S, t->nfin, ERR_OPEN);
 			if (dup2(i, FD0) == -1)
-				err(FC_ERR, ERR_DUP2);
+				err(FC_ERR, FMT1S, strerror(errno));
 			(void)close(i);
 		}
 		/*
@@ -967,12 +936,10 @@ execute(struct tnode *t, int *pin, int *pout)
 			else
 				i = O_WRONLY | O_TRUNC | O_CREAT;
 			ascan(t->nfout, trim);
-			if ((i = open(t->nfout, i, 0666)) == -1) {
-				prs(t->nfout);
-				err(FC_ERR, COLON ERR_CREATE);
-			}
+			if ((i = open(t->nfout, i, 0666)) == -1)
+				err(FC_ERR, FMT2S, t->nfout, ERR_CREATE);
 			if (dup2(i, FD1) == -1)
-				err(FC_ERR, ERR_DUP2);
+				err(FC_ERR, FMT1S, strerror(errno));
 			(void)close(i);
 		}
 		/*
@@ -984,10 +951,8 @@ execute(struct tnode *t, int *pin, int *pout)
 			(void)sasignal(SIGQUIT, SIG_IGN);
 			if (t->nfin == NULL && (f & (FFIN|FPIN|FPRS)) == FPRS) {
 				(void)close(FD0);
-				if (open("/dev/null", O_RDONLY) != FD0) {
-					prs("/dev/null");
-					err(FC_ERR, COLON ERR_OPEN);
-				}
+				if (open("/dev/null", O_RDONLY) != FD0)
+					err(FC_ERR,FMT2S,"/dev/null",ERR_OPEN);
 			}
 		} else {
 			if ((sig_child & SC_SIGINT) != 0)
@@ -1020,76 +985,35 @@ execute(struct tnode *t, int *pin, int *pout)
 			(void)pexec(cmd, (char *const *)t->nav);
 		}
 		if (errno == ENOEXEC)
-			err(125, ERR_NOSHELL);
-		if (errno != ENOENT && errno != ENOTDIR) {
-			prs(cmd);
-			err(126, COLON ERR_EXEC);
-		}
-		prs(cmd);
-		err(127, COLON ERR_NOTFOUND);
+			err(125, FMT1S, ERR_NOSHELL);
+		if (errno != ENOENT && errno != ENOTDIR)
+			err(126, FMT2S, cmd, ERR_EXEC);
+		err(127, FMT2S, cmd, ERR_NOTFOUND);
 		/*NOTREACHED*/
 	}
 }
 
 /*
- * Handle all errors detected by the shell.
+ * Handle all error exit scenarios for the shell.  This includes
+ * setting the exit status to the appropriate value according to
+ * es and causing the shell to exit if appropriate.  This function
+ * may or may not return and is called by err().
  */
 static void
-err(int es, const char *msg)
+sh_errexit(int es)
 {
 
-	if (msg != NULL) {
-		prs(msg);
-		prs("\n");
-	}
+#ifdef	DEBUG
+	fd_print(FD2, "sh_errexit: es == %d;\n", es);
+#endif
+
 	status = es;
 	if (prompt == NULL) {
 		(void)lseek(FD0, (off_t)0, SEEK_END);
 		EXIT(status);
 	}
-	if (getpid() != spid)
+	if (getpid() != getmypid())
 		_exit(status);
-}
-
-/*
- * Print the integer n if it falls between 0 and PIDMAX, inclusive.
- */
-static void
-prn(int n)
-{
-
-	if (n < 0 || n > PIDMAX)
-		return;
-	if (n >= 10)
-		prn(n / 10);
-	xputc("0123456789"[n % 10]);
-}
-
-/*
- * Print the string pointed to by as.
- */
-static void
-prs(const char *as)
-{
-	const char *s;
-
-	if (as == NULL)
-		return;
-	s = as;
-	while (*s != '\0')
-		xputc(*s++);
-}
-
-/*
- * Write the character c to the standard error.
- */
-static void
-xputc(int c)
-{
-	char cc;
-
-	cc = c;
-	(void)write(FD2, &cc, (size_t)1);
 }
 
 /*
@@ -1103,7 +1027,7 @@ static void
 pwait(pid_t cp)
 {
 	pid_t tp;
-	int e, s;
+	int s;
 
 	if (cp == 0)
 		return;
@@ -1112,29 +1036,14 @@ pwait(pid_t cp)
 		if (tp == -1)
 			break;
 		if (s != 0) {
-			if (WIFSIGNALED(s) != 0) {
-				e = WTERMSIG(s);
-				if (e >= XNSIG || (e >= 0 && *sig[e] != '\0')) {
-					if (tp != cp) {
-						prn((int)tp);
-						prs(": ");
-					}
-					if (e < XNSIG)
-						prs(sig[e]);
-					else {
-						prs("Sig ");
-						prn(e);
-					}
-					if (WCOREDUMP(s))
-						prs(sig[0]);
-				}
-				status = 128 + e;
-			} else if (WIFEXITED(s) != 0)
+			if (WIFSIGNALED(s) != 0)
+				status = prsig(s, tp, cp);
+			else if (WIFEXITED(s) != 0)
 				status = WEXITSTATUS(s);
 			if (status >= FC_ERR) {
 				if (status == FC_ERR)
 					status = SH_ERR;
-				err(status, (status > 128) ? "" : NULL);
+				err(status, NULL);
 			}
 		} else
 			status = SH_TRUE;
@@ -1144,40 +1053,72 @@ pwait(pid_t cp)
 }
 
 /*
+ * Print termination report for process tp according to signal s.
+ * Return a value of 128 + signal s (e) for exit status of tp.
+ */
+static int
+prsig(int s, pid_t tp, pid_t cp)
+{
+	int e, r;
+	char buf[32];
+	const char *c, *m;
+
+	e = WTERMSIG(s);
+	if (e >= NSIGMSG || (e >= 0 && *sigmsg[e] != '\0')) {
+		if (e < NSIGMSG)
+			m = sigmsg[e];
+		else {
+			r = snprintf(buf, sizeof(buf), "Sig %u", (unsigned)e);
+			m = (r < 0 || r >= (int)sizeof(buf))  ?
+			    "prsig: snprintf: Internal error" :
+			    buf;
+		}
+		c = "";
+		if (WCOREDUMP(s) != 0)
+			c = sigmsg[0];
+		if (tp != cp)
+			fd_print(FD2, "%u: %s%s\n", (unsigned)tp, m, c);
+		else
+			fd_print(FD2, "%s%s\n", m, c);
+	} else
+		fd_print(FD2, FMT1S, "");
+
+	return 128 + e;
+}
+
+/*
  * Initialize the shell.
  */
 static void
 sh_init(void)
 {
 	struct stat sb;
-	pid_t p;
 	int i;
+
+	setmyerrexit(sh_errexit);
+	setmypid(getpid());
 
 	/*
 	 * Set-ID execution is not supported.
 	 */
 	if (geteuid() != getuid() || getegid() != getgid())
-		err(SH_ERR, ERR_SETID);
+		err(SH_ERR, FMT1S, ERR_SETID);
 
 	/*
-	 * Save the process ID of the shell both as an integer (spid)
-	 * and as a 5-digit ASCII string (apid).  Each occurrence of
-	 * `$$' in a command line is substituted w/ the value of apid.
+	 * Save the process ID of the shell as a 5-digit ASCII
+	 * string (apid).  Each occurrence of `$$' in a command
+	 * line is substituted w/ the value of apid.
 	 */
-	spid = p = getpid();
-	for (i = 4; i >= 0 && p >= 0 && p <= PIDMAX; i--) {
-		apid[i] = "0123456789"[p % 10];
-		p /= 10;
-	}
+	i = snprintf(apid, sizeof(apid), "%05u", (unsigned)getmypid());
+	if (i < 0 || i >= (int)sizeof(apid))
+		*apid = '\0';
 
 	/*
 	 * Fail if any of the descriptors 0, 1, or 2 is not open.
 	 */
 	for (i = 0; i < 3; i++)
-		if (fstat(i, &sb) == -1) {
-			prn(i);
-			err(SH_ERR, COLON ERR_BADDESCR);
-		}
+		if (fstat(i, &sb) == -1)
+			err(SH_ERR, "%u: %s\n", (unsigned)i, strerror(errno));
 
 	/*
 	 * Set the SIGCHLD signal to its default action.
@@ -1204,7 +1145,7 @@ sh_magic(void)
 			for (len = 2; len < LINEMAX; len++)
 				if (readc() == '\n')
 					return;
-			err(SH_ERR, ERR_TMCHARS);
+			err(SH_ERR, FMT1S, ERR_TMCHARS);
 		}
 		(void)lseek(FD0, (off_t)0, SEEK_SET);
 	}
@@ -1251,8 +1192,8 @@ xmalloc(size_t s)
 	void *mp;
 
 	if ((mp = malloc(s)) == NULL) {
-		err(SH_ERR, ERR_NOMEM);
-		exit(SH_ERR);
+		err(ESTATUS, FMT1S, ERR_NOMEM);
+		/*NOTREACHED*/
 	}
 	return mp;
 }

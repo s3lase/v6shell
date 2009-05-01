@@ -32,6 +32,28 @@
 #ifndef	DEFS_H
 #define	DEFS_H
 
+/*
+ * Required include files
+ */
+#include "config.h"
+
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/uio.h>
+#include <sys/wait.h>
+
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <pwd.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #ifdef	PATH_MAX
 #define	PATHMAX		PATH_MAX
 #else
@@ -66,68 +88,6 @@
 #define	FD0		STDIN_FILENO
 #define	FD1		STDOUT_FILENO
 #define	FD2		STDERR_FILENO
-
-/*
- * Exit status values
- */
-#define	FC_ERR		124	/* fatal child error (changed in pwait())   */
-#define	SH_ERR		2	/* shell-detected error (default value)     */
-#define	SH_FALSE	1
-#define	SH_TRUE		0
-
-/*
- * Diagnostics
- */
-#define	COLON		": "
-#define	ERR_PAREN	") expected"
-#define	ERR_GARGCOUNT	"Arg count"
-#define	ERR_ALTOOLONG	"Arg list too long"
-#define	ERR_BADDESCR	"Bad file descriptor"
-#define	ERR_DUP2	"Cannot dup2"
-#define	ERR_FORK	"Cannot fork - try again"
-#define	ERR_PIPE	"Cannot pipe - try again"
-#define	ERR_TRIM	"Cannot trim"
-#define	ERR_GNOTFOUND	"Command not found."
-#define	ERR_NAMTOOLONG	"File name too long"
-#define	ERR_ALINVAL	"Invalid argument list"
-#define	ERR_AVIINVAL	"Invalid argv index"
-#define	ERR_NODIR	"No directory"
-#define	ERR_NOHOMEDIR	"No home directory"
-#define	ERR_NOMATCH	"No match"
-#define	ERR_NOPWD	"No previous directory"
-#define	ERR_NOSHELL	"No shell!"
-#define	ERR_NOTTY	"No terminal!"
-#define	ERR_NOMEM	"Out of memory"
-#define	ERR_PATTOOLONG	"Pattern too long"
-#define	ERR_SETID	"Set-ID execution denied"
-#define	ERR_TMARGS	"Too many args"
-#define	ERR_TMCHARS	"Too many characters"
-#define	ERR_ARGCOUNT	"arg count"
-#define	ERR_ARGUMENT	"argument expected"
-#define	ERR_BADDIR	"bad directory"
-#define	ERR_BADMASK	"bad mask"
-#define	ERR_BADNAME	"bad name"
-#define	ERR_BADSIGNAL	"bad signal"
-#define	ERR_CREATE	"cannot create"
-#define	ERR_EXEC	"cannot execute"
-#define	ERR_OPEN	"cannot open"
-#define	ERR_SEEK	"cannot seek"
-#define	ERR_COMMAND	"command expected"
-#define	ERR_DIGIT	"digit expected"
-#define	ERR_GENERIC	"error"
-#define	ERR_EXPR	"expression expected"
-#define	ERR_LABNOTFOUND	"label not found"
-#define	ERR_LABTOOLONG	"label too long"
-#define	ERR_NOARGS	"no args"
-#define	ERR_NOTDIGIT	"not a digit"
-#define	ERR_NOTFOUND	"not found"
-#define	ERR_OPERATOR	"operator expected"
-#define	ERR_SYNTAX	"syntax error"
-#define	ERR_OPUNKNOWN	"unknown operator"
-#define	ERR_BRACE	"} expected"
-#define	FMT1S		"%s\n"
-#define	FMT2S		"%s: %s\n"
-#define	FMT3S		"%s: %s: %s\n"
 
 #define	LABELSIZE	64	/* label buffer size for the goto(1) utility */
 

@@ -69,18 +69,8 @@
 OSH_RCSID("@(#)$Id$");
 #endif	/* !lint */
 
-#include "config.h"
-
-#include <dirent.h>
-#include <errno.h>
-#include <limits.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
 #include "defs.h"
+#include "err.h"
 #include "pexec.h"
 
 static	const char	**gavp;	/* points to current gav position     */
@@ -89,8 +79,6 @@ static	size_t		gavtot;	/* total bytes used for all arguments */
 
 static	const char	**gavnew(/*@only@*/ const char **);
 static	char		*gcat(const char *, const char *);
-/*@noreturn@*/
-static	void		gerr(const char *);
 static	const char	**glob1(/*@only@*/ const char **, char *, int *);
 static	bool		glob2(const UChar *, const UChar *);
 static	void		gsort(const char **);
@@ -113,17 +101,20 @@ main(int argc, char **argv)
 	const char **gav;	/* points to generated argument vector */
 	int pmc = 0;		/* pattern-match count                 */
 
+	setmyerrexit(util_errexit);
+	setmypid(getpid());
+
 	/*
 	 * Set-ID execution is not supported.
 	 */
 	if (geteuid() != getuid() || getegid() != getgid())
-		gerr(ERR_SETID);
+		err(SH_ERR, FMT1S, ERR_SETID);
 
 	if (argc < 2)
-		gerr(ERR_GARGCOUNT);
+		err(SH_ERR, FMT1S, ERR_GARGCOUNT);
 
 	if ((gav = malloc(GAVNEW * sizeof(char *))) == NULL)
-		gerr(ERR_NOMEM);
+		err(SH_ERR, FMT1S, ERR_NOMEM);
 
 	*gav = NULL, gavp = gav;
 	gave = &gav[GAVNEW - 1];
@@ -132,14 +123,14 @@ main(int argc, char **argv)
 	gavp = NULL;
 
 	if (pmc == 0)
-		gerr(ERR_NOMATCH);
+		err(SH_ERR, FMT1S, ERR_NOMATCH);
 
 	(void)pexec(gav[0], (char *const *)gav);
 	if (errno == ENOEXEC)
-		gerr(ERR_NOSHELL);
+		err(SH_ERR, FMT1S, ERR_NOSHELL);
 	if (errno == E2BIG)
-		gerr(ERR_ALTOOLONG);
-	gerr(ERR_GNOTFOUND);
+		err(SH_ERR, FMT1S, ERR_ALTOOLONG);
+	err(SH_ERR, FMT1S, ERR_GNOTFOUND);
 	/*NOTREACHED*/
 	return SH_ERR;
 }
@@ -157,7 +148,7 @@ gavnew(const char **gav)
 		gidx  = (ptrdiff_t)(gavp - gav);
 		siz   = (size_t)((gidx + (GAVNEW * mult)) * sizeof(char *));
 		if ((nav = realloc(gav, siz)) == NULL)
-			gerr(ERR_NOMEM);
+			err(SH_ERR, FMT1S, ERR_NOMEM);
 		gav   = nav;
 		gavp  = gav + gidx;
 		gave  = &gav[gidx + (GAVNEW * mult) - 1];
@@ -175,7 +166,7 @@ gcat(const char *src1, const char *src2)
 	*buf = '\0', b = buf, s = src1;
 	while ((c = *s++) != '\0') {
 		if (b >= &buf[PATHMAX - 1])
-			gerr(ERR_NAMTOOLONG);
+			err(SH_ERR, FMT1S, strerror(ENAMETOOLONG));
 		if ((c &= ASCII) == '\0') {
 			*b++ = '/';
 			break;
@@ -186,28 +177,19 @@ gcat(const char *src1, const char *src2)
 	s = src2;
 	do {
 		if (b >= &buf[PATHMAX])
-			gerr(ERR_NAMTOOLONG);
+			err(SH_ERR, FMT1S, strerror(ENAMETOOLONG));
 		*b++ = c = *s++;
 	} while (c != '\0');
 
 	siz = b - buf;
 	gavtot += siz;
 	if (gavtot > GAVMAX)
-		gerr(ERR_ALTOOLONG);
+		err(SH_ERR, FMT1S, ERR_ALTOOLONG);
 	if ((dst = malloc(siz)) == NULL)
-		gerr(ERR_NOMEM);
+		err(SH_ERR, FMT1S, ERR_NOMEM);
 
 	(void)memcpy(dst, buf, siz);
 	return dst;
-}
-
-static void
-gerr(const char *msg)
-{
-
-	(void)write(FD2, msg, strlen(msg));
-	(void)write(FD2, "\n", (size_t)1);
-	exit(SH_ERR);
 }
 
 static const char **
@@ -228,7 +210,7 @@ glob1(const char **gav, char *as, int *pmc)
 			return gav;
 		}
 	if (strlen(as) >= PATHMAX)
-		gerr(ERR_PATTOOLONG);
+		err(SH_ERR, FMT1S, ERR_PATTOOLONG);
 	for (;;) {
 		if (ps == ds) {
 			ds = "";
@@ -243,7 +225,7 @@ glob1(const char **gav, char *as, int *pmc)
 		}
 	}
 	if ((dirp = gopendir(*ds != '\0' ? ds : ".")) == NULL)
-		gerr(ERR_NODIR);
+		err(SH_ERR, FMT1S, ERR_NODIR);
 	gidx = (ptrdiff_t)(gavp - gav);
 	while ((entry = readdir(dirp)) != NULL) {
 		if (entry->d_name[0] == '.' && (*ps & ASCII) != '.')

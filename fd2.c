@@ -34,23 +34,10 @@
 OSH_RCSID("@(#)$Id$");
 #endif	/* !lint */
 
-#include "config.h"
-
-#include <sys/stat.h>
-
-#include <errno.h>
-#include <fcntl.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
 #include "defs.h"
+#include "err.h"
 #include "pexec.h"
 
-/*@noreturn@*/
-static	void	err(int, /*@null@*/ const char *, const char *);
 static	bool	fd_isopen(int);
 /*@noreturn@*/
 static	void	usage(void);
@@ -69,20 +56,26 @@ int
 main(int argc, char **argv)
 {
 	bool eopt;
-	int efd, nfd, ofd, opt;
+	int efd, fd, nfd, ofd, opt;
 	char *file;
+
+	setmyerrexit(util_errexit);
+	setmyname(argv[0]);
+	setmypid(getpid());
 
 	/*
 	 * Set-ID execution is not supported.
 	 */
 	if (geteuid() != getuid() || getegid() != getgid())
-		err(FC_ERR, NULL, ERR_SETID);
+		err(FC_ERR, FMT2S, getmyname(), ERR_SETID);
 
 	/*
 	 * File descriptors 0, 1, and 2 must be open.
 	 */
-	if (!fd_isopen(FD0) || !fd_isopen(FD1) || !fd_isopen(FD2))
-		err(FC_ERR, NULL, strerror(errno));
+	for (fd = 0; fd < 3; fd++)
+		if (!fd_isopen(fd))
+			err(FC_ERR, "%s: %u: %s\n",
+			     getmyname(), (unsigned)fd, strerror(errno));
 
 	ofd = FD1, efd = FD2;
 	eopt = false, file = NULL;
@@ -104,17 +97,17 @@ main(int argc, char **argv)
 
 	if (file != NULL) {
 		if ((nfd = open(file, O_WRONLY|O_APPEND|O_CREAT, 0666)) == -1)
-			err(FC_ERR, file, ERR_CREATE);
+			err(FC_ERR, FMT3S, getmyname(), file, ERR_CREATE);
 		if (dup2(nfd, efd) == -1)
-			err(FC_ERR, NULL, strerror(errno));
+			err(FC_ERR, FMT2S, getmyname(), strerror(errno));
 		if (eopt && dup2(efd, ofd) == -1)
-			err(FC_ERR, NULL, strerror(errno));
+			err(FC_ERR, FMT2S, getmyname(), strerror(errno));
 		(void)close(nfd);
 	} else {
 		if (eopt)
 			ofd = FD2, efd = FD1;
 		if (dup2(ofd, efd) == -1)
-			err(FC_ERR, NULL, strerror(errno));
+			err(FC_ERR, FMT2S, getmyname(), strerror(errno));
 	}
 
 	/*
@@ -122,23 +115,12 @@ main(int argc, char **argv)
 	 */
 	(void)pexec(argv[0], argv);
 	if (errno == ENOEXEC)
-		err(125, argv[0], ERR_NOSHELL);
+		err(125, FMT3S, getmyname(), argv[0], ERR_NOSHELL);
 	if (errno != ENOENT && errno != ENOTDIR)
-		err(126, argv[0], ERR_EXEC);
-	err(127, argv[0], ERR_NOTFOUND);
+		err(126, FMT3S, getmyname(), argv[0], ERR_EXEC);
+	err(127, FMT3S, getmyname(), argv[0], ERR_NOTFOUND);
 	/*NOTREACHED*/
 	return FC_ERR;
-}
-
-static void
-err(int es, const char *msg1, const char *msg2)
-{
-
-	if (msg1 != NULL)
-		(void)fprintf(stderr, "fd2: %s: %s\n", msg1, msg2);
-	else
-		(void)fprintf(stderr, "fd2: %s\n", msg2);
-	exit(es);
 }
 
 static bool
@@ -153,6 +135,5 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: fd2 [-e] [-f file] command [arg ...]\n");
-	exit(FC_ERR);
+	err(FC_ERR,"usage: %s [-e] [-f file] command [arg ...]\n",getmyname());
 }

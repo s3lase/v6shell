@@ -69,14 +69,8 @@
 OSH_RCSID("@(#)$Id$");
 #endif	/* !lint */
 
-#include "config.h"
-
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-
 #include "defs.h"
+#include "err.h"
 
 static	off_t	offset;
 
@@ -99,18 +93,16 @@ main(int argc, char **argv)
 	size_t siz;
 	char label[LABELSIZE];
 
-	if (argc < 2 || *argv[1] == '\0' || isatty(FD0) != 0) {
-		(void)fprintf(stderr, "goto: %s\n", ERR_GENERIC);
-		return FC_ERR;
-	}
-	if ((siz = strlen(argv[1]) + 1) > sizeof(label)) {
-		(void)fprintf(stderr,"goto: %s: %s\n", argv[1], ERR_LABTOOLONG);
-		return FC_ERR;
-	}
-	if (lseek(FD0, (off_t)0, SEEK_SET) == -1) {
-		(void)fprintf(stderr, "goto: %s\n", ERR_SEEK);
-		return FC_ERR;
-	}
+	setmyerrexit(util_errexit);
+	setmyname(argv[0]);
+	setmypid(getpid());
+
+	if (argc < 2 || *argv[1] == '\0' || isatty(FD0) != 0)
+		err(FC_ERR, FMT2S, getmyname(), ERR_GENERIC);
+	if ((siz = strlen(argv[1]) + 1) > sizeof(label))
+		err(FC_ERR, FMT3S, getmyname(), argv[1], ERR_LABTOOLONG);
+	if (lseek(FD0, (off_t)0, SEEK_SET) == -1)
+		err(FC_ERR, FMT2S, getmyname(), ERR_SEEK);
 
 	while (getlabel(label, *argv[1] & 0377, siz))
 		if (strcmp(label, argv[1]) == 0) {
@@ -118,7 +110,7 @@ main(int argc, char **argv)
 			return SH_TRUE;
 		}
 
-	(void)fprintf(stderr, "goto: %s: %s\n", argv[1], ERR_LABNOTFOUND);
+	fd_print(FD2, FMT3S, getmyname(), argv[1], ERR_LABNOTFOUND);
 	return SH_FALSE;
 }
 

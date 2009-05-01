@@ -1,5 +1,5 @@
 /*
- * dgn.c - a diagnostic library for osh and utilities
+ * err.c - shell and utility error-handling routines
  */
 /*-
  * Copyright (c) 2004-2009
@@ -34,59 +34,111 @@
 OSH_RCSID("@(#)$Id$");
 #endif	/* !lint */
 
-#include "config.h"
-
-#include <sys/types.h>
-
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
 #include "defs.h"
-#include "dgn.h"
+#include "err.h"
 
 #define	FMTSIZE		64
 #define	MSGSIZE		(FMTSIZE + LINEMAX)
 
-#define	UTILNAME	"unknown"	/* used in setmyname() */
+#define	UTILNAME	"unknown"
 
 /*@observer@*/
 static	const char	*myname = (char *)-1;
 static	pid_t		mypid   = -1;
 
+static	void		(*errexit)(int) = NULL;
+static	void		wmsg(int, const char *, va_list);
+
 /*
- * Print any specified message to the file descriptor pfd.
+ * Handle all errors for the calling process.  This includes printing
+ * any specified non-NULL message to the standard error and calling
+ * the error exit function pointed to by the global errexit.
+ * This function may or may not return.
+ */
+void
+err(int es, const char *msgfmt, ...)
+{
+	va_list va;
+
+	if (msgfmt != NULL) {
+		va_start(va, msgfmt);
+		wmsg(FD2, msgfmt, va);
+		va_end(va);
+	}
+	if (errexit == NULL) {
+		fd_print(FD2, FMT1S, "err: Invalid errexit function pointer");
+		abort();
+	}
+
+#ifdef	DEBUG
+	fd_print(FD2, "err: Call (*errexit)(%d);\n", es);
+#endif
+
+	(*errexit)(es);
+}
+
+/*
+ * Print any specified non-NULL message to the file descriptor pfd.
  */
 void
 fd_print(int pfd, const char *msgfmt, ...)
 {
 	va_list va;
 
-	va_start(va, msgfmt);
-	wmsg(pfd, msgfmt, va);
-	va_end(va);
+	if (msgfmt != NULL) {
+		va_start(va, msgfmt);
+		wmsg(pfd, msgfmt, va);
+		va_end(va);
+	}
 }
 
 /*
- * Return the global myname for use in diagnostics.
- * Must call the setmyname() function first.
+ * Return a pointer to the global myname on success.
+ * Return a pointer to "(null)" on error.
+ *
+ * NOTE: Must call setmyname(argv[0]) first.
  */
 const char *
 getmyname(void)
 {
 
-	if (myname == (char *)-1) {
-		fd_print(FD2, "getmyname: Must call setmyname()\n");
+	if (myname == (char *)-1)
 		return "(null)";
-	}
 
 	return myname;
 }
 
 /*
- * Set the global myname from the string pointed to by s.
+ * Return the global mypid on success.
+ * Return 0 on error.
+ *
+ * NOTE: Must call setmypid(getpid()) first.
+ */
+pid_t
+getmypid(void)
+{
+
+	if (mypid == -1)
+		return 0;
+
+	return mypid;
+}
+
+/*
+ * Set the global errexit to the function pointed to by func.
+ */
+void
+setmyerrexit(void (*func)(int))
+{
+
+	if (func == NULL)
+		return;
+
+	errexit = func;
+}
+
+/*
+ * Set the global myname to the basename of the string pointed to by s.
  */
 void
 setmyname(const char *s)
@@ -108,21 +160,7 @@ setmyname(const char *s)
 }
 
 /*
- * Return the global mypid for use in diagnostic processing.
- * Must call the setmypid() function first.
- */
-pid_t
-getmypid(void)
-{
-
-	if (mypid == -1)
-		fd_print(FD2, "getmypid: Must call setmypid()\n");
-
-	return mypid;
-}
-
-/*
- * Set the global mypid from the process ID p.
+ * Set the global mypid to the process ID p.
  */
 void
 setmypid(const pid_t p)
@@ -135,30 +173,26 @@ setmypid(const pid_t p)
 }
 
 /*
- * Exit the shell utility process on error w/ the
- * specified exit status and any specified message.
+ * Cause all shell utility processes to exit appropriately on error.
+ * This function never returns and is called by err().
  */
 void
-uerr(int es, const char *msgfmt, ...)
+util_errexit(int es)
 {
-	va_list va;
 
-	va_start(va, msgfmt);
-	wmsg(FD2, msgfmt, va);
-	va_end(va);
+#ifdef	DEBUG
+	fd_print(FD2, "util_errexit: es == %d: Call %s(%d);\n",
+	    es, (getpid() == getmypid()) ? "exit" : "_exit", es);
+#endif
 
-	fd_print(FD2, "uerr: getpid() == %u, mypid == %u, %s(%d)\n",
-	    (unsigned)getpid(), (unsigned)mypid,
-	    (getpid() == mypid) ? "exit" : "_exit", es);
-
-	(getpid() == mypid) ? exit(es) : _exit(es);
+	EXIT(es);
 }
 
 /*
  * Write the specified message to the file descriptor wfd.
  * A diagnostic is written to FD2 on error.
  */
-void
+static void
 wmsg(int wfd, const char *msgfmt, va_list va)
 {
 	int r;
@@ -166,11 +200,11 @@ wmsg(int wfd, const char *msgfmt, va_list va)
 	char msg[MSGSIZE];
 	const char *e;
 
-	e = "wmsg: Internal error\n";
+	e = "wmsg: Invalid message\n";
 	r = snprintf(fmt, sizeof(fmt), "%s", msgfmt);
-	if (r > 0 && r < (int)sizeof(fmt)) {
+	if (r >= 1 && r < (int)sizeof(fmt)) {
 		r = vsnprintf(msg, sizeof(msg), fmt, va);
-		if (r > 0 && r < (int)sizeof(msg)) {
+		if (r >= 0 && r < (int)sizeof(msg)) {
 			if (write(wfd, msg, strlen(msg)) == -1)
 				(void)write(FD2, e, strlen(e));
 		} else

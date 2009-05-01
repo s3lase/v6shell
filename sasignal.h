@@ -33,6 +33,11 @@
 #define	SASIGNAL_H
 
 /*
+ * Required include files
+ */
+#include <signal.h>
+
+/*
  * The sasignal() function is a signal() with BSD-like semantics.
  * On success, sasignal() returns the previous action.  Otherwise,
  * it returns SIG_ERR and sets errno according to the error.

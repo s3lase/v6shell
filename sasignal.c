@@ -64,11 +64,7 @@
 OSH_RCSID("@(#)$Id$");
 #endif	/* !lint */
 
-#include "config.h"
-
-#include <signal.h>
-#include <string.h>
-
+#include "defs.h"
 #include "sasignal.h"
 
 action_type

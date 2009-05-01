@@ -78,41 +78,19 @@
 OSH_RCSID("@(#)$Id$");
 #endif	/* !lint */
 
-#include "config.h"
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-
-#include <dirent.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <pwd.h>
-#include <signal.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
 #define	OSH_SHELL
 
-#include "sh.h"
 #include "defs.h"
+#include "err.h"
 #include "pexec.h"
 #include "sasignal.h"
+#include "sh.h"
 
 #ifdef	__GNUC__
 #define	IS_UNUSED	__attribute__((__unused__))
 #else
 #define	IS_UNUSED	/* nothing */
 #endif
-
-#define	FMTSIZE		64
-#define	MSGSIZE		(FMTSIZE + LINEMAX)
 
 /*
  * The following file descriptors are reserved for special use by osh.
@@ -156,8 +134,6 @@ OSH_RCSID("@(#)$Id$");
 #define	NSIG		32
 #endif
 
-#define	ESTATUS		((getpid() == shpid) ? SH_ERR : FC_ERR)
-#define	EXIT(s)		((getpid() == shpid) ? exit((s)) : _exit((s)))
 #define	HALT		true
 #define	PROMPT		((shtype & ST_MASK) == ST_INTERACTIVE)
 #define	SHTYPE(f)	((shtype & (f)) != 0)
@@ -186,7 +162,7 @@ enum stflags {
 /*
  * ==== Global variables ====
  */
-uid_t	euid;	/* effective shell user ID */
+uid_t	sheuid;	/* effective shell user ID */
 
 /*
  * Shell sbi command structure array
@@ -257,7 +233,6 @@ static	volatile sig_atomic_t
 static	const char	*name;		/* $0 - shell command name          */
 static	int		nul_count;	/* `\0'-character count (per line)  */
 static	int		peekc;		/* just-read, pushed-back character */
-static	pid_t		shpid;		/* shell process ID                 */
 static	enum stflags	shtype;		/* shell type (determines behavior) */
 static	enum scflags	sig_child;	/* SIG(INT|QUIT|TERM) child flags   */
 static	enum ssflags	sig_state;	/* SIG(INT|QUIT|TERM) state flags   */
@@ -318,7 +293,8 @@ static	char		*rc_build(/*@out@*/ /*@returned@*/ char *,
 				  const char *, size_t);
 /*@maynotreturn@*/
 static	bool		rc_open(/*@null@*/ const char *);
-static	void		err(int, /*@null@*/ const char *, /*@printflike@*/ ...);
+/*@maynotreturn@*/
+static	void		sh_errexit(int);
 static	void		fd_free(void);
 static	bool		fd_type(int, mode_t);
 static	void		atrim(char *);
@@ -485,44 +461,6 @@ cmd_lookup(const char *cmd)
 }
 
 /*
- * Print any specified message to the file descriptor pfd.
- */
-void
-fd_print(int pfd, const char *msgfmt, ...)
-{
-	va_list va;
-
-	va_start(va, msgfmt);
-	omsg(pfd, msgfmt, va);
-	va_end(va);
-}
-
-/*
- * Create and output the message specified by err() or fd_print() to
- * the file descriptor ofd.  A diagnostic is written to FD2 on error.
- */
-void
-omsg(int ofd, const char *msgfmt, va_list va)
-{
-	int r;
-	char fmt[FMTSIZE];
-	char msg[MSGSIZE];
-	const char *e;
-
-	e = "omsg: Internal error\n";
-	r = snprintf(fmt, sizeof(fmt), "%s", msgfmt);
-	if (r > 0 && r < (int)sizeof(fmt)) {
-		r = vsnprintf(msg, sizeof(msg), fmt, va);
-		if (r > 0 && r < (int)sizeof(msg)) {
-			if (write(ofd, msg, strlen(msg)) == -1)
-				(void)write(FD2, e, strlen(e));
-		} else
-			(void)write(FD2, e, strlen(e));
-	} else
-		(void)write(FD2, e, strlen(e));
-}
-
-/*
  * Read and execute command lines until EOF, or until one of
  * error_source or logout_now != 0 is true according to halt
  * or is_login.
@@ -536,7 +474,7 @@ cmd_loop(bool halt)
 
 	for (error_source = gz = false; ; ) {
 		if (PROMPT)
-			fd_print(FD2, "%s", (euid != 0) ? "% " : "# ");
+			fd_print(FD2, "%s", (sheuid != 0) ? "% " : "# ");
 		if (rpx_line() == EOF) {
 			if (!gz)
 				status = SH_TRUE;
@@ -563,7 +501,7 @@ cmd_verbose(void)
 		return;
 	for (vp = word; **vp != '\n'; vp++)
 		fd_print(FD2, "%s%s", *vp, (**(vp + 1) != '\n') ? " " : "");
-	fd_print(FD2, "\n");
+	fd_print(FD2, FMT1S, "");
 }
 
 /*
@@ -812,7 +750,7 @@ get_dolp(int c)
 	*dolbuf = '\0';
 	switch (c) {
 	case '$':
-		r = snprintf(dolbuf, sizeof(dolbuf), "%05u", (unsigned)shpid);
+		r = snprintf(dolbuf,sizeof(dolbuf),"%05u",(unsigned)getmypid());
 		v = (r < 0 || r >= (int)sizeof(dolbuf)) ? NULL : dolbuf;
 		break;
 	case '0': case '1': case '2': case '3': case '4':
@@ -1238,7 +1176,7 @@ execute(struct tnode *t, int *pin, int *pout)
 	case TCOMMAND:
 		if (t->nav == NULL || t->nav[0] == NULL) {
 			/* should never be true */
-			err(-1, "execute: Invalid command\n");
+			err(-1, FMT1S, "execute: Invalid command");
 			return;
 		}
 		switch (t->nkey) {
@@ -1309,7 +1247,7 @@ exec1(struct tnode *t)
 
 	if (t->nav == NULL || t->nav[0] == NULL) {
 		/* should never be true */
-		err(-1, "exec1: Invalid command\n");
+		err(-1, FMT1S, "exec1: Invalid command");
 		return;
 	}
 	switch (t->nkey) {
@@ -1594,7 +1532,7 @@ exec2(struct tnode *t, int *pin, int *pout)
 	}
 	if (t->nav == NULL || t->nav[0] == NULL) {
 		/* should never be true */
-		err(FC_ERR, "exec2: Invalid command\n");
+		err(FC_ERR, FMT1S, "exec2: Invalid command");
 		/*NOTREACHED*/
 	}
 	if (vtglob(t->nav)) {
@@ -1967,14 +1905,14 @@ prsig(int s, pid_t tp, pid_t cp)
 			    buf;
 		}
 		c = "";
-		if (WCOREDUMP(s))
+		if (WCOREDUMP(s) != 0)
 			c = sigmsg[0];
 		if (tp != cp)
 			fd_print(FD2, "%u: %s%s\n", (unsigned)tp, m, c);
 		else
 			fd_print(FD2, "%s%s\n", m, c);
 	} else
-		fd_print(FD2, "\n");
+		fd_print(FD2, FMT1S, "");
 
 	return 128 + e;
 }
@@ -1989,13 +1927,14 @@ sh_init(void)
 	int fd;
 	const char *p;
 
-	euid  = geteuid();
-	shpid = getpid();
+	setmyerrexit(sh_errexit);
+	setmypid(getpid());
+	sheuid = geteuid();
 
 	/*
 	 * Set-ID execution is not supported.
 	 */
-	if (euid != getuid() || getegid() != getgid())
+	if (sheuid != getuid() || getegid() != getgid())
 		err(SH_ERR, FMT1S, ERR_SETID);
 
 	/*
@@ -2014,7 +1953,7 @@ sh_init(void)
 	tty = xstrdup((p != NULL) ? p : "");
 
 	/* Try to get the effective user name for $u. */
-	pwu  = getpwuid(euid);
+	pwu  = getpwuid(sheuid);
 	user = xstrdup((pwu != NULL) ? pwu->pw_name : "");
 
 	/*
@@ -2215,21 +2154,19 @@ rc_open(const char *file)
 }
 
 /*
- * Handle all errors detected by the shell.  This includes printing any
- * specified message to the standard error and setting the exit status.
- * This function may or may not return depending on the context of the
- * call, the value of es, and the value of the global variable shtype.
+ * Handle all error exit scenarios for the shell.  This includes
+ * setting the exit status to the appropriate value according to
+ * es and causing the shell to exit if appropriate.  This function
+ * may or may not return and is called by err().
  */
 static void
-err(int es, const char *msgfmt, ...)
+sh_errexit(int es)
 {
-	va_list va;
 
-	if (msgfmt != NULL) {
-		va_start(va, msgfmt);
-		omsg(FD2, msgfmt, va);
-		va_end(va);
-	}
+#ifdef	DEBUG
+	fd_print(FD2, "sh_errexit: es == %d;\n", es);
+#endif
+
 	switch (es) {
 	case -1:
 		status = SH_ERR;

@@ -73,37 +73,27 @@
 OSH_RCSID("@(#)$Id$");
 #endif	/* !lint */
 
-#include "config.h"
-
-#include <sys/stat.h>
-#include <sys/wait.h>
-
-#include <errno.h>
-#include <fcntl.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
 #define	OSH_SHELL
 
-#include "sh.h"
 #include "defs.h"
+#include "err.h"
 #include "pexec.h"
+#include "sh.h"
 
 #define	IS_SBI(k)	\
 	((k) == SBI_ECHO || (k) == SBI_FD2 || (k) == SBI_GOTO || (k) == SBI_IF)
 
-static	const char	*utilname;
+static	const char	*myname;
 
-/*@noreturn@*/
-static	void	uerr(int, const char *, /*@printflike@*/ ...);
-static	int	(*util)(int, char **);
+#if 0
+static	int	(*util)(int, char **) = NULL;
+#endif
 static	int	sbi_echo(int, char **);
+/*@maynotreturn@*/
 static	int	sbi_fd2(int, char **);
+/*@maynotreturn@*/
 static	int	sbi_goto(int, char **);
+/*@maynotreturn@*/
 static	int	sbi_if(int, char **);
 
 /*
@@ -114,8 +104,11 @@ static	int	sbi_if(int, char **);
 int
 uexec(enum sbikey key, int ac, char **av)
 {
+	int (*util)(int, char **) = NULL;
 	int r;
 	static int cnt, cnt1, s;
+
+	setmyerrexit(util_errexit);
 
 	switch (key) {
 	case SBI_ECHO:	util = sbi_echo;	break;
@@ -123,32 +116,20 @@ uexec(enum sbikey key, int ac, char **av)
 	case SBI_GOTO:	util = sbi_goto;	break;
 	case SBI_IF:	util = sbi_if;		break;
 	default:
-		uerr(FC_ERR, "uexec: Invalid utility\n");
+		err(FC_ERR, FMT1S, "uexec: Invalid utility");
 	}
 
 	cnt1 = cnt++;
 
-	r = util(ac, av);
+	fd_print(FD2, "uexec: Call (*util)(%d, %p);\n", ac, (void *)av);
+
+	r = (*util)(ac, av);
 
 	if (cnt-- > cnt1)
 		s = r;
 
+	fd_print(FD2, "uexec: return %d;\n", s);
 	return s;
-}
-
-/*
- * Exit the shell utility child process on error w/ the
- * specified exit status and any specified message.
- */
-static void
-uerr(int es, const char *msgfmt, ...)
-{
-	va_list va;
-
-	va_start(va, msgfmt);
-	omsg(FD2, msgfmt, va);
-	va_end(va);
-	_exit(es);
 }
 
 /*
@@ -179,7 +160,7 @@ sbi_echo(int argc, char **argv)
 	for (avp = argv, ave = &argv[argc]; avp < ave; avp++)
 		fd_print(FD1, "%s%s", *avp, (avp + 1 < ave) ? " " : "");
 	if (!nopt)
-		fd_print(FD1, "\n");
+		fd_print(FD1, FMT1S, "");
 
 	return SH_TRUE;
 }
@@ -205,7 +186,7 @@ sbi_fd2(int argc, char **argv)
 	int efd, nfd, ofd, opt;
 	char *file;
 
-	utilname = argv[0];
+	myname = argv[0];
 
 	ofd = FD1, efd = FD2;
 	eopt = false, file = NULL;
@@ -227,17 +208,17 @@ sbi_fd2(int argc, char **argv)
 
 	if (file != NULL) {
 		if ((nfd = open(file, O_WRONLY|O_APPEND|O_CREAT, 0666)) == -1)
-			uerr(FC_ERR, FMT3S, utilname, file, ERR_CREATE);
+			err(FC_ERR, FMT3S, myname, file, ERR_CREATE);
 		if (dup2(nfd, efd) == -1)
-			uerr(FC_ERR, FMT2S, utilname, strerror(errno));
+			err(FC_ERR, FMT2S, myname, strerror(errno));
 		if (eopt && dup2(efd, ofd) == -1)
-			uerr(FC_ERR, FMT2S, utilname, strerror(errno));
+			err(FC_ERR, FMT2S, myname, strerror(errno));
 		(void)close(nfd);
 	} else {
 		if (eopt)
 			ofd = FD2, efd = FD1;
 		if (dup2(ofd, efd) == -1)
-			uerr(FC_ERR, FMT2S, utilname, strerror(errno));
+			err(FC_ERR, FMT2S, myname, strerror(errno));
 	}
 
 	/*
@@ -249,10 +230,10 @@ sbi_fd2(int argc, char **argv)
 
 	(void)pexec(argv[0], argv);
 	if (errno == ENOEXEC)
-		uerr(125, FMT3S, utilname, argv[0], ERR_NOSHELL);
+		err(125, FMT3S, myname, argv[0], ERR_NOSHELL);
 	if (errno != ENOENT && errno != ENOTDIR)
-		uerr(126, FMT3S, utilname, argv[0], ERR_EXEC);
-	uerr(127, FMT3S, utilname, argv[0], ERR_NOTFOUND);
+		err(126, FMT3S, myname, argv[0], ERR_EXEC);
+	err(127, FMT3S, myname, argv[0], ERR_NOTFOUND);
 	/*NOTREACHED*/
 	return FC_ERR;
 }
@@ -261,7 +242,7 @@ static void
 usage(void)
 {
 
-	uerr(FC_ERR, "usage: %s [-e] [-f file] command [arg ...]\n", utilname);
+	err(FC_ERR, "usage: %s [-e] [-f file] command [arg ...]\n", myname);
 }
 
 static	off_t	offset;
@@ -285,14 +266,14 @@ sbi_goto(int argc, char **argv)
 	size_t siz;
 	char label[LABELSIZE];
 
-	utilname = argv[0];
+	myname = argv[0];
 
 	if (argc < 2 || *argv[1] == '\0' || isatty(FD0) != 0)
-		uerr(FC_ERR, FMT2S, utilname, ERR_GENERIC);
+		err(FC_ERR, FMT2S, myname, ERR_GENERIC);
 	if ((siz = strlen(argv[1]) + 1) > sizeof(label))
-		uerr(FC_ERR, FMT3S, utilname, argv[1], ERR_LABTOOLONG);
+		err(FC_ERR, FMT3S, myname, argv[1], ERR_LABTOOLONG);
 	if (lseek(FD0, (off_t)0, SEEK_SET) == -1)
-		uerr(FC_ERR, FMT2S, utilname, ERR_SEEK);
+		err(FC_ERR, FMT2S, myname, ERR_SEEK);
 
 	while (getlabel(label, *argv[1] & 0377, siz))
 		if (strcmp(label, argv[1]) == 0) {
@@ -300,7 +281,7 @@ sbi_goto(int argc, char **argv)
 			return SH_TRUE;
 		}
 
-	fd_print(FD2, FMT3S, utilname, argv[1], ERR_LABNOTFOUND);
+	fd_print(FD2, FMT3S, myname, argv[1], ERR_LABNOTFOUND);
 	return SH_FALSE;
 }
 
@@ -409,7 +390,7 @@ sbi_if(int argc, char **argv)
 {
 	bool re;		/* return value of expr() */
 
-	utilname = argv[0];
+	myname = argv[0];
 
 	if (argc > 1) {
 		iac = argc;
@@ -471,7 +452,7 @@ e3(void)
 	char *a, *b;
 
 	if ((a = nxtarg(RETERR)) == NULL)
-		uerr(FC_ERR, FMT3S, utilname, iav[iap - 2], ERR_EXPR);
+		err(FC_ERR, FMT3S, myname, iav[iap - 2], ERR_EXPR);
 
 	/*
 	 * Deal w/ parentheses for grouping.
@@ -479,7 +460,7 @@ e3(void)
 	if (equal(a, "(")) {
 		re = expr();
 		if (!equal(nxtarg(RETERR), ")"))
-			uerr(FC_ERR, FMT3S, utilname, a, ERR_PAREN);
+			err(FC_ERR, FMT3S, myname, a, ERR_PAREN);
 		return re;
 	}
 
@@ -488,7 +469,7 @@ e3(void)
 	 */
 	if (equal(a, "{")) {
 		if ((cpid = fork()) == -1)
-			uerr(FC_ERR, FMT2S, utilname, ERR_FORK);
+			err(FC_ERR, FMT2S, myname, ERR_FORK);
 		if (cpid == 0)
 			/**** Child! ****/
 			doex(FORKED);
@@ -530,20 +511,20 @@ e3(void)
 		/* Does the descriptor refer to a terminal device? */
 		b = nxtarg(RETERR);
 		if (b == NULL || *b == '\0')
-			uerr(FC_ERR, FMT3S, utilname, a, ERR_DIGIT);
+			err(FC_ERR, FMT3S, myname, a, ERR_DIGIT);
 		if (*b >= '0' && *b <= '9' && *(b + 1) == '\0') {
 			d = *b - '0';
 			if (IS_DIGIT(d, *b))
 				return isatty(d) != 0;
 		}
-		uerr(FC_ERR, FMT3S, utilname, b, ERR_NOTDIGIT);
+		err(FC_ERR, FMT3S, myname, b, ERR_NOTDIGIT);
 	}
 
 	/*
 	 * binary comparisons
 	 */
 	if ((b = nxtarg(RETERR)) == NULL)
-		uerr(FC_ERR, FMT3S, utilname, a, ERR_OPERATOR);
+		err(FC_ERR, FMT3S, myname, a, ERR_OPERATOR);
 	if (equal(b,  "="))
 		return  equal(a, nxtarg(!RETERR));
 	if (equal(b, "!="))
@@ -554,7 +535,7 @@ e3(void)
 		return ifstat2(a, nxtarg(!RETERR), F_NT);
 	if (equal(b, "-ef"))
 		return ifstat2(a, nxtarg(!RETERR), F_EF);
-	uerr(FC_ERR, FMT3S, utilname, b, ERR_OPUNKNOWN);
+	err(FC_ERR, FMT3S, myname, b, ERR_OPUNKNOWN);
 	/*NOTREACHED*/
 	return false;
 }
@@ -566,7 +547,7 @@ doex(bool forked)
 	char **xap, **xav;
 
 	if (iap < 2 || iap > iac)	/* should never be true */
-		uerr(FC_ERR, FMT2S, utilname, ERR_AVIINVAL);
+		err(FC_ERR, FMT2S, myname, ERR_AVIINVAL);
 
 	xav = xap = &iav[iap];
 	while (*xap != NULL) {
@@ -575,10 +556,15 @@ doex(bool forked)
 		xap++;
 	}
 	if (forked && xap - xav > 0 && !equal(*xap, "}"))
-		uerr(FC_ERR, FMT3S, utilname, iav[iap - 1], ERR_BRACE);
+		err(FC_ERR, FMT3S, myname, iav[iap - 1], ERR_BRACE);
 	*xap = NULL;
-	if (xav[0] == NULL)
-		uerr(FC_ERR, FMT3S, utilname, iav[iap - 1], ERR_COMMAND);
+	if (xav[0] == NULL) {
+		if (forked)
+			err(FC_ERR, FMT3S, myname, iav[iap - 1], ERR_COMMAND);
+		else
+			/* Currently unreachable; do not remove. */
+			err(FC_ERR, FMT2S, myname, ERR_COMMAND);
+	}
 
 	/* Invoke a special "exit" utility in this case. */
 	if (equal(xav[0], "exit")) {
@@ -597,10 +583,10 @@ doex(bool forked)
 
 	(void)pexec(xav[0], xav);
 	if (errno == ENOEXEC)
-		uerr(125, FMT3S, utilname, xav[0], ERR_NOSHELL);
+		err(125, FMT3S, myname, xav[0], ERR_NOSHELL);
 	if (errno != ENOENT && errno != ENOTDIR)
-		uerr(126, FMT3S, utilname, xav[0], ERR_EXEC);
-	uerr(127, FMT3S, utilname, xav[0], ERR_NOTFOUND);
+		err(126, FMT3S, myname, xav[0], ERR_EXEC);
+	err(127, FMT3S, myname, xav[0], ERR_NOTFOUND);
 }
 
 /*
@@ -622,7 +608,7 @@ ifaccess(const char *file, int mode)
 
 	ra = access(file, mode) == 0;
 
-	if (ra && mode == X_OK && euid == 0) {
+	if (ra && mode == X_OK && sheuid == 0) {
 		if (stat(file, &sb) < 0)
 			ra = false;
 		else if (S_ISDIR(sb.st_mode))
@@ -694,14 +680,14 @@ nxtarg(bool reterr)
 	char *nap;
 
 	if (iap < 1 || iap > iac)	/* should never be true */
-		uerr(FC_ERR, FMT2S, utilname, ERR_AVIINVAL);
+		err(FC_ERR, FMT2S, myname, ERR_AVIINVAL);
 
 	if (iap == iac) {
 		if (reterr) {
 			iap++;
 			return NULL;
 		}
-		uerr(FC_ERR, FMT3S, utilname, iav[iap - 1], ERR_ARGUMENT);
+		err(FC_ERR, FMT3S, myname, iav[iap - 1], ERR_ARGUMENT);
 	}
 	nap = iav[iap];
 	iap++;

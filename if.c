@@ -71,30 +71,15 @@
 OSH_RCSID("@(#)$Id$");
 #endif	/* !lint */
 
-#include "config.h"
-
-#include <sys/stat.h>
-#include <sys/wait.h>
-
-#include <errno.h>
-#include <signal.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
 #include "defs.h"
+#include "err.h"
 #include "pexec.h"
 #include "sasignal.h"
-
-#define	EXIT(s)		((getpid() == ifpid) ? exit((s)) : _exit((s)))
 
 static	int	ac;
 static	int	ap;
 static	char	**av;
 static	uid_t	ifeuid;
-static	pid_t	ifpid;
 
 /*@noreturn@*/
 static	void	doex(bool);
@@ -102,8 +87,6 @@ static	bool	e1(void);
 static	bool	e2(void);
 static	bool	e3(void);
 static	bool	equal(/*@null@*/ const char *, /*@null@*/ const char *);
-/*@noreturn@*/
-static	void	err(int, /*@null@*/ const char *, const char *);
 static	bool	expr(void);
 static	bool	ifaccess(/*@null@*/ const char *, int);
 static	bool	ifstat1(/*@null@*/ const char *, mode_t);
@@ -126,14 +109,17 @@ main(int argc, char **argv)
 {
 	bool re;		/* return value of expr() */
 
-	ifpid = getpid();
+	setmyerrexit(util_errexit);
+	setmyname(argv[0]);
+	setmypid(getpid());
+
 	ifeuid = geteuid();
 
 	/*
 	 * Set-ID execution is not supported.
 	 */
 	if (ifeuid != getuid() || getegid() != getgid())
-		err(FC_ERR, NULL, ERR_SETID);
+		err(FC_ERR, FMT2S, getmyname(), ERR_SETID);
 
 	(void)sasignal(SIGCHLD, SIG_DFL);
 
@@ -197,7 +183,7 @@ e3(void)
 	char *a, *b;
 
 	if ((a = nxtarg(RETERR)) == NULL)
-		err(FC_ERR, av[ap - 2], ERR_EXPR);
+		err(FC_ERR, FMT3S, getmyname(), av[ap - 2], ERR_EXPR);
 
 	/*
 	 * Deal w/ parentheses for grouping.
@@ -205,7 +191,7 @@ e3(void)
 	if (equal(a, "(")) {
 		re = expr();
 		if (!equal(nxtarg(RETERR), ")"))
-			err(FC_ERR, a, ERR_PAREN);
+			err(FC_ERR, FMT3S, getmyname(), a, ERR_PAREN);
 		return re;
 	}
 
@@ -214,7 +200,7 @@ e3(void)
 	 */
 	if (equal(a, "{")) {
 		if ((cpid = fork()) == -1)
-			err(FC_ERR, NULL, ERR_FORK);
+			err(FC_ERR, FMT2S, getmyname(), ERR_FORK);
 		if (cpid == 0)
 			/**** Child! ****/
 			doex(FORKED);
@@ -256,20 +242,20 @@ e3(void)
 		/* Does the descriptor refer to a terminal device? */
 		b = nxtarg(RETERR);
 		if (b == NULL || *b == '\0')
-			err(FC_ERR, a, ERR_DIGIT);
+			err(FC_ERR, FMT3S, getmyname(), a, ERR_DIGIT);
 		if (*b >= '0' && *b <= '9' && *(b + 1) == '\0') {
 			d = *b - '0';
 			if (IS_DIGIT(d, *b))
 				return isatty(d) != 0;
 		}
-		err(FC_ERR, b, ERR_NOTDIGIT);
+		err(FC_ERR, FMT3S, getmyname(), b, ERR_NOTDIGIT);
 	}
 
 	/*
 	 * binary comparisons
 	 */
 	if ((b = nxtarg(RETERR)) == NULL)
-		err(FC_ERR, a, ERR_OPERATOR);
+		err(FC_ERR, FMT3S, getmyname(), a, ERR_OPERATOR);
 	if (equal(b,  "="))
 		return  equal(a, nxtarg(!RETERR));
 	if (equal(b, "!="))
@@ -280,7 +266,7 @@ e3(void)
 		return ifstat2(a, nxtarg(!RETERR), F_NT);
 	if (equal(b, "-ef"))
 		return ifstat2(a, nxtarg(!RETERR), F_EF);
-	err(FC_ERR, b, ERR_OPUNKNOWN);
+	err(FC_ERR, FMT3S, getmyname(), b, ERR_OPUNKNOWN);
 	/*NOTREACHED*/
 	return false;
 }
@@ -291,7 +277,7 @@ doex(bool forked)
 	char **xap, **xav;
 
 	if (ap < 2 || ap > ac)	/* should never be true */
-		err(FC_ERR, NULL, ERR_AVIINVAL);
+		err(FC_ERR, FMT2S, getmyname(), ERR_AVIINVAL);
 
 	xav = xap = &av[ap];
 	while (*xap != NULL) {
@@ -300,10 +286,15 @@ doex(bool forked)
 		xap++;
 	}
 	if (forked && xap - xav > 0 && !equal(*xap, "}"))
-		err(FC_ERR, av[ap - 1], ERR_BRACE);
+		err(FC_ERR, FMT3S, getmyname(), av[ap - 1], ERR_BRACE);
 	*xap = NULL;
-	if (xav[0] == NULL)
-		err(FC_ERR, forked ? av[ap - 1] : NULL, ERR_COMMAND);
+	if (xav[0] == NULL) {
+		if (forked)
+			err(FC_ERR, FMT3S, getmyname(),av[ap - 1],ERR_COMMAND);
+		else
+			/* Currently unreachable; do not remove. */
+			err(FC_ERR, FMT2S, getmyname(), ERR_COMMAND);
+	}
 
 	/* Invoke a special "exit" utility in this case. */
 	if (equal(xav[0], "exit")) {
@@ -313,10 +304,10 @@ doex(bool forked)
 
 	(void)pexec(xav[0], xav);
 	if (errno == ENOEXEC)
-		err(125, xav[0], ERR_NOSHELL);
+		err(125, FMT3S, getmyname(), xav[0], ERR_NOSHELL);
 	if (errno != ENOENT && errno != ENOTDIR)
-		err(126, xav[0], ERR_EXEC);
-	err(127, xav[0], ERR_NOTFOUND);
+		err(126, FMT3S, getmyname(), xav[0], ERR_EXEC);
+	err(127, FMT3S, getmyname(), xav[0], ERR_NOTFOUND);
 }
 
 /*
@@ -410,14 +401,14 @@ nxtarg(bool reterr)
 	char *nap;
 
 	if (ap < 1 || ap > ac)	/* should never be true */
-		err(FC_ERR, NULL, ERR_AVIINVAL);
+		err(FC_ERR, FMT2S, getmyname(), ERR_AVIINVAL);
 
 	if (ap == ac) {
 		if (reterr) {
 			ap++;
 			return NULL;
 		}
-		err(FC_ERR, av[ap - 1], ERR_ARGUMENT);
+		err(FC_ERR, FMT3S, getmyname(), av[ap - 1], ERR_ARGUMENT);
 	}
 	nap = av[ap];
 	ap++;
@@ -431,15 +422,4 @@ equal(const char *a, const char *b)
 	if (a == NULL || b == NULL)
 		return false;
 	return EQUAL(a, b);
-}
-
-static void
-err(int es, const char *msg1, const char *msg2)
-{
-
-	if (msg1 != NULL)
-		(void)fprintf(stderr, "if: %s: %s\n", msg1, msg2);
-	else
-		(void)fprintf(stderr, "if: %s\n", msg2);
-	EXIT(es);
 }

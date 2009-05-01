@@ -33,10 +33,6 @@
 #define	SH_H
 
 /*
- * osh.c, util.c, and sh6.c must include this header file.
- */
-
-/*
  * Signal child flags
  */
 enum scflags {
@@ -95,13 +91,12 @@ struct tnode {
 
 #ifdef	OSH_SHELL
 /* osh.c */
-extern	uid_t	euid;	/* effective shell user ID */
+extern	uid_t	sheuid;	/* effective shell user ID */
 
 enum sbikey	cmd_lookup(const char *);
-void		fd_print(int, const char *, /*@printflike@*/ ...);
-void		omsg(int, const char *, va_list);
 
 /* util.c */
+/*@maynotreturn@*/
 int		uexec(enum sbikey, int, char **);
 #endif
 
