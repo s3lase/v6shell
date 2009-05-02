@@ -40,7 +40,7 @@ OPTIONS=	-std=c99 -pedantic
 WARNINGS=	-Wall -W
 #WARNINGS+=	-Wstack-protector
 #CFLAGS+=	-g
-CFLAGS+=	-O2 $(OPTIONS) $(WARNINGS)
+CFLAGS+=	-Os $(OPTIONS) $(WARNINGS)
 #LDFLAGS+=	-static
 
 #
@@ -61,26 +61,29 @@ LDFLAGS+=	$(MOXARCH)
 #	osh-YYYYMMDD-current == development snapshot
 #	osh-YYYYMMDD         == official release
 #
-OSH_DATE=	April 18, 2009
-OSH_VERSION=	osh-20090418-current
+OSH_DATE=	May 3, 2009
+OSH_VERSION=	osh-20090503-current
 
 OSH=	osh
 SH6=	sh6 glob6
 UBIN=	fd2 goto if
+ERRSRC=	err.h err.c
 PEXSRC=	pexec.h pexec.c
 SIGSRC=	sasignal.h sasignal.c
-OBJ=	fd2.o glob6.o goto.o if.o osh.o pexec.o sasignal.o sh6.o util.o v.o
+OBJ=	err.o fd2.o glob6.o goto.o if.o osh.o pexec.o sasignal.o sh6.o util.o v.o
 OSHMAN=	osh.1.out
 SH6MAN=	sh6.1.out glob6.1.out
 UMAN=	fd2.1.out goto.1.out if.1.out
 MANALL=	$(OSHMAN) $(SH6MAN) $(UMAN)
+SEDSUB=	-e 's|@OSH_DATE@|$(OSH_DATE)|' \
+	-e 's|@OSH_VERSION@|$(OSH_VERSION)|' \
+	-e 's|@SYSCONFDIR@|$(SYSCONFDIR)|'
 
 DEFS=	-DOSH_VERSION='"$(OSH_VERSION)"' -DSYSCONFDIR='"$(SYSCONFDIR)"'
 
 .SUFFIXES: .1 .1.out .c .o
 .1.1.out:
-	sed 's|@OSH_DATE@|$(OSH_DATE)| ; s|@OSH_VERSION@|$(OSH_VERSION)| ; \
-	     s|@SYSCONFDIR@|$(SYSCONFDIR)|' <$< >$@
+	sed $(SEDSUB) <$< >$@
 
 .c.o:
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(DEFS) $<
@@ -96,51 +99,55 @@ sh6all: $(SH6) $(SH6MAN) utils
 
 utils: $(UBIN) $(UMAN)
 
-osh: config.h defs.h rcsid.h sh.h v.c util.c $(PEXSRC) $(SIGSRC) osh.c
+man: $(MANALL)
+
+osh: config.h defs.h rcsid.h sh.h v.c util.c $(ERRSRC) $(PEXSRC) $(SIGSRC) osh.c
 	@$(MAKE) $@bin
 
-sh6: config.h defs.h rcsid.h sh.h v.c $(PEXSRC) $(SIGSRC) sh6.c
+sh6: config.h defs.h rcsid.h sh.h v.c $(ERRSRC) $(PEXSRC) $(SIGSRC) sh6.c
 	@$(MAKE) $@bin
 
-glob6: config.h defs.h rcsid.h v.c $(PEXSRC) glob6.c
+glob6: config.h defs.h rcsid.h v.c $(ERRSRC) $(PEXSRC) glob6.c
 	@$(MAKE) $@bin
 
-if: config.h defs.h rcsid.h v.c $(PEXSRC) $(SIGSRC) if.c
+if: config.h defs.h rcsid.h v.c $(ERRSRC) $(PEXSRC) $(SIGSRC) if.c
 	@$(MAKE) $@bin
 
-goto: config.h defs.h rcsid.h v.c goto.c
+goto: config.h defs.h rcsid.h v.c $(ERRSRC) goto.c
 	@$(MAKE) $@bin
 
-fd2: config.h defs.h rcsid.h v.c $(PEXSRC) fd2.c
+fd2: config.h defs.h rcsid.h v.c $(ERRSRC) $(PEXSRC) fd2.c
 	@$(MAKE) $@bin
 
-$(OBJ)                               : config.h defs.h rcsid.h
-osh.o sh6.o util.o                   : sh.h
-fd2.o glob6.o if.o osh.o sh6.o util.o: pexec.h
-if.o osh.o sh6.o                     : sasignal.h
-pexec.o                              : $(PEXSRC)
-sasignal.o                           : $(SIGSRC)
+$(OBJ)                                      : config.h defs.h rcsid.h
+fd2.o glob6.o goto.o if.o osh.o sh6.o util.o: err.h
+fd2.o glob6.o if.o osh.o sh6.o util.o       : pexec.h
+if.o osh.o sh6.o                            : sasignal.h
+osh.o sh6.o util.o                          : sh.h
+err.o                                       : $(ERRSRC)
+pexec.o                                     : $(PEXSRC)
+sasignal.o                                  : $(SIGSRC)
 
 config.h: mkconfig
 	$(SHELL) ./mkconfig
 
-oshbin: v.o util.o pexec.o sasignal.o osh.o
-	$(CC) $(LDFLAGS) -o osh v.o osh.o util.o pexec.o sasignal.o $(LIBS)
+oshbin: v.o osh.o err.o util.o pexec.o sasignal.o
+	$(CC) $(LDFLAGS) -o osh v.o osh.o err.o util.o pexec.o sasignal.o $(LIBS)
 
-sh6bin: v.o pexec.o sasignal.o sh6.o
-	$(CC) $(LDFLAGS) -o sh6 v.o sh6.o pexec.o sasignal.o $(LIBS)
+sh6bin: v.o sh6.o err.o pexec.o sasignal.o
+	$(CC) $(LDFLAGS) -o sh6 v.o sh6.o err.o pexec.o sasignal.o $(LIBS)
 
-glob6bin: v.o pexec.o glob6.o
-	$(CC) $(LDFLAGS) -o glob6 v.o glob6.o pexec.o $(LIBS)
+glob6bin: v.o glob6.o err.o pexec.o
+	$(CC) $(LDFLAGS) -o glob6 v.o glob6.o err.o pexec.o $(LIBS)
 
-ifbin: v.o pexec.o sasignal.o if.o
-	$(CC) $(LDFLAGS) -o if v.o if.o pexec.o sasignal.o $(LIBS)
+ifbin: v.o if.o err.o pexec.o sasignal.o
+	$(CC) $(LDFLAGS) -o if v.o if.o err.o pexec.o sasignal.o $(LIBS)
 
-gotobin: v.o goto.o
-	$(CC) $(LDFLAGS) -o goto v.o goto.o $(LIBS)
+gotobin: v.o goto.o err.o
+	$(CC) $(LDFLAGS) -o goto v.o goto.o err.o $(LIBS)
 
-fd2bin: v.o pexec.o fd2.o
-	$(CC) $(LDFLAGS) -o fd2 v.o fd2.o pexec.o $(LIBS)
+fd2bin: v.o fd2.o err.o pexec.o
+	$(CC) $(LDFLAGS) -o fd2 v.o fd2.o err.o pexec.o $(LIBS)
 
 #
 # Install targets

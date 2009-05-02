@@ -2,11 +2,26 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-20090321-current]:
+[osh-20090503-current]:
+	* New files:  err.h, err.c  (error-handling routines)
+
+	* Moved inclusion of required kernel include files (e.g., <sys/*.h>)
+	  and /usr/include files from *.c to "defs.h" where appropriate.
+
+	* Moved files:	Moved manual pages from *.1.in to *.1 .
+
+Makefile:
+	* Changed "-O2" to "-Os" in CFLAGS to optimize for size.
+
+	* Changed how the manual pages are generated and installed.
+
 README:
 	* Added OpenSolaris 2008.11 to the reported system list.
 
 osh.c:
+	* Fixed an echo bug that caused `echo ""' to print an unnecessary
+	  "omsg: Internal error" diagnostic.
+
 	* Added `cd' as a synonym for the `chdir' special command.
 
 	* Added a new special parameter, $m, which points to the current
@@ -23,7 +38,11 @@ if.c:
 	  return the correct exit status of "command" in all cases, even when
 	  the parent process of `if' may ignore SIGCHLD (e.g., sh(1)).
 
-osh.1.in:
+err.[hc]:
+	* Unified all shell and utility error-handling routines (for all
+	  programs) in this module.
+
+osh.1:
 	* Documented the osh(1) code changes as needed.
 
 -------------------------------------------------------------------------------
@@ -1416,6 +1435,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2009/03/21
+Jeffrey Allen Neitzel						2009/05/02
 
 @(#)$Id$
