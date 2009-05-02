@@ -85,9 +85,6 @@ OSH_RCSID("@(#)$Id$");
 
 static	const char	*myname;
 
-#if 0
-static	int	(*util)(int, char **) = NULL;
-#endif
 static	int	sbi_echo(int, char **);
 /*@maynotreturn@*/
 static	int	sbi_fd2(int, char **);
@@ -121,14 +118,19 @@ uexec(enum sbikey key, int ac, char **av)
 
 	cnt1 = cnt++;
 
+#ifdef	DEBUG
 	fd_print(FD2, "uexec: Call (*util)(%d, %p);\n", ac, (void *)av);
+#endif
 
 	r = (*util)(ac, av);
 
 	if (cnt-- > cnt1)
 		s = r;
 
+#ifdef	DEBUG
 	fd_print(FD2, "uexec: return %d;\n", s);
+#endif
+
 	return s;
 }
 
