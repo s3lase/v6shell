@@ -42,17 +42,17 @@ OSH_RCSID("@(#)$Id$");
 
 #define	UTILNAME	"unknown"
 
+static	void		(*myerrexit)(int)	= NULL;
 /*@observer@*/
-static	const char	*myname = (char *)-1;
-static	pid_t		mypid   = -1;
+static	const char	*myname			= (char *)-1;
+static	pid_t		mypid			= -1;
 
-static	void		(*errexit)(int) = NULL;
 static	void		wmsg(int, const char *, va_list);
 
 /*
  * Handle all errors for the calling process.  This includes printing
  * any specified non-NULL message to the standard error and calling
- * the error exit function pointed to by the global errexit.
+ * the error exit function pointed to by the global myerrexit.
  * This function may or may not return.
  */
 void
@@ -65,16 +65,16 @@ err(int es, const char *msgfmt, ...)
 		wmsg(FD2, msgfmt, va);
 		va_end(va);
 	}
-	if (errexit == NULL) {
-		fd_print(FD2, FMT1S, "err: Invalid errexit function pointer");
+	if (myerrexit == NULL) {
+		fd_print(FD2, FMT1S, "err: Invalid myerrexit function pointer");
 		abort();
 	}
 
 #ifdef	DEBUG
-	fd_print(FD2, "err: Call (*errexit)(%d);\n", es);
+	fd_print(FD2, "err: Call (*myerrexit)(%d);\n", es);
 #endif
 
-	(*errexit)(es);
+	(*myerrexit)(es);
 }
 
 /*
@@ -125,7 +125,7 @@ getmypid(void)
 }
 
 /*
- * Set the global errexit to the function pointed to by func.
+ * Set the global myerrexit to the function pointed to by func.
  */
 void
 setmyerrexit(void (*func)(int))
@@ -134,7 +134,7 @@ setmyerrexit(void (*func)(int))
 	if (func == NULL)
 		return;
 
-	errexit = func;
+	myerrexit = func;
 }
 
 /*
@@ -174,7 +174,7 @@ setmypid(const pid_t p)
 
 /*
  * Cause all shell utility processes to exit appropriately on error.
- * This function never returns and is called by err().
+ * This function is called by err() and never returns.
  */
 void
 util_errexit(int es)

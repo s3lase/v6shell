@@ -118,17 +118,13 @@ uexec(enum sbikey key, int ac, char **av)
 
 	cnt1 = cnt++;
 
-#ifdef	DEBUG
-	fd_print(FD2, "uexec: Call (*util)(%d, %p);\n", ac, (void *)av);
-#endif
-
 	r = (*util)(ac, av);
 
 	if (cnt-- > cnt1)
 		s = r;
 
 #ifdef	DEBUG
-	fd_print(FD2, "uexec: return %d;\n", s);
+	fd_print(FD2, "uexec: (%d:%d) return %d;\n", cnt + 1, cnt1, s);
 #endif
 
 	return s;

@@ -149,10 +149,10 @@ static	int		trim(int);
 static	bool		any(int, const char *);
 static	void		execute(/*@null@*/ struct tnode *,
 				/*@null@*/ int *, /*@null@*/ int *);
-/*@maynotreturn@*/
-static	void		sh_errexit(int);
 static	void		pwait(pid_t);
 static	int		prsig(int, pid_t, pid_t);
+/*@maynotreturn@*/
+static	void		sh_errexit(int);
 static	void		sh_init(void);
 static	void		sh_magic(void);
 static	void		fd_free(void);
@@ -994,29 +994,6 @@ execute(struct tnode *t, int *pin, int *pout)
 }
 
 /*
- * Handle all error exit scenarios for the shell.  This includes
- * setting the exit status to the appropriate value according to
- * es and causing the shell to exit if appropriate.  This function
- * may or may not return and is called by err().
- */
-static void
-sh_errexit(int es)
-{
-
-#ifdef	DEBUG
-	fd_print(FD2, "sh_errexit: es == %d;\n", es);
-#endif
-
-	status = es;
-	if (prompt == NULL) {
-		(void)lseek(FD0, (off_t)0, SEEK_END);
-		EXIT(status);
-	}
-	if (getpid() != getmypid())
-		_exit(status);
-}
-
-/*
  * If cp > 0, wait for the child process cp to terminate.
  * While doing so, exorcise any zombies for which the shell has not
  * yet waited, and wait for any other child processes which terminate
@@ -1084,6 +1061,29 @@ prsig(int s, pid_t tp, pid_t cp)
 		fd_print(FD2, FMT1S, "");
 
 	return 128 + e;
+}
+
+/*
+ * Handle all error exit scenarios for the shell.  This includes
+ * setting the exit status to the appropriate value according to
+ * es and causing the shell to exit if appropriate.  This function
+ * is called by err() and may or may not return.
+ */
+static void
+sh_errexit(int es)
+{
+
+#ifdef	DEBUG
+	fd_print(FD2, "sh_errexit: es == %d;\n", es);
+#endif
+
+	status = es;
+	if (prompt == NULL) {
+		(void)lseek(FD0, (off_t)0, SEEK_END);
+		EXIT(status);
+	}
+	if (getpid() != getmypid())
+		_exit(status);
 }
 
 /*

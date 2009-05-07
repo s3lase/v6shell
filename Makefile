@@ -67,6 +67,7 @@ OSH_VERSION=	osh-20090503-current
 OSH=	osh
 SH6=	sh6 glob6
 UBIN=	fd2 goto if
+GHEAD=	config.h defs.h rcsid.h
 ERRSRC=	err.h err.c
 PEXSRC=	pexec.h pexec.c
 SIGSRC=	sasignal.h sasignal.c
@@ -82,6 +83,7 @@ SEDSUB=	-e 's|@OSH_DATE@|$(OSH_DATE)|' \
 DEFS=	-DOSH_VERSION='"$(OSH_VERSION)"' -DSYSCONFDIR='"$(SYSCONFDIR)"'
 
 .SUFFIXES: .1 .1.out .c .o
+
 .1.1.out:
 	sed $(SEDSUB) <$< >$@
 
@@ -101,25 +103,25 @@ utils: $(UBIN) $(UMAN)
 
 man: $(MANALL)
 
-osh: config.h defs.h rcsid.h sh.h v.c util.c $(ERRSRC) $(PEXSRC) $(SIGSRC) osh.c
+osh: sh.h v.c osh.c util.c $(GHEAD) $(ERRSRC) $(PEXSRC) $(SIGSRC)
 	@$(MAKE) $@bin
 
-sh6: config.h defs.h rcsid.h sh.h v.c $(ERRSRC) $(PEXSRC) $(SIGSRC) sh6.c
+sh6: sh.h v.c sh6.c $(GHEAD) $(ERRSRC) $(PEXSRC) $(SIGSRC)
 	@$(MAKE) $@bin
 
-glob6: config.h defs.h rcsid.h v.c $(ERRSRC) $(PEXSRC) glob6.c
+glob6: v.c glob6.c $(GHEAD) $(ERRSRC) $(PEXSRC)
 	@$(MAKE) $@bin
 
-if: config.h defs.h rcsid.h v.c $(ERRSRC) $(PEXSRC) $(SIGSRC) if.c
+if: v.c if.c $(GHEAD) $(ERRSRC) $(PEXSRC) $(SIGSRC)
 	@$(MAKE) $@bin
 
-goto: config.h defs.h rcsid.h v.c $(ERRSRC) goto.c
+goto: v.c goto.c $(GHEAD) $(ERRSRC)
 	@$(MAKE) $@bin
 
-fd2: config.h defs.h rcsid.h v.c $(ERRSRC) $(PEXSRC) fd2.c
+fd2: v.c fd2.c $(GHEAD) $(ERRSRC) $(PEXSRC)
 	@$(MAKE) $@bin
 
-$(OBJ)                                      : config.h defs.h rcsid.h
+$(OBJ)                                      : $(GHEAD)
 fd2.o glob6.o goto.o if.o osh.o sh6.o util.o: err.h
 fd2.o glob6.o if.o osh.o sh6.o util.o       : pexec.h
 if.o osh.o sh6.o                            : sasignal.h
@@ -196,7 +198,7 @@ clean: clean-obj
 	rm -f $(OSH) $(SH6) $(UBIN) $(MANALL) config.h
 
 #
-# Create osh source package tarball and checksums.
+# osh source package target (create tarball and checksums)
 #
 OSP=	$(OSH_VERSION)
 OSPROOT=./.osp

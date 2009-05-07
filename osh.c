@@ -283,6 +283,8 @@ static	void		set_ss_flags(int, action_type);
 static	void		do_source(char **);
 static	void		pwait(pid_t);
 static	int		prsig(int, pid_t, pid_t);
+/*@maynotreturn@*/
+static	void		sh_errexit(int);
 static	void		sh_init(void);
 static	void		sh_magic(void);
 static	bool		sh_on_tty(void);
@@ -293,8 +295,6 @@ static	char		*rc_build(/*@out@*/ /*@returned@*/ char *,
 				  const char *, size_t);
 /*@maynotreturn@*/
 static	bool		rc_open(/*@null@*/ const char *);
-/*@maynotreturn@*/
-static	void		sh_errexit(int);
 static	void		fd_free(void);
 static	bool		fd_type(int, mode_t);
 static	void		atrim(char *);
@@ -1918,6 +1918,46 @@ prsig(int s, pid_t tp, pid_t cp)
 }
 
 /*
+ * Handle all error exit scenarios for the shell.  This includes
+ * setting the exit status to the appropriate value according to
+ * es and causing the shell to exit if appropriate.  This function
+ * is called by err() and may or may not return.
+ */
+static void
+sh_errexit(int es)
+{
+
+#ifdef	DEBUG
+	fd_print(FD2, "sh_errexit: es == %d;\n", es);
+#endif
+
+	switch (es) {
+	case -1:
+		status = SH_ERR;
+		/*FALLTHROUGH*/
+	case 0:
+		if (SHTYPE(ST_SOURCE)) {
+			(void)lseek(FD0, (off_t)0, SEEK_END);
+			error_source = true;
+			return;
+		}
+		if (SHTYPE(ST_RCFILE) && (status == 130 || status == 131)) {
+			(void)lseek(FD0, (off_t)0, SEEK_END);
+			return;
+		}
+		if (!SHTYPE(ST_INTERACTIVE)) {
+			if (!SHTYPE(ST_ONELINE))
+				(void)lseek(FD0, (off_t)0, SEEK_END);
+			break;
+		}
+		return;
+	default:
+		status = es;
+	}
+	EXIT(status);
+}
+
+/*
  * Initialize the shell.
  */
 static void
@@ -2151,46 +2191,6 @@ rc_open(const char *file)
 	(void)close(fd);
 	shtype |= ST_RCFILE;
 	return true;
-}
-
-/*
- * Handle all error exit scenarios for the shell.  This includes
- * setting the exit status to the appropriate value according to
- * es and causing the shell to exit if appropriate.  This function
- * may or may not return and is called by err().
- */
-static void
-sh_errexit(int es)
-{
-
-#ifdef	DEBUG
-	fd_print(FD2, "sh_errexit: es == %d;\n", es);
-#endif
-
-	switch (es) {
-	case -1:
-		status = SH_ERR;
-		/*FALLTHROUGH*/
-	case 0:
-		if (SHTYPE(ST_SOURCE)) {
-			(void)lseek(FD0, (off_t)0, SEEK_END);
-			error_source = true;
-			return;
-		}
-		if (SHTYPE(ST_RCFILE) && (status == 130 || status == 131)) {
-			(void)lseek(FD0, (off_t)0, SEEK_END);
-			return;
-		}
-		if (!SHTYPE(ST_INTERACTIVE)) {
-			if (!SHTYPE(ST_ONELINE))
-				(void)lseek(FD0, (off_t)0, SEEK_END);
-			break;
-		}
-		return;
-	default:
-		status = es;
-	}
-	EXIT(status);
 }
 
 /*
