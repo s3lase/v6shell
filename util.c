@@ -95,17 +95,18 @@ static	int	sbi_if(int, char **);
 
 /*
  * Execute the shell utility specified by key w/ the argument
- * count ac and the argument vector pointed to by av.
- * Return status s of the last call in the chain.
+ * count ac and the argument vector pointed to by av.  Return
+ * status s of the last call in the chain on success.  Do not
+ * return on invalid-utility error.
  */
 int
 uexec(enum sbikey key, int ac, char **av)
 {
-	int (*util)(int, char **) = NULL;
+	int (*util)(int, char **);
 	int r;
 	static int cnt, cnt1, s;
 
-	setmyerrexit(util_errexit);
+	if (cnt == 0) setmyerrexit(util_errexit);
 
 	switch (key) {
 	case SBI_ECHO:	util = sbi_echo;	break;
@@ -114,6 +115,8 @@ uexec(enum sbikey key, int ac, char **av)
 	case SBI_IF:	util = sbi_if;		break;
 	default:
 		err(FC_ERR, FMT1S, "uexec: Invalid utility");
+		/*NOTREACHED*/
+		return FC_ERR;
 	}
 
 	cnt1 = cnt++;
@@ -124,7 +127,7 @@ uexec(enum sbikey key, int ac, char **av)
 		s = r;
 
 #ifdef	DEBUG
-	fd_print(FD2, "uexec: (%d:%d) return %d;\n", cnt + 1, cnt1, s);
+	if (cnt == 0) fd_print(FD2, "uexec: return %d;\n", s);
 #endif
 
 	return s;
