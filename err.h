@@ -111,6 +111,6 @@ void		setmyerrexit(void (*)(int));
 void		setmyname(/*@null@*/ /*@observer@*/ const char *);
 void		setmypid(const pid_t);
 /*@noreturn@*/
-void		util_errexit(int);
+void		ut_errexit(int);
 
 #endif	/* !ERR_H */

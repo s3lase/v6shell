@@ -93,7 +93,7 @@ main(int argc, char **argv)
 	size_t siz;
 	char label[LABELSIZE];
 
-	setmyerrexit(util_errexit);
+	setmyerrexit(ut_errexit);
 	setmyname(argv[0]);
 	setmypid(getpid());
 

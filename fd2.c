@@ -59,7 +59,7 @@ main(int argc, char **argv)
 	int efd, fd, nfd, ofd, opt;
 	char *file;
 
-	setmyerrexit(util_errexit);
+	setmyerrexit(ut_errexit);
 	setmyname(argv[0]);
 	setmypid(getpid());
 

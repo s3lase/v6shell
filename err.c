@@ -178,11 +178,11 @@ setmypid(const pid_t p)
  * This function is called by err() and never returns.
  */
 void
-util_errexit(int es)
+ut_errexit(int es)
 {
 
 #ifdef	DEBUG
-	fd_print(FD2, "util_errexit: es == %d: Call %s(%d);\n",
+	fd_print(FD2, "ut_errexit: es == %d: Call %s(%d);\n",
 	    es, (getpid() == getmypid()) ? "exit" : "_exit", es);
 #endif
 

@@ -109,7 +109,7 @@ main(int argc, char **argv)
 {
 	bool re;		/* return value of expr() */
 
-	setmyerrexit(util_errexit);
+	setmyerrexit(ut_errexit);
 	setmyname(argv[0]);
 	setmypid(getpid());
 
