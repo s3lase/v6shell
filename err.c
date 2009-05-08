@@ -71,7 +71,8 @@ err(int es, const char *msgfmt, ...)
 	}
 
 #ifdef	DEBUG
-	fd_print(FD2, "err: Call (*myerrexit)(%d);\n", es);
+	fd_print(FD2, "err: myerrexit == %#lx: Call (*myerrexit)(%d);\n",
+	    (unsigned long)myerrexit, es);
 #endif
 
 	(*myerrexit)(es);
