@@ -42,7 +42,7 @@ sh6.c:
 	* Moved common definitions for these programs to "defs.h".
 
 sh6.c:
-	* Include "sh.h" for needed declarations.
+	* Included "sh.h" for needed declarations.
 
 	* Synced `struct tnode' w/ osh.c by changing the order of the `nav'
 	  and `nflags' members.

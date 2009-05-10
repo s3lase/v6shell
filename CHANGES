@@ -3,7 +3,7 @@ Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
 [osh-20090510-current]:
-	* New files:  err.h, err.c  (error-handling routines)
+	* New files:  err.h, err.c  (see err.[hc] description below)
 
 	* Moved inclusion of required kernel include files (e.g., <sys/*.h>)
 	  and /usr/include files from *.c to "defs.h" where appropriate.
@@ -16,12 +16,15 @@ Makefile:
 	* Changed how the manual pages are generated and installed.
 
 README:
-	* Added OpenSolaris 2008.11 to the reported system list.
+	* Added Debian 5.0.1 (lenny), NetBSD 5.0, OpenBSD 4.5, and
+	  OpenSolaris 2008.11 to the reported system list; the osh
+	  package behaves as expected on each system.
+
+err.[hc]:
+	* Unified all shell and utility error-handling routines (for all
+	  programs) in this module (see also CHANGES-sh_to_sh6).
 
 osh.c:
-	* Fixed an echo bug that caused `echo ""' to print an unnecessary
-	  "omsg: Internal error" diagnostic.
-
 	* Added `cd' as a synonym for the `chdir' special command.
 
 	* Added a new special parameter, $m, which points to the current
@@ -32,15 +35,15 @@ osh.c:
 	  command in a subshell correctly ignores, unignores, and prints
 	  signal(s) ignored by sigign relative to the main shell process.
 
+err.c, osh.c, util.c:
+	* Fixed an echo bug that caused `echo ""' to print an unnecessary
+	  "omsg: Internal error" diagnostic.
+
 if.c:
 	* Added a call to sasignal() to set the SIGCHLD signal to its default
 	  action so that the { command [arg ...] } primary can obtain and
 	  return the correct exit status of "command" in all cases, even when
 	  the parent process of `if' may ignore SIGCHLD (e.g., sh(1)).
-
-err.[hc]:
-	* Unified all shell and utility error-handling routines (for all
-	  programs) in this module.
 
 osh.1:
 	* Documented the osh(1) code changes as needed.
@@ -116,9 +119,9 @@ mkconfig:
 	* Synced the manual pages w/ the code as needed.
 
 osh.c:
-	* Include "sh.h" for needed declarations.
+	* Included "sh.h" for needed declarations.
 
-	* See "util.c:" below for integrated shell utilities description.
+	* See util.c below for integrated shell utilities description.
 
 	* Renamed cmd_index() to cmd_lookup(), and changed the algorithm from
 	  a linear search to a binary search.
@@ -132,7 +135,7 @@ osh.c:
 	  file-name arguments.
 
 util.c:
-	* Include "sh.h" for needed declarations.
+	* Included "sh.h" for needed declarations.
 
 	* Integrated the external `if', `goto', and `fd2' shell utilities as
 	  special built-in commands to improve shell performance.  Also, added
