@@ -576,9 +576,9 @@ doex(bool forked)
 	xak = cmd_lookup(xav[0]);
 	if (IS_SBI(xak)) {
 		if (forked)
-			_exit(uexec(xak, xap - xav, xav));
+			_exit(uexec(xak, (int)(xap - xav), xav));
 		else
-			(void)uexec(xak, xap - xav, xav);
+			(void)uexec(xak, (int)(xap - xav), xav);
 		return;
 	}
 

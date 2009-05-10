@@ -1128,7 +1128,7 @@ vacount(const char **vp)
 	for (p = vp; *p != NULL; p++)
 		;	/* nothing */
 
-	return p - vp;
+	return (int)(p - vp);
 }
 
 /*
