@@ -3,10 +3,7 @@ code for the Sixth Edition (V6) UNIX Thompson shell and global
 command in porting them to run on modern UNIX systems.
 
 -------------------------------------------------------------------------------
-[osh-20090503-current]:
-	* The following code changes should produce no obvious
-	  user-visible changes in sh6 and glob6 behavior.
-
+[osh-20090510-current]:
 sh6.c:
 	* Replaced err(), prn(), prs(), and xputc() w/ err() and fd_print()
 	  from err.c .
@@ -18,7 +15,7 @@ sh6.c:
 	  termination messages.
 
 glob6.c:
-	* Replaced gerr() w/ err() and util_errexit() from err.c .
+	* Replaced gerr() w/ err() and ut_errexit() from err.c .
 
 -------------------------------------------------------------------------------
 [osh-20081213]:
@@ -364,6 +361,6 @@ glob.c:
     Date: May 14, 1975
     From: Sixth Edition UNIX /usr/source/s1/glob.c
 
-Jeffrey Allen Neitzel						2009/05/02
+Jeffrey Allen Neitzel						2009/05/10
 
 @(#)$Id$

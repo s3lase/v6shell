@@ -2,7 +2,7 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-20090503-current]:
+[osh-20090510-current]:
 	* New files:  err.h, err.c  (error-handling routines)
 
 	* Moved inclusion of required kernel include files (e.g., <sys/*.h>)
@@ -1435,6 +1435,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2009/05/02
+Jeffrey Allen Neitzel						2009/05/10
 
 @(#)$Id$
