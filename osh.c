@@ -298,7 +298,9 @@ static	bool		rc_open(/*@null@*/ const char *);
 static	void		fd_free(void);
 static	bool		fd_type(int, mode_t);
 static	void		atrim(char *);
+/*@null@*/
 static	char		*gtrim(/*@returned@*/ char *);
+/*@null@*/
 static	char		*gchar(/*@returned@*/ const char *);
 static	void		xfree(/*@null@*/ /*@only@*/ void *);
 /*@out@*/
