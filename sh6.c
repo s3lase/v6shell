@@ -831,7 +831,7 @@ execute(struct tnode *t, int *pin, int *pout)
 			return;
 		}
 		if (EQUAL(cmd, "chdir")) {
-			ascan(t->nav[1], trim);
+			ascan(t->nav[1], &trim);
 			if (t->nav[1] == NULL)
 				err(SH_ERR, FMT2S, cmd, ERR_ARGCOUNT);
 			else if (chdir(t->nav[1]) == -1)
@@ -850,7 +850,7 @@ execute(struct tnode *t, int *pin, int *pout)
 		if (EQUAL(cmd, "login") || EQUAL(cmd, "newgrp")) {
 			if (prompt != NULL) {
 				p = (*cmd == 'l') ? PATH_LOGIN : PATH_NEWGRP;
-				vscan(t->nav, trim);
+				vscan(t->nav, &trim);
 				(void)sasignal(SIGINT, SIG_DFL);
 				(void)sasignal(SIGQUIT, SIG_DFL);
 				(void)pexec(p, (char *const *)t->nav);
@@ -920,7 +920,7 @@ execute(struct tnode *t, int *pin, int *pout)
 		 */
 		if (t->nfin != NULL && (f & FPIN) == 0) {
 			f |= FFIN;
-			ascan(t->nfin, trim);
+			ascan(t->nfin, &trim);
 			if ((i = open(t->nfin, O_RDONLY)) == -1)
 				err(FC_ERR, FMT2S, t->nfin, ERR_OPEN);
 			if (dup2(i, FD0) == -1)
@@ -935,7 +935,7 @@ execute(struct tnode *t, int *pin, int *pout)
 				i = O_WRONLY | O_APPEND | O_CREAT;
 			else
 				i = O_WRONLY | O_TRUNC | O_CREAT;
-			ascan(t->nfout, trim);
+			ascan(t->nfout, &trim);
 			if ((i = open(t->nfout, i, 0666)) == -1)
 				err(FC_ERR, FMT2S, t->nfout, ERR_CREATE);
 			if (dup2(i, FD1) == -1)
@@ -970,7 +970,7 @@ execute(struct tnode *t, int *pin, int *pout)
 			_exit(status);
 		}
 		glob_flag = false;
-		vscan(t->nav, tglob);
+		vscan(t->nav, &tglob);
 		if (glob_flag) {
 			for (i = 0; t->nav[i] != NULL; i++)
 				;	/* nothing */
@@ -980,7 +980,7 @@ execute(struct tnode *t, int *pin, int *pout)
 			(void)memcpy(&gav[1], t->nav, (i + 1) * sizeof(char *));
 			(void)pexec(cmd, (char *const *)gav);
 		} else {
-			vscan(t->nav, trim);
+			vscan(t->nav, &trim);
 			cmd = t->nav[0];
 			(void)pexec(cmd, (char *const *)t->nav);
 		}
@@ -1095,7 +1095,7 @@ sh_init(void)
 	struct stat sb;
 	int i;
 
-	setmyerrexit(sh_errexit);
+	setmyerrexit(&sh_errexit);
 	setmypid(getpid());
 
 	/*

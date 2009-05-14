@@ -101,7 +101,7 @@ main(int argc, char **argv)
 	const char **gav;	/* points to generated argument vector */
 	int pmc = 0;		/* pattern-match count                 */
 
-	setmyerrexit(ut_errexit);
+	setmyerrexit(&ut_errexit);
 	setmypid(getpid());
 
 	/*

@@ -106,13 +106,13 @@ uexec(enum sbikey key, int ac, char **av)
 	int r;
 	static int cnt, cnt1, s;
 
-	if (cnt == 0) setmyerrexit(ut_errexit);
+	if (cnt == 0) setmyerrexit(&ut_errexit);
 
 	switch (key) {
-	case SBI_ECHO:	util = sbi_echo;	break;
-	case SBI_FD2:	util = sbi_fd2;		break;
-	case SBI_GOTO:	util = sbi_goto;	break;
-	case SBI_IF:	util = sbi_if;		break;
+	case SBI_ECHO:	util = &sbi_echo;	break;
+	case SBI_FD2:	util = &sbi_fd2;	break;
+	case SBI_GOTO:	util = &sbi_goto;	break;
+	case SBI_IF:	util = &sbi_if;		break;
 	default:
 		err(FC_ERR, FMT1S, "uexec: Invalid utility");
 		/*NOTREACHED*/

@@ -1969,7 +1969,7 @@ sh_init(void)
 	int fd;
 	const char *p;
 
-	setmyerrexit(sh_errexit);
+	setmyerrexit(&sh_errexit);
 	setmypid(getpid());
 	sheuid = geteuid();
 
