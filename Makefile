@@ -198,17 +198,8 @@ clean: clean-obj
 	rm -f $(OSH) $(SH6) $(UBIN) $(MANALL) config.h
 
 #
-# osh source package target (create tarball and checksums)
+# Release target
 #
-OSP=	$(OSH_VERSION)
-OSPROOT=./.osp
-OSPDIR=	$(OSPROOT)/$(OSP)
-OSPSUMS=$(OSP).sums
-OSPTAR=	$(OSP).tar
-OSPTGZ=	$(OSPTAR).gz
-osp: clean
-	rm -rf $(OSPROOT)
-	umask 0022 && mkdir -p $(OSPDIR) && cp -p * $(OSPDIR)/ && \
-	chmod 0644 $(OSPDIR)/* && cd $(OSPROOT) && tar cf $(OSPTAR) $(OSP) && \
-	gzip -9 $(OSPTAR) && mksums $(OSPTGZ) > $(OSPSUMS)
-	rm -rf $(OSPDIR)
+release: clean
+	rm -rf .release
+	oshrelease .release $(OSH_VERSION)
