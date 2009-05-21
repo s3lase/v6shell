@@ -2,7 +2,7 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-20090510-current]:
+[osh-20090521-current]:
 	* New files:  err.h, err.c  (see err.[hc] description below)
 
 	* Moved inclusion of required kernel include files (e.g., <sys/*.h>)
@@ -24,6 +24,10 @@ err.[hc]:
 	* Unified all shell and utility error-handling routines (for all
 	  programs) in this module (see also CHANGES-sh_to_sh6).
 
+err.c, osh.c, util.c:
+	* Fixed an echo bug that caused `echo ""' to print an unnecessary
+	  "omsg: Internal error" diagnostic.
+
 osh.c:
 	* Added `cd' as a synonym for the `chdir' special command.
 
@@ -34,10 +38,6 @@ osh.c:
 	* Changed do_sigign() so that invocation of the `sigign' special
 	  command in a subshell correctly ignores, unignores, and prints
 	  signal(s) ignored by sigign relative to the main shell process.
-
-err.c, osh.c, util.c:
-	* Fixed an echo bug that caused `echo ""' to print an unnecessary
-	  "omsg: Internal error" diagnostic.
 
 if.c:
 	* Added a call to sasignal() to set the SIGCHLD signal to its default
@@ -1438,6 +1438,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2009/05/10
+Jeffrey Allen Neitzel						2009/05/21
 
 @(#)$Id$
