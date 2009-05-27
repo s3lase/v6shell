@@ -3,12 +3,12 @@ Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
 [osh-20090521-current]:
-	* New files:  err.h, err.c  (see err.[hc] description below)
-
 	* Moved inclusion of required kernel include files (e.g., <sys/*.h>)
 	  and /usr/include files from *.c to "defs.h" where appropriate.
 
 	* Moved files:	Moved manual pages from *.1.in to *.1 .
+
+	* New files:	err.h, err.c  (see err.[hc] description below)
 
 Makefile:
 	* Changed "-O2" to "-Os" in CFLAGS to optimize for size.
@@ -1438,6 +1438,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2009/05/21
+Jeffrey Allen Neitzel						2009/05/27
 
 @(#)$Id$
