@@ -2,7 +2,7 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-20090521-current]:
+[osh-20090527]:
 	* Moved inclusion of required kernel include files (e.g., <sys/*.h>)
 	  and /usr/include files from *.c to "defs.h" where appropriate.
 

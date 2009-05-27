@@ -3,7 +3,7 @@ code for the Sixth Edition (V6) UNIX Thompson shell and global
 command in porting them to run on modern UNIX systems.
 
 -------------------------------------------------------------------------------
-[osh-20090521-current]:
+[osh-20090527]:
 sh6.c:
 	* Replaced err(), prn(), prs(), and xputc() w/ err() and fd_print()
 	  from err.c .
