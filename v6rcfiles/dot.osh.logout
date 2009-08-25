@@ -1,0 +1,36 @@
+: $h/.osh.logout - " Modify to taste. "
+:
+: "  @(#)$Id: dot.osh.logout 548 2008-11-06 23:09:27Z jneitzel $  "
+:
+: "  The author of this file, J.A. Neitzel <jan (at) v6shell (dot) org>,  "
+: "  hereby grants it to the public domain.                               "
+:
+: "  From:  http://v6shell.org/rc_files/  "
+:
+
+sigign + 2 3
+
+: fd2 -e echo "debug: Executing `"$h/.osh.logout"' now..."
+
+:
+: " Check for OSHDIR ($d), and remove it before logout. "
+:
+if X$d = X -o ! -d $d'' goto Logout
+
+	chdir $d ; rm -r $d ; chdir -
+	: fallthrough
+
+: Logout - " Log out or start new login shell according to user response. "
+
+	chdir ; fd2 -e echo
+	fd2 -e echo -n 'Do you want to log out now? ([y]/n) '
+	head -1 <- | tr -d ' \t' >osh-logout-$$
+
+	if ! -s osh-logout-$$ -o \
+		{ egrep '^$|^[Yy][A-Za-z]*$' osh-logout-$$ >/dev/null } \
+			if { rm -f osh-logout-$$ } exit
+	if ! { which osh >/dev/null } \
+		if { rm -f osh-logout-$$ } if { exit } sleep 5
+
+	rm -f osh-logout-$$ ; unsetenv TTY ; chdir -
+	clear <- ; sigign - 2 3 ; exec osh -login <-

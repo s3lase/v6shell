@@ -1,0 +1,18 @@
+: @SYSCONFDIR@/osh.oshrc - " Modify to taste. "
+:
+: "  @(#)$Id: etc.osh.oshrc 551 2008-11-09 17:45:10Z jneitzel $  "
+:
+: "  The author of this file, J.A. Neitzel <jan (at) v6shell (dot) org>,  "
+: "  hereby grants it to the public domain.                               "
+:
+: "  From:  http://v6shell.org/rc_files/  "
+:
+
+sigign + 1 2 3 13 14 15 ; : " Ignore HUP, INT, QUIT, PIPE, ALRM, and TERM. "
+sigign + 18 21 22 ;       : " Ignore job-control signals: TSTP, TTIN, TTOU "
+
+: fd2 -e echo "debug: Executing `@SYSCONFDIR@/osh.oshrc' now..."
+
+: Insert useful initialization routines here.
+
+sigign - 1 2 3 13 14 15 ; : " Reset the ignored, non-job-control signals. "

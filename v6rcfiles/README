@@ -1,0 +1,45 @@
+Welcome to v6rcfiles-20081109!
+
+V6rcfiles is a collection of rc files for osh(1).  The entire
+collection may be studied as is.  The rc files may also be used
+as templates, modified, and installed for personal or general use.
+
+-------
+INSTALL:
+1) If needed, it is recommended to modify the etc.* and dot.* files
+   to taste before installation.  However, please try not to modify
+   any of the @EXECSHELL@, @SOURCE_OSHDIR@, or @SYSCONFDIR@ strings.
+   The INSTALL script automatically translates these strings into
+   appropriate values during installation.
+
+2) Run the INSTALL script to install all of the rc files.
+
+	usage: ./INSTALL [user]
+
+If possible, it installs all the system-wide rc files (etc.*) into
+the SYSCONFDIR directory specified at osh compile time and found
+in the first osh binary on the current PATH ($p).  If possible, it
+installs all user rc files (dot.*) into the current HOME ($h)
+directory.
+
+All installed user rc files shall be owned by `user' if specified.
+No existent system-wide or user rc files shall be overwritten.
+
+If all rc files install successfully, it exits w/ zero status (true).
+Otherwise, it prints diagnostic(s) and exits w/ non-zero status (false).
+
+...
+Depending on your system configuration, you may need to become the
+superuser in order to successfully install the system-wide rc files.
+In such a case, using su(1) or sudo(8) may be valid options depending
+on your system.
+
+-------
+If you have any comments or questions about this software, I encourage
+you to contact me via email.  Thanks & Enjoy!
+
+Jeffrey Allen Neitzel
+<jan (at) v6shell (dot) org>
+http://v6shell.org/rc_files/					2008/11/09
+
+@(#)$Id: README 551 2008-11-09 17:45:10Z jneitzel $

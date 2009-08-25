@@ -1,0 +1,58 @@
+: $h/.oshrc - " Modify to taste. "
+:
+: "  @(#)$Id: dot.oshrc 546 2008-11-04 21:25:16Z jneitzel $  "
+:
+: "  The author of this file, J.A. Neitzel <jan (at) v6shell (dot) org>,  "
+: "  hereby grants it to the public domain.                               "
+:
+: "  From:  http://v6shell.org/rc_files/  "
+:
+
+: fd2 -e echo "debug: Executing `"$h/.oshrc"' now..."
+
+printenv TERM >/dev/null
+if $s = 0 goto TERM_OK
+
+	setenv	TERM	vt100
+	: fallthrough
+
+: TERM_OK
+printenv TTY | grep \^$t\$ >/dev/null
+if $s = 0 goto continue
+
+	setenv	TTY	$t
+
+	printenv TERM | grep '^rxvt$' >/dev/null
+	if $s = 0 goto C
+
+		:
+		: " The terminal I normally use is rxvt-unicode, but I also "
+		: " use Terminal.app on rare occasions.  Both terminals are "
+		: " UTF-8 capable.  I normally set TERM to xterm-color.     "
+		:
+		setenv	LC_ALL		en_US.UTF-8
+		setenv	LESSCHARSET	utf-8
+		printf	"%b"		'\033]701;en_US.UTF-8\007' >/dev/tty
+		goto Next
+
+	: C - " Default to the C locale for rxvt. "
+
+		setenv	LC_ALL	C
+		: fallthrough
+
+	: Next - " Set the window title for terminal emulators under X. "
+
+		xtitle
+		: fallthrough
+
+	: " Set terminal options. "
+	stty altwerase imaxbel -oxtabs <-
+	stty status '^T' <-
+	: fallthrough
+
+: continue - " Okay, continue as normal. "
+
+	:
+	: " Other initialization routines that the user wishes to execute "
+	: " for each interactive shell can be placed here.                "
+	:

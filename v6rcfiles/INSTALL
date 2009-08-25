@@ -1,0 +1,155 @@
+#!/usr/bin/env osh
+:
+: osh - " Force sh(1), csh(1), and other shells to exit w/ error! " <'' ;;;
+:
+: "  @(#)$Id: INSTALL 551 2008-11-09 17:45:10Z jneitzel $  "
+:
+: "  The author of this file, J.A. Neitzel <jan (at) v6shell (dot) org>,  "
+: "  hereby grants it to the public domain.                               "
+:
+
+:
+: "  If possible, install all the system-wide rc files (etc.*) into the    "
+: "  SYSCONFDIR directory specified at osh compile time and found in the   "
+: "  first osh binary on the current PATH ($p).  If possible, install all  "
+: "  user rc files (dot.*) into the current HOME ($h) directory.           "
+:
+: "  All installed user rc files shall be owned by `user' if specified.    "
+: "  No existent system-wide or user rc files shall be overwritten.        "
+:
+: "  If all rc files install successfully, exit w/  zero status (true).    "
+: "  Otherwise, print diagnostic(s) and exit w/ non-zero status (false).   "
+:
+: "  usage: ./INSTALL [user]  "
+:
+
+: " Check for correct usage. "
+if X$0 != XINSTALL -a X$0 != X./INSTALL\
+	if { exit } fd2 -e echo INSTALL: $0: Invalid INSTALL pathname ; false
+if $n != 0 -a $n != 1 if { exit } fd2 -e echo usage: $0 '[user]' ; false
+if { fd2 which . >/dev/null }\
+	if { exit } fd2 -e echo $0: which: Invalid results ; false
+if ! { which cp id install mkdir mv rm rmdir strings tr >/dev/null }\
+	if { exit } false
+if $n = 1 if ! { id $1'' >/dev/null } if { exit } false
+if $n = 1 if ! { which chown >/dev/null } if { exit } false
+
+: " Do needed setup. "
+	sigign + 2 3 ; umask 0022
+	if { mkdir orig-$$ } cp -p *osh* orig-$$/
+	if $s != 0 if { exit } false
+	if ! { mkdir work-$$ } if { exit } false
+	setenv OSHDIR work-$$
+	( : ) >$d/status
+
+: " Prepare files for installation. "
+	echo -n "<$1 ( rm -f $1 ; sed 's,@SYSCONFDIR@," >$d/sysconfdir
+	which osh | sed 's,.*,strings &,' | osh |\
+		sed -n 's,\(.*\)/osh.login,\1,p' >$d/sysconfdir_path
+	<$d/sysconfdir_path tr -d '\n' >>$d/sysconfdir
+	echo ",' >$1 )" >>$d/sysconfdir
+	osh - etc.osh.login etc.osh.oshrc etc.osh.logout ; goto EXECSHELL
+	: Loop0
+		osh $d/sysconfdir $1 ; shift
+		if $n = 0 exit
+		goto Loop0
+
+: EXECSHELL
+	(\
+	 echo -n "<$1 ( rm -f $1 ; sed 's,@EXECSHELL@," ;\
+	 which osh | tr -d '\n' ; echo ",' >$1 )"       ;\
+	) >$d/execshell
+	osh $d/execshell dot.osh.login
+	: fallthrough
+: OSHDIR
+if ! { fd2 which oshdir >/dev/null } goto NotFound
+	(\
+	 echo -n "<$1 ( rm -f $1 ; sed 's,@SOURCE_OSHDIR@,source " ;\
+	 which oshdir | tr -d '\n' ; echo " $$,' >$1 )"            ;\
+	) >$d/oshdir
+	goto PrepDone
+: NotFound
+	(\
+	 echo -n "<$1 ( rm -f $1 ; sed 's,@SOURCE_OSHDIR@,"                 ;\
+	 echo ": See http://v6shell.org/command_files/oshdir.osh .,' >$1 )" ;\
+	) >$d/oshdir
+	: fallthrough
+: PrepDone
+	osh $d/oshdir dot.osh.login
+	: fallthrough
+
+: System - " Install the system-wide rc files if possible. "
+
+	<$d/sysconfdir_path\
+		sed "s,.*,if ! \\( -e &'' -o -h &'' \\)\
+			fd2 mkdir -p &'' >/dev/null,"\
+	>$d/sysconfdir_test
+	<$d/sysconfdir_path\
+		sed "s,.*,if ! \\( -d &'' -a -w &'' \\) echo error>>$d/status,"\
+	>>$d/sysconfdir_test
+	<$d/sysconfdir_path\
+		sed "s,.*,if ! -d &'' if {\
+			fd2 -e echo INSTALL: &: Not a directory\
+		} goto Jump1 <-,"\
+	>>$d/sysconfdir_test
+	<$d/sysconfdir_path\
+		sed "s,.*,if -d &'' -a ! -w &'' if {\
+			fd2 -e echo INSTALL: &: Permission denied\
+		} goto Jump1 <-,"\
+	>>$d/sysconfdir_test
+	osh - osh.login osh.oshrc osh.logout ; goto User
+	: Loop1
+		osh $d/sysconfdir_test
+		<$d/sysconfdir_path sed 's,.*,\
+		if ! {\
+			if -e &/'$1' -o -h &/'$1'\
+				fd2 -e echo INSTALL: &/'$1': File exists\
+		} install -c -m 0644 etc.'$1' &/'$1',' | osh
+		if $s != 0 echo error >>$d/status
+		: fallthrough
+	: Jump1
+		shift
+		if $n  = 0 exit
+		goto Loop1
+
+: User - " Install the user rc files if possible. "
+
+	osh - osh.login $1'' oshrc $1'' osh.logout $1'' ; goto Status
+	: Loop2
+	if X$2 != X goto User2
+		if ! \( -e $h'' -o -h $h'' \) fd2 mkdir -p $h'' >/dev/null
+		if ! \( -d $h'' -a -w $h'' \) echo error >>$d/status
+		if ! -d $h'' if { fd2 -e echo INSTALL: $h: Not a directory }\
+			goto Jump2
+		if ! -w $h'' if { fd2 -e echo INSTALL: $h: Permission denied }\
+			goto Jump2
+		if ! {\
+			if -e $h/.$1 -o -h $h/.$1\
+				fd2 -e echo INSTALL: $h/.$1: File exists\
+		} install -c -m 0644 dot.$1 $h/.$1
+		if $s != 0 echo error >>$d/status
+		goto Jump2
+	: User2
+		if ! \( -e $h'' -o -h $h'' \)\
+			if { fd2 mkdir -p $h'' >/dev/null } chown $2 $h''
+		if ! \( -d $h'' -a -w $h'' \) echo error >>$d/status
+		if ! -d $h'' if { fd2 -e echo INSTALL: $h: Not a directory }\
+			goto Jump2
+		if ! -w $h'' if { fd2 -e echo INSTALL: $h: Permission denied }\
+			goto Jump2
+		if ! {\
+			if -e $h/.$1 -o -h $h/.$1\
+				fd2 -e echo INSTALL: $h/.$1: File exists\
+		} install -c -o $2 -m 0644 dot.$1 $h/.$1
+		if $s != 0 echo error >>$d/status
+		: fallthrough
+	: Jump2
+		shift ; shift
+		if $n = 0 exit
+		goto Loop2
+
+: Status - " Clean up and exit w/ the appropriate status. "
+
+	if { mv -f orig-$$/* . } rmdir orig-$$
+	if -s $d/status if { rm -rf work-$$ } if { exit } false
+	rm -rf work-$$ ; : zero status
