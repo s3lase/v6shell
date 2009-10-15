@@ -1,0 +1,10 @@
+*.1.out
+*.o
+.release
+config.h
+fd2
+glob6
+goto
+if
+osh
+sh6
