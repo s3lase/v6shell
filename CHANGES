@@ -2,6 +2,9 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
+[osh-20091015-current]:
+	* No changes.
+
 [osh-20090527]:
 	* Moved inclusion of required kernel include files (e.g., <sys/*.h>)
 	  and /usr/include files from *.c to "defs.h" where appropriate.
@@ -1438,6 +1441,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2009/05/27
+Jeffrey Allen Neitzel						2009/10/15
 
 @(#)$Id$
