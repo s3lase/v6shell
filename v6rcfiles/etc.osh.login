@@ -1,6 +1,6 @@
 : @SYSCONFDIR@/osh.login - " Modify to taste. "
 :
-: "  @(#)$Id: etc.osh.login 551 2008-11-09 17:45:10Z jneitzel $  "
+: "  @(#)$Id$  "
 :
 : "  The author of this file, J.A. Neitzel <jan (at) v6shell (dot) org>,  "
 : "  hereby grants it to the public domain.                               "
