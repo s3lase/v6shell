@@ -64,11 +64,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	lint
-#include "rcsid.h"
-OSH_RCSID("@(#)$Id$");
-#endif	/* !lint */
-
 #define	SH6_SHELL
 
 #include "defs.h"

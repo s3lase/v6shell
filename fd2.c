@@ -29,11 +29,6 @@
  *	@(#)$Id$
  */
 
-#ifndef	lint
-#include "rcsid.h"
-OSH_RCSID("@(#)$Id$");
-#endif	/* !lint */
-
 #include "defs.h"
 #include "err.h"
 #include "pexec.h"

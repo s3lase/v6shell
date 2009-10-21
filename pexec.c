@@ -61,11 +61,6 @@
  *	@(#)exec.c	8.1 (Berkeley) 6/4/93
  */
 
-#ifndef	lint
-#include "rcsid.h"
-OSH_RCSID("@(#)$Id$");
-#endif	/* !lint */
-
 #include "defs.h"
 #include "pexec.h"
 

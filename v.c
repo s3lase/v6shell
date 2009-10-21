@@ -27,6 +27,25 @@
  */
 
 #ifndef	lint
-#include "rcsid.h"
-OSH_RCSID("\100(#)\044Id: " OSH_VERSION " \044");
+
+#ifndef	OSH_ATTR
+# if __GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ >= 4
+#  define	OSH_ATTR	__attribute__((__used__))
+# elif defined(__GNUC__)
+#  define	OSH_ATTR	__attribute__((__unused__))
+# else
+#  define	OSH_ATTR	/* nothing */
+# endif
+#endif	/* !OSH_ATTR */
+
+#define	OSH_COPY	"Copyright (c) 2001-2002 Caldera International Inc."
+#define	OSH_COPY1	"Copyright (c) 2003-2009 Jeffrey Allen Neitzel."
+
+/*@unused@*/
+static const char copy[] OSH_ATTR    = "\100(#)\044Id: " OSH_COPY " \044";
+/*@unused@*/
+static const char copy1[] OSH_ATTR   = "\100(#)\044Id: " OSH_COPY1 " \044";
+/*@unused@*/
+static const char version[] OSH_ATTR = "\100(#)\044Id: " OSH_VERSION " \044";
+
 #endif	/* !lint */
