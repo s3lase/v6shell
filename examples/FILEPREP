@@ -24,19 +24,21 @@
 if X$0 != XFILEPREP -a X$0 != X./FILEPREP\
 	if { exit } fd2 -e echo FILEPREP: $0: Invalid FILEPREP pathname ; false
 if $n != 1 -o X$1 = X\
-	if { exit } fd2 -e echo usage: osh $0 /path/to/nonexistent_directory ; false
+	if { exit } fd2 -e echo usage: osh $0 /path/to/nonexistent_directory ;\
+	false
 if -e $1'' -o -h $1''\
 	if { exit } fd2 -e echo FILEPREP: $1: File exists ; false
 if { fd2 which . >/dev/null }\
 	if { exit } fd2 -e echo $0: which: Invalid results ; false
-if ! { which cp head mkdir pwd rm strings tee tr >/dev/null } if { exit } false
+if ! { which chmod cp head mkdir pwd rm strings tee tr >/dev/null }\
+	if { exit } false
 
 : " Do needed setup. "
 
 	sigign + 2 3 ; umask 0022
 	if { mkdir -p $1'' } cp *osh* $1/
 	if $s != 0 if { exit } false
-	cd $1''
+	cd $1'' ; chmod 0644 *
 	if ! { mkdir tmp-$$ } if { exit } false
 	setenv OSHDIR tmp-$$
 
