@@ -1,38 +1,24 @@
-Welcome to v6rcfiles-20081109!
+This collection of osh(1) rc files may be studied as is, used as
+templates, modified, and/or installed for personal or general use.
 
-V6rcfiles is a collection of rc files for osh(1).  The entire
-collection may be studied as is.  The rc files may also be used
-as templates, modified, and installed for personal or general use.
+For full details about how osh handles rc files, see "Startup and
+shutdown" subsection of osh(1) manual page.
 
 -------
 INSTALL:
-1) If needed, it is recommended to modify the etc.* and dot.* files
-   to taste before installation.  However, please try not to modify
-   any of the @EXECSHELL@, @SOURCE_OSHDIR@, or @SYSCONFDIR@ strings.
-   The INSTALL script automatically translates these strings into
-   appropriate values during installation.
+1) Run FILEPREP script to prepare rc files for installation.
 
-2) Run the INSTALL script to install all of the rc files.
+	usage: osh FILEPREP /path/to/nonexistent_directory
 
-	usage: ./INSTALL [user]
+2) cd or chdir to specified directory.
 
-If possible, it installs all the system-wide rc files (etc.*) into
-the SYSCONFDIR directory specified at osh compile time and found
-in the first osh binary on the current PATH ($p).  If possible, it
-installs all user rc files (dot.*) into the current HOME ($h)
-directory.
+3) Modify *osh* files to taste (e.g., change PATH, etc).
 
-All installed user rc files shall be owned by `user' if specified.
-No existent system-wide or user rc files shall be overwritten.
-
-If all rc files install successfully, it exits w/ zero status (true).
-Otherwise, it prints diagnostic(s) and exits w/ non-zero status (false).
+4) Copy *osh* files to destinations noted in fileprep.log .
 
 ...
-Depending on your system configuration, you may need to become the
-superuser in order to successfully install the system-wide rc files.
-In such a case, using su(1) or sudo(8) may be valid options depending
-on your system.
+Depending on system configuration, you may need to become superuser
+in order to successfully install system-wide rc files.
 
 -------
 If you have any comments or questions about this software, I encourage
@@ -40,6 +26,6 @@ you to contact me via email.  Thanks & Enjoy!
 
 Jeffrey Allen Neitzel
 <jan (at) v6shell (dot) org>
-http://v6shell.org/rc_files/					2008/11/09
+http://v6shell.org/rc_files/					2009/10/23
 
 @(#)$Id$
