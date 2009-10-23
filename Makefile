@@ -13,7 +13,7 @@
 DESTDIR?=
 PREFIX?=	/usr/local
 BINDIR?=	$(PREFIX)/bin
-DOCDIR?=	$(PREFIX)/share/doc
+DOCDIR?=	$(PREFIX)/share/doc/$(OSH_VERSION)
 MANDIR?=	$(PREFIX)/share/man/man1
 SYSCONFDIR?=	$(PREFIX)/etc
 #BINGRP=		-g bin
@@ -62,8 +62,8 @@ LDFLAGS+=	$(MOXARCH)
 #	osh-YYYYMMDD-current == development snapshot
 #	osh-YYYYMMDD         == official release
 #
-OSH_DATE=	October 22, 2009
-OSH_VERSION=	osh-20091022-current
+OSH_DATE=	October 23, 2009
+OSH_VERSION=	osh-20091023-current
 
 OSH=	osh
 SH6=	sh6 glob6
@@ -156,14 +156,14 @@ fd2bin: v.o fd2.o err.o pexec.o
 # Install targets
 #
 DESTBINDIR=	$(DESTDIR)$(BINDIR)
-DESTDOCDIR=	$(DESTDIR)$(DOCDIR)/$(OSH_VERSION)
+DESTDOCDIR=	$(DESTDIR)$(DOCDIR)
 DESTEXPDIR=	$(DESTDOCDIR)/examples
 DESTMANDIR=	$(DESTDIR)$(MANDIR)
-install: install-oshall install-sh6all install-doc install-examples
+install: install-oshall install-sh6all
 
-install-oshall: oshall install-osh install-uman
+install-oshall: oshall install-osh install-uman install-exp
 
-install-sh6all: sh6all install-sh6 install-utils
+install-sh6all: sh6all install-sh6 install-utils install-doc
 
 install-utils: install-ubin install-uman
 
@@ -187,17 +187,17 @@ install-uman: $(UMAN) install-dest
 	$(INSTALL) -c    $(MANGRP) $(MANMODE) goto.1.out  $(DESTMANDIR)/goto.1
 	$(INSTALL) -c    $(MANGRP) $(MANMODE) if.1.out    $(DESTMANDIR)/if.1
 
-install-doc:
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) [ACILNR]*   $(DESTDOCDIR)
-
-install-examples:
-	$(INSTALL) -c    $(MANGRP) $(MANMODE) examples/*  $(DESTEXPDIR)
-
 install-dest:
 	test -d $(DESTBINDIR) || { umask 0022 && mkdir -p $(DESTBINDIR) ; }
-	test -d $(DESTDOCDIR) || { umask 0022 && mkdir -p $(DESTDOCDIR) ; }
-	test -d $(DESTEXPDIR) || { umask 0022 && mkdir -p $(DESTEXPDIR) ; }
 	test -d $(DESTMANDIR) || { umask 0022 && mkdir -p $(DESTMANDIR) ; }
+
+install-doc:
+	test -d $(DESTDOCDIR) || { umask 0022 && mkdir -p $(DESTDOCDIR) ; }
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) [ACILNR]*   $(DESTDOCDIR)
+
+install-exp: install-doc
+	test -d $(DESTEXPDIR) || { umask 0022 && mkdir -p $(DESTEXPDIR) ; }
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) examples/*  $(DESTEXPDIR)
 
 #
 # Cleanup targets
