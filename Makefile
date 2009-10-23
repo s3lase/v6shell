@@ -13,7 +13,8 @@
 DESTDIR?=
 PREFIX?=	/usr/local
 BINDIR?=	$(PREFIX)/bin
-MANDIR?=	$(PREFIX)/man/man1
+DOCDIR?=	$(PREFIX)/share/doc
+MANDIR?=	$(PREFIX)/share/man/man1
 SYSCONFDIR?=	$(PREFIX)/etc
 #BINGRP=		-g bin
 BINMODE=	-m 0555
@@ -155,8 +156,10 @@ fd2bin: v.o fd2.o err.o pexec.o
 # Install targets
 #
 DESTBINDIR=	$(DESTDIR)$(BINDIR)
+DESTDOCDIR=	$(DESTDIR)$(DOCDIR)/$(OSH_VERSION)
+DESTEXPDIR=	$(DESTDOCDIR)/examples
 DESTMANDIR=	$(DESTDIR)$(MANDIR)
-install: install-oshall install-sh6all
+install: install-oshall install-sh6all install-doc install-examples
 
 install-oshall: oshall install-osh install-uman
 
@@ -165,27 +168,35 @@ install-sh6all: sh6all install-sh6 install-utils
 install-utils: install-ubin install-uman
 
 install-osh: $(OSH) $(OSHMAN) install-dest
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) osh         $(DESTBINDIR)/osh
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) osh         $(DESTBINDIR)
 	$(INSTALL) -c    $(MANGRP) $(MANMODE) osh.1.out   $(DESTMANDIR)/osh.1
 
 install-sh6: $(SH6) $(SH6MAN) install-dest
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) sh6         $(DESTBINDIR)/sh6
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) sh6         $(DESTBINDIR)
 	$(INSTALL) -c    $(MANGRP) $(MANMODE) sh6.1.out   $(DESTMANDIR)/sh6.1
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) glob6       $(DESTBINDIR)/glob6
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) glob6       $(DESTBINDIR)
 	$(INSTALL) -c    $(MANGRP) $(MANMODE) glob6.1.out $(DESTMANDIR)/glob6.1
 
 install-ubin: $(UBIN) install-dest
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) fd2         $(DESTBINDIR)/fd2
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) goto        $(DESTBINDIR)/goto
-	$(INSTALL) -c -s $(BINGRP) $(BINMODE) if          $(DESTBINDIR)/if
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) fd2         $(DESTBINDIR)
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) goto        $(DESTBINDIR)
+	$(INSTALL) -c -s $(BINGRP) $(BINMODE) if          $(DESTBINDIR)
 
 install-uman: $(UMAN) install-dest
 	$(INSTALL) -c    $(MANGRP) $(MANMODE) fd2.1.out   $(DESTMANDIR)/fd2.1
 	$(INSTALL) -c    $(MANGRP) $(MANMODE) goto.1.out  $(DESTMANDIR)/goto.1
 	$(INSTALL) -c    $(MANGRP) $(MANMODE) if.1.out    $(DESTMANDIR)/if.1
 
+install-doc:
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) [ACILNR]*   $(DESTDOCDIR)
+
+install-examples:
+	$(INSTALL) -c    $(MANGRP) $(MANMODE) examples/*  $(DESTEXPDIR)
+
 install-dest:
 	test -d $(DESTBINDIR) || { umask 0022 && mkdir -p $(DESTBINDIR) ; }
+	test -d $(DESTDOCDIR) || { umask 0022 && mkdir -p $(DESTDOCDIR) ; }
+	test -d $(DESTEXPDIR) || { umask 0022 && mkdir -p $(DESTEXPDIR) ; }
 	test -d $(DESTMANDIR) || { umask 0022 && mkdir -p $(DESTMANDIR) ; }
 
 #
