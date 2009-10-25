@@ -59,11 +59,12 @@ LDFLAGS+=	$(MOXARCH)
 #
 # The following specifies the osh date and version:
 #
-#	osh-YYYYMMDD-current == development snapshot
 #	osh-YYYYMMDD         == official release
+#	osh-YYYYMMDD-beta    == beta release
+#	osh-YYYYMMDD-current == development snapshot
 #
-OSH_DATE=	October 23, 2009
-OSH_VERSION=	osh-20091023-current
+OSH_DATE=	October 25, 2009
+OSH_VERSION=	osh-20091029-beta
 
 OSH=	osh
 SH6=	sh6 glob6
@@ -72,7 +73,8 @@ GHEAD=	config.h defs.h
 ERRSRC=	err.h err.c
 PEXSRC=	pexec.h pexec.c
 SIGSRC=	sasignal.h sasignal.c
-OBJ=	err.o fd2.o glob6.o goto.o if.o osh.o pexec.o sasignal.o sh6.o util.o v.o
+OBJ=	err.o fd2.o glob6.o goto.o if.o osh.o pexec.o sasignal.o
+OBJ+=	sh6.o util.o v.o
 OSHMAN=	osh.1.out
 SH6MAN=	sh6.1.out glob6.1.out
 UMAN=	fd2.1.out goto.1.out if.1.out
