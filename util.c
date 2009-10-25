@@ -242,7 +242,7 @@ sbi_fd2(int argc, char **argv)
 	if (IS_SBI(key))
 		return uexec(key, argc, argv);
 
-	(void)err_pexec(myname, argv[0], argv);
+	(void)err_pexec(argv[0], argv);
 	/*NOTREACHED*/
 	return FC_ERR;
 }
@@ -590,7 +590,7 @@ doex(bool forked)
 		return;
 	}
 
-	(void)err_pexec(myname, xav[0], xav);
+	(void)err_pexec(xav[0], xav);
 }
 
 /*
