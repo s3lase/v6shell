@@ -245,11 +245,11 @@ always appended to the end of the file.
 For example, either of the following command lines:
 .PP
 .nf
-	% date >dirlist ; pwd >>dirlist ; ls \-l >>dirlist
-	% ( date ; pwd ; ls \-l ) >dirlist
+	% date >.dirlist ; pwd >>.dirlist ; ls \-l >>.dirlist
+	% ( date ; pwd ; ls \-l ) >.dirlist
 .fi
 .PP
-creates on the file `dirlist',
+creates on the file `.dirlist',
 the current date and time,
 followed by the name and a long listing
 of the current working directory.
