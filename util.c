@@ -162,7 +162,7 @@ sbi_echo(int argc, char **argv)
 }
 
 /*@noreturn@*/
-static	void	usage(void);
+static	void	fd2_usage(void);
 
 /*
  * NAME
@@ -195,12 +195,12 @@ sbi_fd2(int argc, char **argv)
 			file = optarg;
 			break;
 		default:
-			usage();
+			fd2_usage();
 		}
 	argc -= optind;
 	argv += optind;
 	if (argc < 1)
-		usage();
+		fd2_usage();
 
 	if (file != NULL) {
 		if ((nfd = open(file, O_WRONLY|O_APPEND|O_CREAT, 0666)) == -1)
@@ -235,7 +235,7 @@ sbi_fd2(int argc, char **argv)
 }
 
 static void
-usage(void)
+fd2_usage(void)
 {
 
 	err(FC_ERR, "usage: %s [-e] [-f file] command [arg ...]\n", myname);
