@@ -96,6 +96,7 @@
  *			unusable value which causes execve(2) to fail.
  */
 
+/*@maynotreturn@*/
 int	pexec(/*@null@*/ const char *, /*@null@*/ char *const *);
 
 #endif	/* !PEXEC_H */
