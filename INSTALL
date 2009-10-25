@@ -28,14 +28,18 @@ passing the desired variable=value pair(s) on the command line.
 			binary packages if needed.
 
 	PREFIX		Defaults to /usr/local.  This is the target
-			directory where BINDIR, MANDIR, and SYSCONFDIR
-			are located by default.
+			directory where BINDIR, DOCDIR, MANDIR, and
+			SYSCONFDIR are located by default.
 
 	BINDIR		Defaults to $(PREFIX)/bin.  This is the target
 			directory where the binaries are installed.
 
-	MANDIR		Defaults to $(PREFIX)/man/man1.  This is the
-			target directory where the manual pages are
+	DOCDIR		Defaults to $(PREFIX)/share/doc/$(OSH_VERSION).
+			This is the target directory for the [ACILNPR]*
+			package documentation and examples/* files.
+
+	MANDIR		Defaults to $(PREFIX)/share/man/man1.  This is
+			the target directory where the manual pages are
 			installed.
 
 	SYSCONFDIR	Defaults to $(PREFIX)/etc.  This is the target
@@ -58,9 +62,9 @@ architecture(s) for compiling universal binaries and/or 64-bit
 binaries and/or 32-bit binaries for Mac OS X running on Intel
 and PowerPC Macs.
 
-	MOXARCH		Unset by default.  Possible value(s) may be
-			one or more of the following: -arch x86_64,
-			-arch ppc64, -arch i386, -arch ppc.
+	MOXARCH		Unset by default.  Possible value(s) may include
+			one or more of the following on supported systems:
+			-arch x86_64, -arch ppc64, -arch i386, -arch ppc.
 			See also EXAMPLES.
 
 -------
@@ -70,16 +74,19 @@ The following targets are available.
 	all		Default target is the same as typing `make'.
 			Compiles everything.
 
-	install		Installs all binaries and manual pages.
+	install		Installs all binaries, package documentation,
+			examples, and manual pages.
 
 	oshall		Compiles osh and generates manual pages.
 
-	install-oshall	Installs osh binary and manual pages.
+	install-oshall	Installs osh binary, package documentation,
+			examples, and manual pages.
 
 	sh6all		Compiles sh6, glob6, if, goto, fd2 and
 			generates manual pages.
 
-	install-sh6all	Installs sh6all binaries and manual pages.
+	install-sh6all	Installs sh6all binaries, package documentation,
+			and manual pages.
 
 	clean-obj	Removes all object files.
 
@@ -88,24 +95,27 @@ The following targets are available.
 
 --------
 EXAMPLES
-The following example compiles osh for /opt/local.  It then
-installs the osh binary into /opt/local/bin, its manual pages into
-/opt/local/man/man1, and also sets SYSCONFDIR to /opt/local/etc.
+The following example compiles osh for /opt/local.  It then installs
+the osh binary into /opt/local/bin, package documentation and
+examples into /opt/local/share/doc/$(OSH_VERSION), manual pages
+into /opt/local/share/man/man1, and also sets SYSCONFDIR to
+/opt/local/etc.
 
 	% make PREFIX=/opt/local oshall
 	# make PREFIX=/opt/local install-oshall
 
 The following example compiles sh6, glob6, if, goto, and fd2 for
-/usr/pkg.  It then installs these binaries into /usr/pkg/bin and
-their manual pages into /usr/pkg/man/man1.
+/usr/pkg.  It then installs these binaries into /usr/pkg/bin, package
+documentation into /usr/pkg/share/doc/$(OSH_VERSION), and manual
+pages into /usr/pkg/share/man/man1.
 
 	% make PREFIX=/usr/pkg sh6all
 	# make PREFIX=/usr/pkg install-sh6all
 
-The following example compiles everything, configuring the shell to
-search for its system-wide rc files in /etc instead of /usr/local/etc
-by default.  It then installs the entire osh package into the
-default location.
+The following example compiles everything, configuring the shell
+to search for its system-wide rc files in /etc instead of /usr/local/etc
+by default.  It then installs the entire osh package into the default
+location.
 
 	% make SYSCONFDIR=/etc
 	# make install
@@ -117,6 +127,6 @@ It then installs the entire osh package into the default location.
 	% make MOXARCH='-arch i386 -arch ppc'
 	# make install
 
-Jeffrey Allen Neitzel						2009/05/27
+Jeffrey Allen Neitzel						2009/10/25
 
 @(#)$Id$
