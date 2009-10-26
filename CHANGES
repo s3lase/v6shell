@@ -2,14 +2,29 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-current]:
-	* No consequential code changes.
+[osh-20091029-beta]:
+	* Remove the rcsid.h file; stop adding rcsid strings for
+	  all sources to compiled binaries.
 
-	* This release will focus primarily on issues related to
-	  building, installation, and packaging...
+	* Re-add example rc (init and logout) files as examples/* .
 
-	* WIP
+	* Add my $h/.project file as PROJECT for quick info.
 
+Makefile:
+	* Add default DOCDIR as $(PREFIX)/share/doc/$(OSH_VERSION); use it
+	  for the [ACILNPR]* package documentation and examples/* files.
+
+	* Change default MANDIR to $(PREFIX)/share/man/man1 .
+
+v.c:
+	* Include OSH_VERSION from Makefile and project copyright
+	  notices in compiled binaries.
+
+osh.1:
+	* Change an example in the "I/O redirection" subsection
+	  that could confuse new users.
+
+-------------------------------------------------------------------------------
 [osh-20090527]:
 	* Moved inclusion of required kernel include files (e.g., <sys/*.h>)
 	  and /usr/include files from *.c to "defs.h" where appropriate.
@@ -1446,6 +1461,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2009/10/23
+Jeffrey Allen Neitzel						2009/10/26
 
 @(#)$Id$

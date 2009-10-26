@@ -3,9 +3,14 @@ code for the Sixth Edition (V6) UNIX Thompson shell and global
 command in porting them to run on modern UNIX systems.
 
 -------------------------------------------------------------------------------
-[osh-current]:
-	* No consequential code changes.
+[osh-20091029-beta]:
+	* No code changes.
 
+sh6.1:
+	* Change an example in the "I/O redirection" subsection
+	  that could confuse new users.
+
+-------------------------------------------------------------------------------
 [osh-20090527]:
 sh6.c:
 	* Replaced err(), prn(), prs(), and xputc() w/ err() and fd_print()
@@ -364,6 +369,6 @@ glob.c:
     Date: May 14, 1975
     From: Sixth Edition UNIX /usr/source/s1/glob.c
 
-Jeffrey Allen Neitzel						2009/10/23
+Jeffrey Allen Neitzel						2009/10/26
 
 @(#)$Id$
