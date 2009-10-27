@@ -2,7 +2,7 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-20091029-beta]:
+[osh-20091029-beta1]:
 	* Remove rcsid.h file; stop adding rcsid strings for all
 	  sources to compiled binaries.
 
@@ -1465,6 +1465,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2009/10/26
+Jeffrey Allen Neitzel						2009/10/27
 
 @(#)$Id$
