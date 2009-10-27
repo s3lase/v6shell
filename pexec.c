@@ -62,10 +62,14 @@
  */
 
 #include "defs.h"
+#include "err.h"
 #include "pexec.h"
 
 extern char **environ;
 
+/*
+ * Execute a file or path name.
+ */
 int
 pexec(const char *file, char *const *argv)
 {
@@ -189,4 +193,23 @@ fail:
 	if (errno == 0)
 		errno = ENOENT;
 	return -1;
+}
+
+/*
+ * Execute a file or path name w/ error handling.
+ * This function never returns.
+ */
+void
+err_pexec(const char *name, const char *file, char *const *argv)
+{
+	const char *f, *n;
+
+	(void)pexec(file, argv);
+	f = (file == NULL) ? "(null)" : file;
+	n = (name == NULL) ? "(null)" : name;
+	if (errno == ENOEXEC)
+		err(125, FMT3S, n, f, ERR_NOSHELL);
+	if (errno != ENOENT && errno != ENOTDIR)
+		err(126, FMT3S, n, f, ERR_EXEC);
+	err(127, FMT3S, n, f, ERR_NOTFOUND);
 }

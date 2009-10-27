@@ -297,12 +297,7 @@ doex(bool forked)
 		EXIT(SH_TRUE);
 	}
 
-	(void)pexec(xav[0], xav);
-	if (errno == ENOEXEC)
-		err(125, FMT3S, getmyname(), xav[0], ERR_NOSHELL);
-	if (errno != ENOENT && errno != ENOTDIR)
-		err(126, FMT3S, getmyname(), xav[0], ERR_EXEC);
-	err(127, FMT3S, getmyname(), xav[0], ERR_NOTFOUND);
+	(void)err_pexec(getmyname(), xav[0], xav);
 }
 
 /*

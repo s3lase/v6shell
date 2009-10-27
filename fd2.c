@@ -108,12 +108,7 @@ main(int argc, char **argv)
 	/*
 	 * Try to execute the specified command.
 	 */
-	(void)pexec(argv[0], argv);
-	if (errno == ENOEXEC)
-		err(125, FMT3S, getmyname(), argv[0], ERR_NOSHELL);
-	if (errno != ENOENT && errno != ENOTDIR)
-		err(126, FMT3S, getmyname(), argv[0], ERR_EXEC);
-	err(127, FMT3S, getmyname(), argv[0], ERR_NOTFOUND);
+	(void)err_pexec(getmyname(), argv[0], argv);
 	/*NOTREACHED*/
 	return FC_ERR;
 }

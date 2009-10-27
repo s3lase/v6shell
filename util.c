@@ -87,8 +87,6 @@ static	int	sbi_fd2(int, char **);
 static	int	sbi_goto(int, char **);
 /*@maynotreturn@*/
 static	int	sbi_if(int, char **);
-/*@noreturn@*/
-static	void	err_pexec(/*@null@*/ const char *, /*@null@*/ char *const *);
 
 /*
  * Execute the shell utility specified by key w/ the argument
@@ -128,22 +126,6 @@ uexec(enum sbikey key, int ac, char **av)
 #endif
 
 	return s;
-}
-
-/*
- * Wrap pexec() function calls w/ error handling.
- * This function never returns.
- */
-static void
-err_pexec(const char *file, char *const *argv)
-{
-
-	(void)pexec(file, argv);
-	if (errno == ENOEXEC)
-		err(125, FMT3S, myname, file, ERR_NOSHELL);
-	if (errno != ENOENT && errno != ENOTDIR)
-		err(126, FMT3S, myname, file, ERR_EXEC);
-	err(127, FMT3S, myname, file, ERR_NOTFOUND);
 }
 
 /*
@@ -242,7 +224,7 @@ sbi_fd2(int argc, char **argv)
 	if (IS_SBI(key))
 		return uexec(key, argc, argv);
 
-	(void)err_pexec(argv[0], argv);
+	(void)err_pexec(myname, argv[0], argv);
 	/*NOTREACHED*/
 	return FC_ERR;
 }
@@ -590,7 +572,7 @@ doex(bool forked)
 		return;
 	}
 
-	(void)err_pexec(xav[0], xav);
+	(void)err_pexec(myname, xav[0], xav);
 }
 
 /*

@@ -99,4 +99,12 @@
 /*@maynotreturn@*/
 int	pexec(/*@null@*/ const char *, /*@null@*/ char *const *);
 
+/*
+ * NAME
+ *	err_pexec - execute a file or path name w/ error handling
+ */
+/*@noreturn@*/
+void	err_pexec(/*@null@*/ const char *,
+		  /*@null@*/ const char *, /*@null@*/ char *const *);
+
 #endif	/* !PEXEC_H */
