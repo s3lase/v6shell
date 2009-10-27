@@ -2,7 +2,7 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-20091029-beta1]:
+[osh-current]:
 	* Remove rcsid.h file; stop adding rcsid strings for all
 	  sources to compiled binaries.
 
@@ -23,6 +23,9 @@ v.c:
 fd2.c, if.c, pexec.[hc], util.c:
 	* Add err_pexec() error-handling wrapper around pexec() for
 	  shell utilities that execute external commands.
+
+osh.c:
+	* Wrap WCOREDUMP(s) use w/ #ifdef WCOREDUMP ... #endif .
 
 osh.1:
 	* Change example in the "I/O redirection" subsection that

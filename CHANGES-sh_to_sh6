@@ -3,8 +3,9 @@ code for the Sixth Edition (V6) UNIX Thompson shell and global
 command in porting them to run on modern UNIX systems.
 
 -------------------------------------------------------------------------------
-[osh-20091029-beta1]:
-	* No code changes.
+[osh-current]:
+sh6.c:
+	* Wrap WCOREDUMP(s) use w/ #ifdef WCOREDUMP ... #endif .
 
 sh6.1:
 	* Change an example in the "I/O redirection" subsection
