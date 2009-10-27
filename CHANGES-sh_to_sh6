@@ -5,11 +5,11 @@ command in porting them to run on modern UNIX systems.
 -------------------------------------------------------------------------------
 [osh-current]:
 sh6.c:
-	* Wrap WCOREDUMP(s) use w/ #ifdef WCOREDUMP ... #endif .
+	* Wrap WCOREDUMP(s) w/ #ifdef WCOREDUMP ... #endif .
 
 sh6.1:
-	* Change an example in the "I/O redirection" subsection
-	  that could confuse new users.
+	* Change example in "I/O redirection" subsection that could
+	  confuse new users.
 
 -------------------------------------------------------------------------------
 [osh-20090527]:

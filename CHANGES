@@ -25,11 +25,11 @@ fd2.c, if.c, pexec.[hc], util.c:
 	  shell utilities that execute external commands.
 
 osh.c:
-	* Wrap WCOREDUMP(s) use w/ #ifdef WCOREDUMP ... #endif .
+	* Wrap WCOREDUMP(s) w/ #ifdef WCOREDUMP ... #endif .
 
 osh.1:
-	* Change example in the "I/O redirection" subsection that
-	  could confuse new users.
+	* Change example in "I/O redirection" subsection that could
+	  confuse new users.
 
 -------------------------------------------------------------------------------
 [osh-20090527]:

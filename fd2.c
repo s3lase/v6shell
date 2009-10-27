@@ -70,7 +70,7 @@ main(int argc, char **argv)
 	for (fd = 0; fd < 3; fd++)
 		if (!fd_isopen(fd))
 			err(FC_ERR, "%s: %u: %s\n",
-			     getmyname(), (unsigned)fd, strerror(errno));
+			    getmyname(), (unsigned)fd, strerror(errno));
 
 	ofd = FD1, efd = FD2;
 	eopt = false, file = NULL;
