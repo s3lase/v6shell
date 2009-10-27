@@ -1046,8 +1046,10 @@ prsig(int s, pid_t tp, pid_t cp)
 			    buf;
 		}
 		c = "";
+#ifdef	WCOREDUMP
 		if (WCOREDUMP(s) != 0)
 			c = sigmsg[0];
+#endif
 		if (tp != cp)
 			fd_print(FD2, "%u: %s%s\n", (unsigned)tp, m, c);
 		else
