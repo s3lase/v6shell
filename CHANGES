@@ -3,16 +3,16 @@ Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
 [osh-20091029-beta]:
-	* Remove the rcsid.h file; stop adding rcsid strings for
-	  all sources to compiled binaries.
+	* Remove rcsid.h file; stop adding rcsid strings for all
+	  sources to compiled binaries.
 
 	* Re-add example rc (init and logout) files as examples/* .
 
-	* Add my $h/.project file as PROJECT for quick info.
+	* Add $h/.project file as PROJECT for quick project info.
 
 Makefile:
-	* Add default DOCDIR as $(PREFIX)/share/doc/$(OSH_VERSION); use it
-	  for the [ACILNPR]* package documentation and examples/* files.
+	* Add default DOCDIR as $(PREFIX)/share/doc/$(OSH_VERSION);
+	  use it for [ACILNPR]* package documentation and examples/* .
 
 	* Change default MANDIR to $(PREFIX)/share/man/man1 .
 
@@ -20,9 +20,13 @@ v.c:
 	* Include OSH_VERSION from Makefile and project copyright
 	  notices in compiled binaries.
 
+fd2.c, if.c, pexec.[hc], util.c:
+	* Add err_pexec() error-handling wrapper around pexec() for
+	  shell utilities that execute external commands.
+
 osh.1:
-	* Change an example in the "I/O redirection" subsection
-	  that could confuse new users.
+	* Change example in the "I/O redirection" subsection that
+	  could confuse new users.
 
 -------------------------------------------------------------------------------
 [osh-20090527]:

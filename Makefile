@@ -63,8 +63,8 @@ LDFLAGS+=	$(MOXARCH)
 #	osh-YYYYMMDD-beta    == beta release
 #	osh-YYYYMMDD-current == development snapshot
 #
-OSH_DATE=	October 26, 2009
-OSH_VERSION=	osh-20091029-beta
+OSH_DATE=	October 27, 2009
+OSH_VERSION=	osh-20091029-beta1
 
 OSH=	osh
 SH6=	sh6 glob6
@@ -124,14 +124,14 @@ goto: v.c goto.c $(GHEAD) $(ERRSRC)
 fd2: v.c fd2.c $(GHEAD) $(ERRSRC) $(PEXSRC)
 	@$(MAKE) $@bin
 
-$(OBJ)                                      : $(GHEAD)
-fd2.o glob6.o goto.o if.o osh.o sh6.o util.o: err.h
-fd2.o glob6.o if.o osh.o sh6.o util.o       : pexec.h
-if.o osh.o sh6.o                            : sasignal.h
-osh.o sh6.o util.o                          : sh.h
-err.o                                       : $(ERRSRC)
-pexec.o                                     : $(PEXSRC)
-sasignal.o                                  : $(SIGSRC)
+$(OBJ)                                              : $(GHEAD)
+fd2.o glob6.o goto.o if.o osh.o pexec.o sh6.o util.o: err.h
+fd2.o glob6.o if.o osh.o sh6.o                      : pexec.h
+if.o osh.o sh6.o                                    : sasignal.h
+osh.o sh6.o util.o                                  : sh.h
+err.o                                               : $(ERRSRC)
+pexec.o                                             : $(PEXSRC)
+sasignal.o                                          : $(SIGSRC)
 
 config.h: mkconfig
 	$(SHELL) ./mkconfig
