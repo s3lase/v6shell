@@ -127,6 +127,18 @@ It then installs the entire osh package into the default location.
 	% make MOXARCH='-arch i386 -arch ppc'
 	# make install
 
-Jeffrey Allen Neitzel						2009/10/25
+The following example shows what I do to compile and install the
+osh package on OpenSolaris.
+
+	% uname -srvm
+	SunOS 5.11 snv_111b i86pc
+	% which cc gmake ginstall
+	/usr/gnu/bin/cc
+	/usr/bin/gmake
+	/usr/bin/ginstall
+	% gmake
+	# gmake INSTALL=/usr/bin/ginstall install
+
+Jeffrey Allen Neitzel						2009/10/28
 
 @(#)$Id$
