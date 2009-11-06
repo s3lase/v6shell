@@ -3,6 +3,10 @@ Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
 [osh-current]:
+	* Refer to `git log' for now.
+
+-------------------------------------------------------------------------------
+[osh-20091029]:
 	* Remove rcsid.h file; stop adding rcsid strings for all
 	  sources to compiled binaries.
 
@@ -1468,6 +1472,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2009/10/27
+Jeffrey Allen Neitzel						2009/11/06
 
 @(#)$Id$

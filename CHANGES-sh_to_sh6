@@ -4,6 +4,10 @@ command in porting them to run on modern UNIX systems.
 
 -------------------------------------------------------------------------------
 [osh-current]:
+	* Refer to `git log' for now.
+
+-------------------------------------------------------------------------------
+[osh-20091029]:
 sh6.c:
 	* Wrap WCOREDUMP(s) w/ #ifdef WCOREDUMP ... #endif .
 
@@ -370,6 +374,6 @@ glob.c:
     Date: May 14, 1975
     From: Sixth Edition UNIX /usr/source/s1/glob.c
 
-Jeffrey Allen Neitzel						2009/10/27
+Jeffrey Allen Neitzel						2009/11/06
 
 @(#)$Id$
