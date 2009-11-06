@@ -297,7 +297,7 @@ doex(bool forked)
 		EXIT(SH_TRUE);
 	}
 
-	(void)err_pexec(getmyname(), xav[0], xav);
+	(void)err_pexec(xav[0], xav);
 }
 
 /*

@@ -108,7 +108,7 @@ main(int argc, char **argv)
 	/*
 	 * Try to execute the specified command.
 	 */
-	(void)err_pexec(getmyname(), argv[0], argv);
+	(void)err_pexec(argv[0], argv);
 	/*NOTREACHED*/
 	return FC_ERR;
 }
