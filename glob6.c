@@ -124,7 +124,7 @@ main(int argc, char **argv)
 	if (errno == ENOEXEC)
 		err(SH_ERR, FMT1S, ERR_NOSHELL);
 	if (errno == E2BIG)
-		err(SH_ERR, FMT1S, ERR_ALTOOLONG);
+		err(SH_ERR, FMT1S, ERR_E2BIG);
 	err(SH_ERR, FMT1S, ERR_GNOTFOUND);
 	/*NOTREACHED*/
 	return SH_ERR;
@@ -179,7 +179,7 @@ gcat(const char *src1, const char *src2)
 	siz = b - buf;
 	gavtot += siz;
 	if (gavtot > GAVMAX)
-		err(SH_ERR, FMT1S, ERR_ALTOOLONG);
+		err(SH_ERR, FMT1S, ERR_E2BIG);
 	if ((dst = malloc(siz)) == NULL)
 		err(SH_ERR, FMT1S, ERR_NOMEM);
 
