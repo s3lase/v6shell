@@ -39,7 +39,7 @@
 
 static	void		(*myerrexit)(int)	= NULL;
 /*@observer@*/
-static	const char	*myname			= (char *)-1;
+static	const char	*myname			= NULL;
 static	pid_t		mypid			= -1;
 
 static	void		wmsg(int, const char *, va_list);
@@ -93,7 +93,7 @@ const char *
 getmyname(void)
 {
 
-	if (myname == (char *)-1)
+	if (myname == NULL)
 		return "(null)";
 
 	return myname;
@@ -136,14 +136,13 @@ setmyname(const char *s)
 {
 	const char *p;
 
-	if (myname != (char *)-1)
-		return;
-
 	if (s != NULL && *s != '\0') {
 		if ((p = strrchr(s, '/')) != NULL)
 			p++;
 		else
 			p = s;
+		if (*p == '-')
+			p++;
 	} else
 		p = UTILNAME;
 
