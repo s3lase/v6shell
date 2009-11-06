@@ -42,7 +42,7 @@
  */
 #define	ERR_PAREN	") expected"
 #define	ERR_GARGCOUNT	"Arg count"
-#define	ERR_ALTOOLONG	"Arg list too long"
+#define	ERR_E2BIG	"Arg list too long"
 #define	ERR_FORK	"Cannot fork - try again"
 #define	ERR_PIPE	"Cannot pipe - try again"
 #define	ERR_TRIM	"Cannot trim"
@@ -87,6 +87,7 @@
 #define	FMT1S		"%s\n"
 #define	FMT2S		"%s: %s\n"
 #define	FMT3S		"%s: %s: %s\n"
+#define	FMT4S		"%s: %s: %s: %s\n"
 
 /*
  * Exit status values
