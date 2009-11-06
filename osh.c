@@ -1822,7 +1822,8 @@ do_source(char **av)
 		if (cnt == 0) {
 			/* Restore original standard input or die trying. */
 			if (dup2(SAVFD0, FD0) == -1)
-				err(SH_ERR,FMT4S,getmyname(),av[0],av[1],strerror(errno));
+				err(SH_ERR, FMT4S,
+				    getmyname(), av[0], av[1], strerror(errno));
 			(void)close(SAVFD0);
 			shtype &= ~ST_SOURCE;
 			if (!SHTYPE(ST_RCFILE))
@@ -1984,10 +1985,12 @@ sh_init(const char *av0p)
 	 */
 	for (fd = 0; fd < 3; fd++)
 		if (!fd_type(fd, FD_ISOPEN))
-			err(SH_ERR, "%s: %u: %s\n", getmyname(), (unsigned)fd, strerror(errno));
+			err(SH_ERR, "%s: %u: %s\n",
+			    getmyname(), (unsigned)fd, strerror(errno));
 	if ((dupfd0 = dup2(FD0, DUPFD0)) == -1 ||
 	    fcntl(dupfd0, F_SETFD, FD_CLOEXEC) == -1)
-		err(SH_ERR, "%s: %u: %s\n", getmyname(), DUPFD0, strerror(errno));
+		err(SH_ERR, "%s: %u: %s\n",
+		    getmyname(), DUPFD0, strerror(errno));
 
 	/* Try to get the terminal name for $t. */
 	p   = ttyname(dupfd0);
@@ -2080,7 +2083,7 @@ rc_init(int *rc_flag)
 			break;
 		case DO_INIT_DONE:
 			if (dup2(dupfd0, FD0) == -1)
-				err(SH_ERR, FMT2S, getmyname(), strerror(errno));
+				err(SH_ERR,FMT2S,getmyname(),strerror(errno));
 			shtype &= ~ST_RCFILE;
 			(*rc_flag)++;
 			return;
@@ -2153,7 +2156,8 @@ rc_build(char *path, const char *file, size_t size)
 	if (home != NULL && *home != '\0') {
 		len = snprintf(path, size, "%s/%s", home, file);
 		if (len < 0 || len >= (int)size) {
-			err(-1,"%s: %s/%s: %s\n",getmyname(),home,file,strerror(ENAMETOOLONG));
+			err(-1, "%s: %s/%s: %s\n",
+			    getmyname(), home, file, strerror(ENAMETOOLONG));
 			*path = '\0';
 		}
 	}
