@@ -102,9 +102,17 @@ int	pexec(/*@null@*/ const char *, /*@null@*/ char *const *);
 /*
  * NAME
  *	err_pexec - execute a file or path name w/ error handling
+ *
+ * SYNOPSIS
+ *	#include "pexec.h"
+ *
+ *	extern char **environ;
+ *
+ *	void
+ *	err_pexec(const char *file, char *const argv[]);
  */
+
 /*@noreturn@*/
-void	err_pexec(/*@null@*/ const char *,
-		  /*@null@*/ const char *, /*@null@*/ char *const *);
+void	err_pexec(/*@null@*/ const char *, /*@null@*/ char *const *);
 
 #endif	/* !PEXEC_H */

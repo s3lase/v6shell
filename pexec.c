@@ -200,16 +200,17 @@ fail:
  * This function never returns.
  */
 void
-err_pexec(const char *name, const char *file, char *const *argv)
+err_pexec(const char *file, char *const *argv)
 {
 	const char *f, *n;
 
 	(void)pexec(file, argv);
+
 	f = (file == NULL) ? "(null)" : file;
-	n = (name == NULL) ? "(null)" : name;
-	if (errno == ENOEXEC)
-		err(125, FMT3S, n, f, ERR_NOSHELL);
-	if (errno != ENOENT && errno != ENOTDIR)
-		err(126, FMT3S, n, f, ERR_EXEC);
-	err(127, FMT3S, n, f, ERR_NOTFOUND);
+	n = getmyname();
+
+	if (errno == ENOEXEC)			 err(125,FMT3S,n,f,ERR_NOSHELL);
+	if (errno == E2BIG)			 err(126,FMT3S,n,f,ERR_E2BIG);
+	if (errno != ENOENT && errno != ENOTDIR) err(126,FMT3S,n,f,ERR_EXEC);
+	err(127,FMT3S,n,f,ERR_NOTFOUND);
 }
