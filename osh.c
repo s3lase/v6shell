@@ -280,7 +280,7 @@ static	void		pwait(pid_t);
 static	int		prsig(int, pid_t, pid_t);
 /*@maynotreturn@*/
 static	void		sh_errexit(int);
-static	void		sh_init(void);
+static	void		sh_init(/*@null@*/ const char *);
 static	void		sh_magic(void);
 static	bool		sh_on_tty(void);
 static	void		sighup(/*@unused@*/ int IS_UNUSED);
@@ -322,9 +322,9 @@ main(int argc, char **argv)
 	int rc_flag = 0;
 	bool dosigs = false;
 
-	sh_init();
+	sh_init(argv[0]);
 	if (argv[0] == NULL || *argv[0] == '\0')
-		err(SH_ERR, FMT1S, ERR_ALINVAL);
+		err(SH_ERR, FMT2S, getmyname(), ERR_ALINVAL);
 	if (fd_type(FD0, FD_ISDIR))
 		goto done;
 
@@ -348,20 +348,22 @@ main(int argc, char **argv)
 				rc_flag = DO_SYSTEM_OSHRC;
 				shtype  = ST_INTERACTIVE;
 				if (!sh_on_tty())
-					err(SH_ERR, FMT2S, argv[1], ERR_NOTTY);
+					err(SH_ERR, FMT3S,
+					    getmyname(), argv[1], ERR_NOTTY);
 			} else if (argv[1][1] == 'l') {
 				is_login = true;
 				rc_flag  = DO_SYSTEM_LOGIN;
 				shtype   = ST_INTERACTIVE;
 				if (!sh_on_tty())
-					err(SH_ERR, FMT2S, argv[1], ERR_NOTTY);
+					err(SH_ERR, FMT3S,
+					    getmyname(), argv[1], ERR_NOTTY);
 			} else if (argv[1][1] == 't')
 				shtype = ST_ONELINE;
 		} else {
 			shtype = ST_COMMANDFILE;
 			(void)close(FD0);
 			if (open(argv[1], O_RDONLY) != FD0)
-				err(SH_ERR, FMT2S, argv[1], ERR_OPEN);
+				err(SH_ERR,FMT3S,getmyname(),argv[1],ERR_OPEN);
 			if (fd_type(FD0, FD_ISDIR))
 				goto done;
 		}
@@ -524,7 +526,7 @@ rpx_line(void)
 	cmd_verbose();
 
 	if (error) {
-		err(-1, FMT1S, error_message);
+		err(-1, FMT2S, getmyname(), error_message);
 		return 1;
 	}
 
@@ -536,7 +538,7 @@ rpx_line(void)
 		treep = syntax(word, wordp);
 		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 		if (error)
-			err(-1, FMT1S, ERR_SYNTAX);
+			err(-1, FMT2S, getmyname(), ERR_SYNTAX);
 		else
 			execute(treep, NULL, NULL);
 		tfree(treep);
@@ -1152,7 +1154,7 @@ execute(struct tnode *t, int *pin, int *pout)
 
 	case TPIPE:
 		if (pipe(pfd) == -1) {
-			err(-1, FMT1S, ERR_PIPE);
+			err(-1, FMT2S, getmyname(), ERR_PIPE);
 			if (pin != NULL) {
 				(void)close(pin[0]);
 				(void)close(pin[1]);
@@ -1173,7 +1175,7 @@ execute(struct tnode *t, int *pin, int *pout)
 	case TCOMMAND:
 		if (t->nav == NULL || t->nav[0] == NULL) {
 			/* should never be true */
-			err(-1, FMT1S, "execute: Invalid command");
+			err(-1, FMT2S, getmyname(), "execute: Invalid command");
 			return;
 		}
 		switch (t->nkey) {
@@ -1187,11 +1189,13 @@ execute(struct tnode *t, int *pin, int *pout)
 			 * usage: exec command [arg ...]
 			 */
 			if (t->nav[1] == NULL) {
-				err(-1, FMT2S, t->nav[0], ERR_ARGCOUNT);
+				err(-1, FMT3S, getmyname(),
+				    t->nav[0], ERR_ARGCOUNT);
 				return;
 			}
 			if ((t->nkey = cmd_lookup(t->nav[1])) != SBI_UNKNOWN) {
-				err(-1, FMT3S, t->nav[0], t->nav[1], ERR_EXEC);
+				err(-1, FMT4S, getmyname(),
+				    t->nav[0], t->nav[1], ERR_EXEC);
 				return;
 			}
 			t->nav++;
@@ -1209,7 +1213,7 @@ execute(struct tnode *t, int *pin, int *pout)
 	case TSUBSHELL:
 		f = t->nflags;
 		if ((cpid = ((f & FNOFORK) != 0) ? 0 : fork()) == -1) {
-			err(-1, FMT1S, ERR_FORK);
+			err(-1, FMT2S, getmyname(), ERR_FORK);
 			return;
 		}
 		/**** Parent! ****/
@@ -1244,7 +1248,7 @@ exec1(struct tnode *t)
 
 	if (t->nav == NULL || t->nav[0] == NULL) {
 		/* should never be true */
-		err(-1, FMT1S, "exec1: Invalid command");
+		err(-1, FMT2S, getmyname(), "exec1: Invalid command");
 		return;
 	}
 	switch (t->nkey) {
@@ -1312,12 +1316,13 @@ exec1(struct tnode *t)
 			for (p = t->nav[1]; *p != '=' && *p != '\0'; p++)
 				;	/* nothing */
 			if (*t->nav[1] == '\0' || *p == '=') {
-				err(-1,FMT3S,t->nav[0],t->nav[1],ERR_BADNAME);
+				err(-1, FMT4S, getmyname(),
+				    t->nav[0], t->nav[1], ERR_BADNAME);
 				return;
 			}
 			p = (t->nav[2] != NULL) ? t->nav[2] : "";
 			if (setenv(t->nav[1], p, 1) == -1)
-				err(ESTATUS, FMT1S, ERR_NOMEM);
+				err(ESTATUS, FMT2S, getmyname(), ERR_NOMEM);
 
 			status = SH_TRUE;
 			return;
@@ -1386,7 +1391,8 @@ exec1(struct tnode *t)
 			for (m = 0, p = t->nav[1]; *p >= '0' && *p <= '7'; p++)
 				m = m * 8 + (*p - '0');
 			if (*t->nav[1] == '\0' || *p != '\0' || m > 0777) {
-				err(-1,FMT3S,t->nav[0],t->nav[1],ERR_BADMASK);
+				err(-1, FMT4S, getmyname(),
+				    t->nav[0], t->nav[1], ERR_BADMASK);
 				return;
 			}
 			(void)umask(m);
@@ -1406,7 +1412,8 @@ exec1(struct tnode *t)
 			for (p = t->nav[1]; *p != '=' && *p != '\0'; p++)
 				;	/* nothing */
 			if (*t->nav[1] == '\0' || *p == '=') {
-				err(-1,FMT3S,t->nav[0],t->nav[1],ERR_BADNAME);
+				err(-1, FMT4S, getmyname(),
+				    t->nav[0], t->nav[1], ERR_BADNAME);
 				return;
 			}
 			unsetenv(t->nav[1]);
@@ -1429,7 +1436,7 @@ exec1(struct tnode *t)
 	default:
 		emsg = ERR_EXEC;
 	}
-	err(-1, FMT2S, t->nav[0], emsg);
+	err(-1, FMT3S, getmyname(), t->nav[0], emsg);
 }
 
 /*
@@ -1453,7 +1460,7 @@ exec2(struct tnode *t, int *pin, int *pout)
 	 */
 	if (pin != NULL && (f & FPIN) != 0) {
 		if (dup2(pin[0], FD0) == -1)
-			err(FC_ERR, FMT1S, strerror(errno));
+			err(FC_ERR, FMT2S, getmyname(), strerror(errno));
 		(void)close(pin[0]);
 		(void)close(pin[1]);
 	}
@@ -1462,7 +1469,7 @@ exec2(struct tnode *t, int *pin, int *pout)
 	 */
 	if (pout != NULL && (f & FPOUT) != 0) {
 		if (dup2(pout[1], FD1) == -1)
-			err(FC_ERR, FMT1S, strerror(errno));
+			err(FC_ERR, FMT2S, getmyname(), strerror(errno));
 		(void)close(pout[0]);
 		(void)close(pout[1]);
 	}
@@ -1480,9 +1487,9 @@ exec2(struct tnode *t, int *pin, int *pout)
 		else
 			i = open(t->nfin, O_RDONLY);
 		if (i == -1)
-			err(FC_ERR, FMT2S, t->nfin, ERR_OPEN);
+			err(FC_ERR, FMT3S, getmyname(), t->nfin, ERR_OPEN);
 		if (dup2(i, FD0) == -1)
-			err(FC_ERR, FMT1S, strerror(errno));
+			err(FC_ERR, FMT2S, getmyname(), strerror(errno));
 		(void)close(i);
 	}
 	/*
@@ -1495,9 +1502,9 @@ exec2(struct tnode *t, int *pin, int *pout)
 			i = O_WRONLY | O_TRUNC | O_CREAT;
 		atrim(t->nfout);
 		if ((i = open(t->nfout, i, 0666)) == -1)
-			err(FC_ERR, FMT2S, t->nfout, ERR_CREATE);
+			err(FC_ERR, FMT3S, getmyname(), t->nfout, ERR_CREATE);
 		if (dup2(i, FD1) == -1)
-			err(FC_ERR, FMT1S, strerror(errno));
+			err(FC_ERR, FMT2S, getmyname(), strerror(errno));
 		(void)close(i);
 	}
 	/*
@@ -1510,7 +1517,8 @@ exec2(struct tnode *t, int *pin, int *pout)
 		if (t->nfin == NULL && (f & (FFIN|FPIN|FPRS)) == FPRS) {
 			(void)close(FD0);
 			if (open("/dev/null", O_RDONLY) != FD0)
-				err(FC_ERR, FMT2S, "/dev/null", ERR_OPEN);
+				err(FC_ERR, FMT3S,
+				    getmyname(), "/dev/null", ERR_OPEN);
 		}
 	} else {
 		if ((sig_state&SS_SIGINT) == 0 && (sig_child&SC_SIGINT) != 0)
@@ -1529,7 +1537,7 @@ exec2(struct tnode *t, int *pin, int *pout)
 	}
 	if (t->nav == NULL || t->nav[0] == NULL) {
 		/* should never be true */
-		err(FC_ERR, FMT1S, "exec2: Invalid command");
+		err(FC_ERR, FMT2S, getmyname(), "exec2: Invalid command");
 		/*NOTREACHED*/
 	}
 	if (vtglob(t->nav)) {
@@ -1542,16 +1550,9 @@ exec2(struct tnode *t, int *pin, int *pout)
 		cmd = av[0];
 	}
 	if (t->nkey == SBI_UNKNOWN)
-		(void)pexec(cmd, (char *const *)av);
+		(void)err_pexec(cmd, (char *const *)av);
 	else
 		_exit(uexec(t->nkey, vacount(av), (char **)av));
-	if (errno == ENOEXEC)
-		err(125, FMT2S, cmd, ERR_NOSHELL);
-	if (errno == E2BIG)
-		err(126, FMT2S, cmd, ERR_ALTOOLONG);
-	if (errno != ENOENT && errno != ENOTDIR)
-		err(126, FMT2S, cmd, ERR_EXEC);
-	err(127, FMT2S, cmd, ERR_NOTFOUND);
 	/*NOTREACHED*/
 }
 
@@ -1613,7 +1614,7 @@ do_chdir(char **av)
 chdirerr:
 	if (cwd != -1)
 		(void)close(cwd);
-	err(-1, FMT2S, av[0], emsg);
+	err(-1, FMT3S, getmyname(), av[0], emsg);
 }
 
 /*
@@ -1733,9 +1734,9 @@ sigdone:
 	if (sigerr == 0)
 		status = SH_TRUE;
 	else if (sigerr == 1)
-		err(-1, FMT2S, av[0], ERR_GENERIC);
+		err(-1, FMT3S, getmyname(), av[0], ERR_GENERIC);
 	else
-		err(-1, FMT3S, av[0], av[sigerr], ERR_BADSIGNAL);
+		err(-1, FMT4S, getmyname(), av[0], av[sigerr], ERR_BADSIGNAL);
 }
 
 /*
@@ -1777,12 +1778,12 @@ do_source(char **av)
 	static int cnt;
 
 	if ((nfd = open(av[1], O_RDONLY | O_NONBLOCK)) == -1) {
-		err(-1, FMT3S, av[0], av[1], ERR_OPEN);
+		err(-1, FMT4S, getmyname(), av[0], av[1], ERR_OPEN);
 		return;
 	}
 	if (nfd >= SAVFD0 || !fd_type(nfd, FD_ISREG)) {
 		(void)close(nfd);
-		err(-1, FMT3S, av[0], av[1], ERR_EXEC);
+		err(-1, FMT4S, getmyname(), av[0], av[1], ERR_EXEC);
 		return;
 	}
 	sfd = dup2(FD0, SAVFD0 + cnt);
@@ -1790,7 +1791,7 @@ do_source(char **av)
 	    fcntl(FD0, F_SETFL, O_RDONLY & ~O_NONBLOCK) == -1) {
 		(void)close(sfd);
 		(void)close(nfd);
-		err(-1, FMT3S, av[0], av[1], strerror(EMFILE));
+		err(-1, FMT4S, getmyname(), av[0], av[1], strerror(EMFILE));
 		return;
 	}
 	(void)fcntl(sfd, F_SETFD, FD_CLOEXEC);
@@ -1821,7 +1822,7 @@ do_source(char **av)
 		if (cnt == 0) {
 			/* Restore original standard input or die trying. */
 			if (dup2(SAVFD0, FD0) == -1)
-				err(SH_ERR,FMT3S,av[0],av[1],strerror(errno));
+				err(SH_ERR,FMT4S,getmyname(),av[0],av[1],strerror(errno));
 			(void)close(SAVFD0);
 			shtype &= ~ST_SOURCE;
 			if (!SHTYPE(ST_RCFILE))
@@ -1835,7 +1836,7 @@ do_source(char **av)
 	/* Restore previous standard input or die trying. */
 	if (dup2(sfd, FD0) == -1) {
 		(void)close(sfd);
-		err(SH_ERR, FMT3S, av[0], av[1], strerror(errno));
+		err(SH_ERR, FMT4S, getmyname(), av[0], av[1], strerror(errno));
 		return;
 	}
 	(void)close(sfd);
@@ -1960,13 +1961,14 @@ sh_errexit(int es)
  * Initialize the shell.
  */
 static void
-sh_init(void)
+sh_init(const char *av0p)
 {
 	struct passwd *pwu;
 	int fd;
 	const char *p;
 
 	setmyerrexit(&sh_errexit);
+	setmyname(av0p);
 	setmypid(getpid());
 	sheuid = geteuid();
 
@@ -1974,7 +1976,7 @@ sh_init(void)
 	 * Set-ID execution is not supported.
 	 */
 	if (sheuid != getuid() || getegid() != getgid())
-		err(SH_ERR, FMT1S, ERR_SETID);
+		err(SH_ERR, FMT2S, getmyname(), ERR_SETID);
 
 	/*
 	 * Fail if any of the descriptors 0, 1, or 2 is not open,
@@ -1982,10 +1984,10 @@ sh_init(void)
 	 */
 	for (fd = 0; fd < 3; fd++)
 		if (!fd_type(fd, FD_ISOPEN))
-			err(SH_ERR, "%u: %s\n", (unsigned)fd, strerror(errno));
+			err(SH_ERR, "%s: %u: %s\n", getmyname(), (unsigned)fd, strerror(errno));
 	if ((dupfd0 = dup2(FD0, DUPFD0)) == -1 ||
 	    fcntl(dupfd0, F_SETFD, FD_CLOEXEC) == -1)
-		err(SH_ERR, "%u: %s\n", DUPFD0, strerror(errno));
+		err(SH_ERR, "%s: %u: %s\n", getmyname(), DUPFD0, strerror(errno));
 
 	/* Try to get the terminal name for $t. */
 	p   = ttyname(dupfd0);
@@ -2018,7 +2020,7 @@ sh_magic(void)
 			for (len = 2; len < LINEMAX; len++)
 				if ((c = readc()) == '\n' || c == EOF)
 					return;
-			err(-1, FMT1S, ERR_TMCHARS);
+			err(-1, FMT2S, getmyname(), ERR_TMCHARS);
 		} else
 			(void)lseek(FD0, (off_t)0, SEEK_SET);
 	}
@@ -2078,7 +2080,7 @@ rc_init(int *rc_flag)
 			break;
 		case DO_INIT_DONE:
 			if (dup2(dupfd0, FD0) == -1)
-				err(SH_ERR, FMT1S, strerror(errno));
+				err(SH_ERR, FMT2S, getmyname(), strerror(errno));
 			shtype &= ~ST_RCFILE;
 			(*rc_flag)++;
 			return;
@@ -2151,7 +2153,7 @@ rc_build(char *path, const char *file, size_t size)
 	if (home != NULL && *home != '\0') {
 		len = snprintf(path, size, "%s/%s", home, file);
 		if (len < 0 || len >= (int)size) {
-			err(-1,"%s/%s: %s\n",home,file,strerror(ENAMETOOLONG));
+			err(-1,"%s: %s/%s: %s\n",getmyname(),home,file,strerror(ENAMETOOLONG));
 			*path = '\0';
 		}
 	}
@@ -2177,7 +2179,7 @@ rc_open(const char *file)
 		return false;
 
 	if (!fd_type(fd, FD_ISREG)) {
-		err(-1, FMT2S, file, ERR_EXEC);
+		err(-1, FMT3S, getmyname(), file, ERR_EXEC);
 		(void)close(fd);
 		return false;
 	}
@@ -2185,7 +2187,7 @@ rc_open(const char *file)
 	/* NOTE: A dup2(2) or fcntl(2) error here is fatal. */
 	if (dup2(fd, FD0) == -1 ||
 	    fcntl(FD0, F_SETFL, O_RDONLY & ~O_NONBLOCK) == -1)
-		err(SH_ERR, FMT2S, file, strerror(errno));
+		err(SH_ERR, FMT3S, getmyname(), file, strerror(errno));
 
 	(void)close(fd);
 	shtype |= ST_RCFILE;
@@ -2281,7 +2283,7 @@ atrim(char *ap)
 	}
 
 aterr:
-	err(ESTATUS, "%s %s\n", ERR_TRIM, ap);
+	err(ESTATUS, "%s: %s %s\n", getmyname(), ERR_TRIM, ap);
 }
 
 /*
@@ -2347,7 +2349,7 @@ gtrim(char *ap)
 	}
 
 gterr:
-	err(FC_ERR, "%s %s\n", ERR_TRIM, ap);
+	err(FC_ERR, "%s: %s %s\n", getmyname(), ERR_TRIM, ap);
 	/*NOTREACHED*/
 	return NULL;
 }
@@ -2405,7 +2407,7 @@ xmalloc(size_t s)
 	void *mp;
 
 	if ((mp = malloc(s)) == NULL) {
-		err(ESTATUS, FMT1S, ERR_NOMEM);
+		err(ESTATUS, FMT2S, getmyname(), ERR_NOMEM);
 		/*NOTREACHED*/
 	}
 	return mp;
@@ -2422,7 +2424,7 @@ xrealloc(void *p, size_t s)
 	void *rp;
 
 	if ((rp = realloc(p, s)) == NULL) {
-		err(ESTATUS, FMT1S, ERR_NOMEM);
+		err(ESTATUS, FMT2S, getmyname(), ERR_NOMEM);
 		/*NOTREACHED*/
 	}
 	return rp;
@@ -2480,7 +2482,7 @@ glob(char **av)
 	gavp = NULL;
 
 	if (pmc == 0)
-		err(SH_ERR, FMT1S, ERR_NOMATCH);
+		err(SH_ERR, FMT2S, getmyname(), ERR_NOMATCH);
 
 	return gav;
 }
@@ -2513,7 +2515,7 @@ gcat(const char *src1, const char *src2, bool slash)
 	*buf = '\0', b = buf, s = src1;
 	while ((c = *s++) != '\0') {
 		if (b >= &buf[PATHMAX - 1])
-			err(SH_ERR, FMT1S, strerror(ENAMETOOLONG));
+			err(SH_ERR, FMT2S, getmyname(), strerror(ENAMETOOLONG));
 		*b++ = c;
 	}
 	if (slash)
@@ -2521,14 +2523,14 @@ gcat(const char *src1, const char *src2, bool slash)
 	s = src2;
 	do {
 		if (b >= &buf[PATHMAX])
-			err(SH_ERR, FMT1S, strerror(ENAMETOOLONG));
+			err(SH_ERR, FMT2S, getmyname(), strerror(ENAMETOOLONG));
 		*b++ = c = *s++;
 	} while (c != '\0');
 
 	siz = b - buf;
 	gavtot += siz;
 	if (gavtot > GAVMAX)
-		err(SH_ERR, FMT1S, ERR_ALTOOLONG);
+		err(SH_ERR, FMT2S, getmyname(), ERR_E2BIG);
 	dst = xmalloc(siz);
 
 	(void)memcpy(dst, buf, siz);
@@ -2570,7 +2572,7 @@ glob1(const char **gav, char *as, int *pmc)
 		}
 	}
 	if ((dirp = gopendir(dirbuf, *ds != '\0' ? ds : ".")) == NULL) {
-		err(SH_ERR, FMT1S, ERR_NODIR);
+		err(SH_ERR, FMT2S, getmyname(), ERR_NODIR);
 		/*NOTREACHED*/
 	}
 	if (*ds != '\0')
