@@ -32,8 +32,8 @@
 #include "defs.h"
 #include "err.h"
 
-#define	FMTSIZE		64
-#define	MSGSIZE		(FMTSIZE + LINEMAX)
+#define	FMTMAX		(BUFMAX * 2 + 1)
+#define	MSGMAX		(FMTMAX + LINEMAX)
 
 #define	UTILNAME	"unknown"
 
@@ -186,8 +186,8 @@ static void
 wmsg(int wfd, const char *msgfmt, va_list va)
 {
 	int r;
-	char fmt[FMTSIZE];
-	char msg[MSGSIZE];
+	char fmt[FMTMAX];
+	char msg[MSGMAX];
 	const char *e;
 
 	e = "wmsg: Invalid message\n";

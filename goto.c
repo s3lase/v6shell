@@ -86,7 +86,7 @@ int
 main(int argc, char **argv)
 {
 	size_t siz;
-	char label[LABELSIZE];
+	char label[LABELMAX];
 
 	setmyerrexit(&ut_errexit);
 	setmyname(argv[0]);

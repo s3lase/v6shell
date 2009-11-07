@@ -253,7 +253,7 @@ static int
 sbi_goto(int argc, char **argv)
 {
 	size_t siz;
-	char label[LABELSIZE];
+	char label[LABELMAX];
 
 	setmyname(argv[0]);
 

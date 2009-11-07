@@ -81,6 +81,12 @@
 #define	ASCII		0177
 #define	QUOTE		0200
 
+#ifdef	CHAR_BIT
+#define	BUFMAX		(sizeof(int) * CHAR_BIT)
+#else
+#error	"CHAR_BIT: undefined: Non-POSIX-compliant system?"
+#endif
+
 /*
  * Following standard conventions, file descriptors 0, 1, and 2 are used
  * for standard input, standard output, and standard error respectively.
@@ -89,12 +95,14 @@
 #define	FD1		STDOUT_FILENO
 #define	FD2		STDERR_FILENO
 
-#define	LABELSIZE	64	/* label buffer size for the goto(1) utility */
+#define	DOLMAX		(BUFMAX + 1)	/* used by osh(1) and sh6(1) shells */
 
-#define	F_GZ		1	/* `-s'  primary for the if(1) utility       */
-#define	F_OT		2	/* `-ot' primary for the if(1) utility       */
-#define	F_NT		3	/* `-nt' primary for the if(1) utility       */
-#define	F_EF		4	/* `-ef' primary for the if(1) utility       */
+#define	LABELMAX	(BUFMAX * 2 + 1)/* used by goto(1) utility          */
+
+#define	F_GZ		1		/* `-s'  primary for if(1) utility  */
+#define	F_OT		2		/* `-ot' primary for if(1) utility  */
+#define	F_NT		3		/* `-nt' primary for if(1) utility  */
+#define	F_EF		4		/* `-ef' primary for if(1) utility  */
 
 #define	DOLSUB		true
 #define	FORKED		true
