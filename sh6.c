@@ -96,7 +96,7 @@ static	const char *const sigmsg[] = {
 };
 #define	NSIGMSG		((int)(sizeof(sigmsg) / sizeof(sigmsg[0])))
 
-static	char		apid[6];	/* $$ - ASCII shell process ID      */
+static	char		apid[32];	/* $$ - ASCII shell process ID      */
 /*@null@*/
 static	const char	*argv2p;	/* string for `-c' option           */
 static	int		dolc;		/* $N dollar-argument count         */
