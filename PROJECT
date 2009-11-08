@@ -1,6 +1,6 @@
 % cat < $h/.project
 
-V6 Shell (osh project)
+               V6 Shell (osh project)
 
         __     ____     ____  _          _ _
         \ \   / / /_   / ___|| |__   ___| | |
@@ -14,5 +14,5 @@ V6 Shell (osh project)
         http://v6shell.org/twitter  - on Twitter
         http://v6shell.org/identica - on Identi.ca
 
-Osh is an enhanced, backward-compatible port of the
-Sixth Edition (V6) UNIX Thompson shell (circa 1975).
+   Osh is an enhanced, backward-compatible port of the
+   Sixth Edition (V6) UNIX Thompson shell (circa 1975).
