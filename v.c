@@ -36,10 +36,13 @@
 #  define	OSH_ATTR	/* nothing */
 # endif
 #endif	/* !OSH_ATTR */
+
 /*@unused@*/
-static const char cid[]  OSH_ATTR = "\100(#)\044Id: Copyright (c) 2001-2002 Caldera International Inc. \044";
+static const char cid[]  OSH_ATTR = "\100(#)\044Id: Copyright (c) 1993 The Regents of the University of California. \044";
 /*@unused@*/
-static const char cid1[] OSH_ATTR = "\100(#)\044Id: Copyright (c) 2003-2009 Jeffrey Allen Neitzel. \044";
+static const char cid1[]  OSH_ATTR = "\100(#)\044Id: Copyright (c) 2001-2002 Caldera International Inc. \044";
+/*@unused@*/
+static const char cid2[] OSH_ATTR = "\100(#)\044Id: Copyright (c) 2003-2009 Jeffrey Allen Neitzel. \044";
 /*@unused@*/
 static const char vid[]  OSH_ATTR = "\100(#)\044Id: " OSH_VERSION " \044";
 #endif	/* !lint */
