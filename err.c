@@ -32,7 +32,7 @@
 #include "defs.h"
 #include "err.h"
 
-#define	FMTMAX		(BUFMAX * 2 + 1)
+#define	FMTMAX		SBUFMM(2)
 #define	MSGMAX		(FMTMAX + LINEMAX)
 
 #define	UTILNAME	"unknown"

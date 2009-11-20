@@ -81,11 +81,9 @@
 #define	ASCII		0177
 #define	QUOTE		0200
 
-#ifdef	CHAR_BIT
-#define	BUFMAX		(sizeof(int) * CHAR_BIT)
-#else
-#error	"CHAR_BIT: undefined: Non-POSIX-compliant system?"
-#endif
+#define	SBUFMM(m)	((32 * (m)) + 1)/* small buffer max multiplier      */
+#define	DOLMAX		SBUFMM(1)	/* used by osh(1) and sh6(1) shells */
+#define	LABELMAX	SBUFMM(2)	/* used by goto(1) utility          */
 
 /*
  * Following standard conventions, file descriptors 0, 1, and 2 are used
@@ -94,10 +92,6 @@
 #define	FD0		STDIN_FILENO
 #define	FD1		STDOUT_FILENO
 #define	FD2		STDERR_FILENO
-
-#define	DOLMAX		(BUFMAX + 1)	/* used by osh(1) and sh6(1) shells */
-
-#define	LABELMAX	(BUFMAX * 2 + 1)/* used by goto(1) utility          */
 
 #define	F_GZ		1		/* `-s'  primary for if(1) utility  */
 #define	F_OT		2		/* `-ot' primary for if(1) utility  */
