@@ -3,7 +3,37 @@ Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
 [osh-current]:
-	* Refer to `git log' for now.
+defs.h:
+	* Defined SBUFMM(m), small buffer max multiplier, for calculating
+	  small buffer sizes (e.g., DOLMAX, FMTMAX, LABELMAX).
+
+err.h:
+	* Changed ERR_ALTOOLONG to ERR_E2BIG, and added FMT4S.
+
+pexec.[hc]:
+	* Changed err_pexec() function prototype.
+
+	* Changed it to print ERR_E2BIG diagnostic when errno == E2BIG.
+
+	* Changed exit status to 126 for such "cannot execute" conditions.
+
+*.c:
+	* Changed all err_pexec() calls to match new function prototype
+	  where appropriate.
+
+osh.c:
+	* Changed main child process execute function from pexec()
+	  to err_pexec() for external commands.
+
+	* Added getmyname() program name prefix (e.g., "osh: ")
+	  to osh diagnostics.
+
+v.c:
+	* Added "The Regents of the University of California" copyright notice
+	  for NetBSD and OpenBSD code included in the osh project.
+
+[fgio][dfos]*.1:
+	* Added COPYRIGHT section headings, and added copyright notices.
 
 -------------------------------------------------------------------------------
 [osh-20091029]:
@@ -1472,6 +1502,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2009/11/06
+Jeffrey Allen Neitzel						2009/11/21
 
 @(#)$Id$
