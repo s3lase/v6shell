@@ -38,7 +38,7 @@
 #endif	/* !OSH_ATTR */
 
 /*@unused@*/
-static const char cid[]  OSH_ATTR = "\100(#)\044Id: Copyright (c) 1993 The Regents of the University of California. \044";
+static const char cid[]  OSH_ATTR = "\100(#)\044Id: Copyright (c) 1985, 1989, 1991, 1993 The Regents of the University of California. \044";
 /*@unused@*/
 static const char cid1[]  OSH_ATTR = "\100(#)\044Id: Copyright (c) 2001-2002 Caldera International Inc. \044";
 /*@unused@*/
