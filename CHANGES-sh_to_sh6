@@ -52,8 +52,8 @@ sh6.c:
 
 		% sleep 10 | sleep 20 | sleep 30 ; wait
 		^C
-		2845: 
-		2846: 
+		2845:
+		2846:
 
 	  This example should only print three newlines to the standard error
 	  on SIGINT, not one newline and two process IDs w/ empty messages.
