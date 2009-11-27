@@ -816,7 +816,7 @@ execute(struct tnode *t, int *pin, int *pout)
 
 	case TCOMMAND:
 		if (t->nav == NULL || t->nav[0] == NULL) {
-			/* should never be true */
+			/* should never (but can) be true */
 			err(SH_ERR, FMT1S, "execute: Invalid command");
 			return;
 		}

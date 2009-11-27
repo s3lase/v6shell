@@ -1174,7 +1174,7 @@ execute(struct tnode *t, int *pin, int *pout)
 
 	case TCOMMAND:
 		if (t->nav == NULL || t->nav[0] == NULL) {
-			/* should never be true */
+			/* should never (but can) be true */
 			err(-1, FMT2S, getmyname(), "execute: Invalid command");
 			return;
 		}
@@ -1247,7 +1247,7 @@ exec1(struct tnode *t)
 	const char *emsg, *p;
 
 	if (t->nav == NULL || t->nav[0] == NULL) {
-		/* should never be true */
+		/* should never (but can) be true */
 		err(-1, FMT2S, getmyname(), "exec1: Invalid command");
 		return;
 	}
@@ -1536,7 +1536,7 @@ exec2(struct tnode *t, int *pin, int *pout)
 		_exit(status);
 	}
 	if (t->nav == NULL || t->nav[0] == NULL) {
-		/* should never be true */
+		/* should never (but can) be true */
 		err(FC_ERR, FMT2S, getmyname(), "exec2: Invalid command");
 		/*NOTREACHED*/
 	}

@@ -144,8 +144,10 @@ setmyname(const char *s)
 		if (*p == '-' && *(p + 1) != '\0')
 			p++;
 		else if (*p == '\0')
+			/* should never (but can) be true */
 			p = MYNAME;
 	} else
+		/* should never (but can) be true */
 		p = MYNAME;
 
 	myname = p;

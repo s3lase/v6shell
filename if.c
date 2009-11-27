@@ -271,7 +271,7 @@ doex(bool forked)
 {
 	char **xap, **xav;
 
-	if (ap < 2 || ap > ac)	/* should never be true */
+	if (ap < 2 || ap > ac)	/* should never (but can) be true */
 		err(FC_ERR, FMT2S, getmyname(), ERR_AVIINVAL);
 
 	xav = xap = &av[ap];
@@ -390,7 +390,7 @@ nxtarg(bool reterr)
 {
 	char *nap;
 
-	if (ap < 1 || ap > ac)	/* should never be true */
+	if (ap < 1 || ap > ac)	/* should never (but can) be true */
 		err(FC_ERR, FMT2S, getmyname(), ERR_AVIINVAL);
 
 	if (ap == ac) {

@@ -535,7 +535,7 @@ doex(bool forked)
 	enum sbikey xak;
 	char **xap, **xav;
 
-	if (iap < 2 || iap > iac)	/* should never be true */
+	if (iap < 2 || iap > iac)	/* should never (but can) be true */
 		err(FC_ERR, FMT2S, getmyname(), ERR_AVIINVAL);
 
 	xav = xap = &iav[iap];
@@ -663,7 +663,7 @@ nxtarg(bool reterr)
 {
 	char *nap;
 
-	if (iap < 1 || iap > iac)	/* should never be true */
+	if (iap < 1 || iap > iac)	/* should never (but can) be true */
 		err(FC_ERR, FMT2S, getmyname(), ERR_AVIINVAL);
 
 	if (iap == iac) {
