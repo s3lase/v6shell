@@ -139,6 +139,6 @@ osh package on OpenSolaris.
 	% gmake
 	# gmake INSTALL=/usr/bin/ginstall install
 
-Jeffrey Allen Neitzel						2009/10/28
+Jeffrey Allen Neitzel						2009/11/27
 
 @(#)$Id$
