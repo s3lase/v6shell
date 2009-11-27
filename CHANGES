@@ -4,9 +4,9 @@ Thompson shell are marked w/ a `C:' in the details below.
 -------------------------------------------------------------------------------
 [osh-current]:
 err.c:
-	* When calling setmyname(argv[0]) to set the getmyname() program
-	  name, only ditch an initial "-" when the binary name is "-" plus
-	  at least 1 of any character before end-of-string.  For example:
+	* Changed setmyname(argv[0]) so that it only ditches an initial
+	  "-" character when a binary name is "-" plus at least 1 of any
+	  character before end-of-string.  For example:
 
 		% pwd ; ln -s osh - ; ln -s osh -o ; ln -s osh -os ; \
 			ln -s osh -osh ; echo -* osh
