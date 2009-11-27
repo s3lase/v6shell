@@ -4,6 +4,10 @@ command in porting them to run on modern UNIX systems.
 
 -------------------------------------------------------------------------------
 [osh-current]:
+	* No user-visible changes.
+
+-------------------------------------------------------------------------------
+[osh-20091122]:
 sh6.c:
 	* Increased apid[] buffer size to 33 via DOLMAX; this allows $$
 	  to correctly represent shell's process ID on systems where
@@ -383,6 +387,6 @@ glob.c:
     Date: May 14, 1975
     From: Sixth Edition UNIX /usr/source/s1/glob.c
 
-Jeffrey Allen Neitzel						2009/11/21
+Jeffrey Allen Neitzel						2009/11/27
 
 @(#)$Id$

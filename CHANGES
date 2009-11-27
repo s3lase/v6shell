@@ -3,6 +3,33 @@ Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
 [osh-current]:
+err.c:
+	* When calling setmyname(argv[0]) to set the getmyname() program
+	  name, only ditch an initial "-" when the binary name is "-" plus
+	  at least 1 of any character before end-of-string.  For example:
+
+		% pwd ; ln -s osh - ; ln -s osh -o ; ln -s osh -os ; \
+			ln -s osh -osh ; echo -* osh
+		/tmp/v6shell
+		- -o -os -osh osh
+
+		% which - -o -os -osh osh
+		/tmp/v6shell/-
+		/tmp/v6shell/-o
+		/tmp/v6shell/-os
+		/tmp/v6shell/-osh
+		/tmp/v6shell/osh
+
+		% - file arg1 ; -o file arg1 ; -os file arg1 ; \
+			-osh file arg1 ; osh file arg1
+		-: file: cannot open
+		o: file: cannot open
+		os: file: cannot open
+		osh: file: cannot open
+		osh: file: cannot open
+
+-------------------------------------------------------------------------------
+[osh-20091122]:
 defs.h:
 	* Defined SBUFMM(m), small buffer max multiplier, for calculating
 	  small buffer sizes (e.g., DOLMAX, FMTMAX, LABELMAX).
@@ -1502,6 +1529,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2009/11/21
+Jeffrey Allen Neitzel						2009/11/27
 
 @(#)$Id$

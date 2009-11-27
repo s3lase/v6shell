@@ -64,7 +64,7 @@ LDFLAGS+=	$(MOXARCH)
 #	osh-YYYYMMDD-beta.*  == beta release
 #	osh-YYYYMMDD         == official release
 #
-OSH_DATE=	November 7, 2009
+OSH_DATE=	November 27, 2009
 OSH_VERSION=	osh-current
 
 OSH=	osh
