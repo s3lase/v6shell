@@ -35,7 +35,7 @@
 #define	FMTMAX		SBUFMM(2)
 #define	MSGMAX		(FMTMAX + LINEMAX)
 
-#define	UTILNAME	"unknown"
+#define	MYNAME		"unknown"
 
 static	void		(*myerrexit)(int)	= NULL;
 /*@observer@*/
@@ -141,10 +141,12 @@ setmyname(const char *s)
 			p++;
 		else
 			p = s;
-		if (*p == '-')
+		if (*p == '-' && *(p + 1) != '\0')
 			p++;
+		else if (*p == '\0')
+			p = MYNAME;
 	} else
-		p = UTILNAME;
+		p = MYNAME;
 
 	myname = p;
 }
