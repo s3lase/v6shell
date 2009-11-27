@@ -2,7 +2,7 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-current]:
+[osh-20091127]:
 err.c:
 	* Changed setmyname(argv[0]) so that it only ditches an initial
 	  "-" character when a binary name is "-" plus at least 1 of any
