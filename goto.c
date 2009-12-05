@@ -67,7 +67,9 @@
 #include "defs.h"
 #include "err.h"
 
+#ifndef	CONFIG_SUNOS
 static	off_t	offset;
+#endif
 
 static	bool	getlabel(/*@out@*/ char *, int, size_t);
 static	int	xgetc(void);
@@ -101,7 +103,9 @@ main(int argc, char **argv)
 
 	while (getlabel(label, *argv[1] & 0377, siz))
 		if (strcmp(label, argv[1]) == 0) {
+#ifndef	CONFIG_SUNOS
 			(void)lseek(FD0, offset, SEEK_SET);
+#endif
 			return SH_TRUE;
 		}
 
@@ -175,9 +179,15 @@ getlabel(char *buf, int fc, size_t siz)
 static int
 xgetc(void)
 {
+#ifndef	CONFIG_SUNOS
 	int nc;
 
 	offset++;
 	nc = getchar();
 	return (nc != EOF) ? nc & 0377 : EOF;
+#else
+	unsigned char nc;
+
+	return (read(FD0, &nc, (size_t)1) == 1) ? nc : EOF;
+#endif
 }

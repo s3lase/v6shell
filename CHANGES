@@ -3,6 +3,16 @@ Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
 [osh-current]:
+mkconfig:
+	* Define CONFIG_SUNOS on OpenSolaris (uname -s == SunOS).
+
+goto.c:
+	* Fixed problem w/ external goto command on OpenSolaris where file
+	  offset set via lseek(2) isn't shared w/ parent process, causing
+	  unexpected behavior.
+
+-------------------------------------------------------------------------------
+[osh-20091127]:
 err.c:
 	* Changed setmyname(argv[0]) so that it only ditches an initial
 	  "-" character when a binary name is "-" plus at least 1 of any
