@@ -1,3 +1,6 @@
+/*
+ * v.c - osh package version and copyright notices
+ */
 /*-
  * Copyright (c) 2008-2009
  *	Jeffrey Allen Neitzel <jan (at) v6shell (dot) org>.
@@ -36,7 +39,6 @@
 #  define	OSH_ATTR	/* nothing */
 # endif
 #endif	/* !OSH_ATTR */
-
 /*@unused@*/
 static const char cid[]  OSH_ATTR = "\100(#)\044Id: Copyright (c) 1985, 1989, 1991, 1993 The Regents of the University of California. \044";
 /*@unused@*/
