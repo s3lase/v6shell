@@ -36,7 +36,10 @@ passing the desired variable=value pair(s) on the command line.
 
 	DOCDIR		Defaults to $(PREFIX)/share/doc/$(OSH_VERSION).
 			This is the target directory for the [ACILNPR]*
-			package documentation and examples/* files.
+			package documentation files.
+
+	EXPDIR		Defaults to $(DOCDIR)/examples.  This is the
+			target directory for the examples/* files.
 
 	MANDIR		Defaults to $(PREFIX)/share/man/man1.  This is
 			the target directory where the manual pages are
@@ -53,8 +56,8 @@ passing the desired variable=value pair(s) on the command line.
 			for example rc files.
 
 	INSTALL		Defaults to /usr/bin/install.  The install(1)
-			utility is used to copy the resulting binaries
-			and manual pages to their final targets.
+			utility is used to copy the resulting binaries,
+			manual pages, and other files to final targets.
 
 Mac OS X only:
 The following configuration variable specifies the desired target
@@ -72,21 +75,22 @@ TARGETS
 The following targets are available.
 
 	all		Default target is the same as typing `make'.
-			Compiles everything.
-
-	install		Installs all binaries, package documentation,
-			examples, and manual pages.
+			Compiles everything and generates manual pages.
 
 	oshall		Compiles osh and generates manual pages.
-
-	install-oshall	Installs osh binary, package documentation,
-			examples, and manual pages.
 
 	sh6all		Compiles sh6, glob6, if, goto, fd2 and
 			generates manual pages.
 
-	install-sh6all	Installs sh6all binaries, package documentation,
-			and manual pages.
+	install		Installs all binaries and manual pages.
+
+	install-oshall	Installs osh binary and manual pages.
+
+	install-sh6all	Installs sh6all binaries and manual pages.
+
+	install-doc	Installs package documentation.
+
+	install-exp	Installs examples.
 
 	clean-obj	Removes all object files.
 
@@ -95,40 +99,42 @@ The following targets are available.
 
 --------
 EXAMPLES
-The following example compiles osh for /opt/local.  It then installs
-the osh binary into /opt/local/bin, package documentation and
-examples into /opt/local/share/doc/$(OSH_VERSION), manual pages
-into /opt/local/share/man/man1, and also sets SYSCONFDIR to
-/opt/local/etc.
+The following compiles osh for /opt/local.
+Then, it installs the osh binary into /opt/local/bin, manual pages
+into /opt/local/share/man/man1, package documentation and examples
+into /opt/local/share/doc/$(OSH_VERSION), and also sets SYSCONFDIR
+to /opt/local/etc.
 
 	% make PREFIX=/opt/local oshall
-	# make PREFIX=/opt/local install-oshall
+	# make PREFIX=/opt/local install-oshall install-doc install-exp
 
-The following example compiles sh6, glob6, if, goto, and fd2 for
-/usr/pkg.  It then installs these binaries into /usr/pkg/bin, package
-documentation into /usr/pkg/share/doc/$(OSH_VERSION), and manual
-pages into /usr/pkg/share/man/man1.
+The following compiles sh6, glob6, if, goto, and fd2 for /usr/pkg.
+Then, it installs these binaries into /usr/pkg/bin, manual pages
+into /usr/pkg/share/man/man1, and package documentation into
+/usr/pkg/share/doc/$(OSH_VERSION).
 
 	% make PREFIX=/usr/pkg sh6all
-	# make PREFIX=/usr/pkg install-sh6all
+	# make PREFIX=/usr/pkg install-sh6all install-doc
 
-The following example compiles everything, configuring the shell
-to search for its system-wide rc files in /etc instead of /usr/local/etc
-by default.  It then installs the entire osh package into the default
-location.
+The following compiles everything, configuring the shell to search
+for its system-wide rc files in /etc instead of /usr/local/etc by
+default.  Then, it installs the entire osh package, including package
+documentation and examples, into the default location.
 
 	% make SYSCONFDIR=/etc
-	# make install
+	# make install install-doc install-exp
 
-The following example compiles each program as a 2-way 32-bit
-universal binary for Mac OS X running on Intel and PowerPC Macs.
-It then installs the entire osh package into the default location.
+The following compiles each program as a 2-way 32-bit universal
+binary for Mac OS X running on Intel and PowerPC Macs.  Then, it
+installs the entire osh package, including package documentation
+and examples, into the default location.
 
 	% make MOXARCH='-arch i386 -arch ppc'
-	# make install
+	# make install install-doc install-exp
 
-The following example shows what I do to compile and install the
-osh package on OpenSolaris.
+The following compiles and installs the entire osh package, including
+package documentation and examples, into the default location on
+OpenSolaris.
 
 	% uname -srvm
 	SunOS 5.11 snv_111b i86pc
@@ -137,8 +143,8 @@ osh package on OpenSolaris.
 	/usr/bin/gmake
 	/usr/bin/ginstall
 	% gmake
-	# gmake INSTALL=/usr/bin/ginstall install
+	# gmake INSTALL=/usr/bin/ginstall install install-doc install-exp
 
-Jeffrey Allen Neitzel						2009/11/27
+Jeffrey Allen Neitzel						2009/12/17
 
 @(#)$Id$

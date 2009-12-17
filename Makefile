@@ -14,6 +14,7 @@ DESTDIR?=
 PREFIX?=	/usr/local
 BINDIR?=	$(PREFIX)/bin
 DOCDIR?=	$(PREFIX)/share/doc/$(OSH_VERSION)
+EXPDIR?=	$(DOCDIR)/examples
 MANDIR?=	$(PREFIX)/share/man/man1
 SYSCONFDIR?=	$(PREFIX)/etc
 #BINGRP=		-g bin
@@ -65,7 +66,7 @@ LDFLAGS+=	$(MOXARCH)
 #	osh-YYYYMMDD           == official release
 #	osh-YYYYMMDD-p[1-9]    == patched  release
 #
-OSH_DATE=	November 27, 2009
+OSH_DATE=	December 17, 2009
 OSH_VERSION=	osh-current
 
 OSH=	osh
@@ -75,8 +76,7 @@ GHEAD=	config.h defs.h
 ERRSRC=	err.h err.c
 PEXSRC=	pexec.h pexec.c
 SIGSRC=	sasignal.h sasignal.c
-OBJ=	err.o fd2.o glob6.o goto.o if.o osh.o pexec.o sasignal.o
-OBJ+=	sh6.o util.o v.o
+OBJ=	err.o fd2.o glob6.o goto.o if.o osh.o pexec.o sasignal.o sh6.o util.o v.o
 OSHMAN=	osh.1.out
 SH6MAN=	sh6.1.out glob6.1.out
 UMAN=	fd2.1.out goto.1.out if.1.out
@@ -161,13 +161,13 @@ fd2bin: v.o fd2.o err.o pexec.o
 #
 DESTBINDIR=	$(DESTDIR)$(BINDIR)
 DESTDOCDIR=	$(DESTDIR)$(DOCDIR)
-DESTEXPDIR=	$(DESTDOCDIR)/examples
+DESTEXPDIR=	$(DESTDIR)$(EXPDIR)
 DESTMANDIR=	$(DESTDIR)$(MANDIR)
 install: install-oshall install-sh6all
 
-install-oshall: oshall install-osh install-uman install-exp
+install-oshall: oshall install-osh install-uman
 
-install-sh6all: sh6all install-sh6 install-utils install-doc
+install-sh6all: sh6all install-sh6 install-utils
 
 install-utils: install-ubin install-uman
 
@@ -199,7 +199,7 @@ install-doc:
 	test -d $(DESTDOCDIR) || { umask 0022 && mkdir -p $(DESTDOCDIR) ; }
 	$(INSTALL) -c    $(MANGRP) $(MANMODE) [ACILNPR]*  $(DESTDOCDIR)
 
-install-exp: install-doc
+install-exp:
 	test -d $(DESTEXPDIR) || { umask 0022 && mkdir -p $(DESTEXPDIR) ; }
 	$(INSTALL) -c    $(MANGRP) $(MANMODE) examples/*  $(DESTEXPDIR)
 
