@@ -11,6 +11,7 @@
 : fd2 -e echo "debug: Executing `"$h/.osh.login"' now..."
 
 if X$u != Xroot goto continue
+
 	:
 	: " Give the superuser a different default PATH. "
 	:
@@ -23,6 +24,7 @@ if X$u != Xroot goto continue
 	setenv	MANPATH	\
 		/opt/local/share/man:/usr/local/man:/usr/share/man:/usr/X11/share/man
 	setenv	PATH		/usr/local/v6bin:$h/v6bin:$p:/usr/games
+	setenv	COMMAND_MODE	unix2003
 	setenv	EXECSHELL	@EXECSHELL@
 	setenv	EDITOR		'/bin/ed -p:'
 	setenv	VISUAL		/opt/local/bin/vim
@@ -30,7 +32,9 @@ if X$u != Xroot goto continue
 	setenv	LESS		-M
 	setenv	TZ		UTC
 
-	@SOURCE_OSHDIR@
+	if $n = 1 -a X$1 = Xsh6 goto sh6
+		@SOURCE_OSHDIR@
+	: sh6
 
 	: " Print a message or two at login time. "
 	echo ; date '+%A, %Y-%m-%d, %T %Z' ; echo

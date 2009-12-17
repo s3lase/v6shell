@@ -17,6 +17,12 @@ if $s = 0 goto TERM_OK
 	: fallthrough
 
 : TERM_OK
+if ! \( $n = 1 -a X$1 = Xsh6 \) goto TTY_CHECK
+
+	unsetenv TTY
+	: fallthrough
+
+: TTY_CHECK
 printenv TTY | grep \^$t\$ >/dev/null
 if $s = 0 goto continue
 
@@ -26,9 +32,9 @@ if $s = 0 goto continue
 	if $s = 0 goto C
 
 		:
-		: " The terminal I normally use is rxvt-unicode, but I also "
-		: " use Terminal.app on rare occasions.  Both terminals are "
-		: " UTF-8 capable.  I normally set TERM to xterm-color.     "
+		: " The terminal I normally use is rxvt-unicode (urxvt),  "
+		: " but I also use others on occasion.  Normally, they're "
+		: " UTF-8 capable, but that's not always true.            "
 		:
 		setenv	LC_ALL		en_US.UTF-8
 		setenv	LESSCHARSET	utf-8
@@ -42,10 +48,13 @@ if $s = 0 goto continue
 
 	: Next - " Set the window title for terminal emulators under X. "
 
-		xtitle
+	if $n = 1 -a X$1 = Xsh6 goto sh6
+		xtitle ; goto stty
+	: sh6
+		sh6 -c xtitle
 		: fallthrough
 
-	: " Set terminal options. "
+	: stty - " Set terminal options. "
 	stty altwerase imaxbel -oxtabs <-
 	stty status '^T' <-
 	: fallthrough
@@ -56,3 +65,10 @@ if $s = 0 goto continue
 	: " Other initialization routines that the user wishes to execute "
 	: " for each interactive shell can be placed here.                "
 	:
+
+	if ! \( $n = 1 -a X$1 = Xsh6 \) goto osh
+		if ! { which sh6 >/dev/null } goto shift
+			: " Replace osh w/ sh6 . " ; exec sh6 <-
+		: shift
+			shift
+	: osh
