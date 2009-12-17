@@ -17,7 +17,7 @@ sigign + 2 3
 :
 if X$d = X -o ! -d $d'' goto Logout
 
-	chdir $d ; rm -r $d ; chdir -
+	chdir ; rm -r $d ; chdir -
 	: fallthrough
 
 : Logout - " Log out or start new login shell according to user response. "
