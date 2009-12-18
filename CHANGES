@@ -10,7 +10,7 @@ INSTALL, Makefile:
 	  they're no longer triggered by default "install" target(s).
 
 mkconfig:
-	* p1: Define CONFIG_SUNOS on OpenSolaris (uname -s == SunOS).
+	* p1: Defined CONFIG_SUNOS on OpenSolaris (uname -s == SunOS).
 
 goto.c:
 	* p1: Fixed problem w/ external goto command on OpenSolaris where
