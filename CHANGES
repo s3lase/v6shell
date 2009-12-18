@@ -3,13 +3,28 @@ Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
 [osh-current]:
+	* Incorporated osh-20091127-p1.patch changes (see p1: below).
+
+INSTALL, Makefile:
+	* Made "install-doc" and "install-exp" targets optional so that
+	  they're no longer triggered by default "install" target(s).
+
 mkconfig:
-	* Define CONFIG_SUNOS on OpenSolaris (uname -s == SunOS).
+	* p1: Define CONFIG_SUNOS on OpenSolaris (uname -s == SunOS).
 
 goto.c:
-	* Fixed problem w/ external goto command on OpenSolaris where file
-	  offset set via lseek(2) isn't shared w/ parent process, causing
-	  unexpected behavior.
+	* p1: Fixed problem w/ external goto command on OpenSolaris where
+	      file offset set via lseek(2) isn't shared w/ parent process,
+	      causing unexpected behavior.
+
+examples/*osh*:
+	* Made changes that allow users to use osh to initialize/invoke sh6
+	  by doing `[exec] osh [-i | -l] sh6'. This is most convenient way
+	  to perform startup actions for sh6 without adding undesirable
+	  functionality to sh6 itself.
+
+examples/dot.osh.logout:
+	* Fixed `rm -r $d' error on OpenSolaris.
 
 -------------------------------------------------------------------------------
 [osh-20091127]:
@@ -1539,6 +1554,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2009/11/27
+Jeffrey Allen Neitzel						2009/12/18
 
 @(#)$Id$

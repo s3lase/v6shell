@@ -90,13 +90,18 @@ Further details regarding some of the known differences:
    This does not change the user-visible behavior of the shell or
    utilities.
 
-3) This port of the shell ignores the first line of a command file
+3) This port of the shell prints a progname prefix (e.g., `osh: ')
+   for all diagnostics.  This results in `osh: file: cannot open'
+   instead of `file: cannot open', `osh: syntax error' instead of
+   `syntax error', and so forth.
+
+4) This port of the shell ignores the first line of a command file
    if it begins with `#!' in order to play nicely with kernels which
    support the `#!' mechanism.  For example, the first line might be
    `#!/usr/local/bin/osh' or `#!/usr/bin/env osh'.  This is just for
    user convenience in the face of conflicting shell languages.
 
-4) The original implementation of the shell does shell accounting
+5) The original implementation of the shell does shell accounting
    in order to record command execution data; this port does not.
 
 -------------------------------
@@ -149,6 +154,6 @@ Further details regarding the substantial differences:
 3) The original implementation of the shell does shell accounting
    in order to record command execution data; this port does not.
 
-Jeffrey Allen Neitzel						2009/11/27
+Jeffrey Allen Neitzel						2009/12/18
 
 @(#)$Id$
