@@ -1890,7 +1890,7 @@ static int
 prsig(int s, pid_t tp, pid_t cp)
 {
 	int e, r;
-	char buf[32];
+	char buf[SBUFMM(1)];
 	const char *c, *m;
 
 	e = WTERMSIG(s);
