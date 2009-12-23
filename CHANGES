@@ -3,6 +3,9 @@ Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
 [osh-current]:
+
+-------------------------------------------------------------------------------
+[osh-20091218]:
 	* Incorporated osh-20091127-p1.patch changes (see p1: below).
 
 INSTALL, Makefile:
@@ -1554,6 +1557,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2009/12/18
+Jeffrey Allen Neitzel						2009/12/23
 
 @(#)$Id$
