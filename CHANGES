@@ -141,7 +141,7 @@ README:
 
 err.[hc]:
 	* Unified all shell and utility error-handling routines (for all
-	  programs) in this module (see also CHANGES-sh_to_sh6).
+	  programs) in this module (see also CHANGES6).
 
 err.c, osh.c, util.c:
 	* Fixed an echo bug that caused `echo ""' to print an unnecessary
@@ -490,8 +490,8 @@ pexec.c:
 
 osh.c:
 	C: Rewrote the shell!  It is now a combination of the ports of the
-	   original source code from sh6.c and glob6.c (see CHANGES-sh_to_sh6)
-	   w/ the prior enhancements which were found in osh-060124/osh*.[ch] .
+	   original source code from sh6.c and glob6.c (see CHANGES6) w/ the
+	   prior enhancements which were found in osh-060124/osh*.[ch] .
 
 fd2.c:
 	* Removed the call to lseek(2) to end-of-file for errors.
@@ -535,8 +535,8 @@ Makefile:
 sh6:
 	* Changed sh6(1) from being a reimplementation which is compiled from
 	  the same sources as osh(1) to being a port of the original Thompson
-	  shell from Sixth Edition UNIX.  Refer to the CHANGES-sh_to_sh6 file
-	  for further details.
+	  shell from Sixth Edition UNIX.  Refer to the CHANGES6 file for
+	  further details.
 
 osh:
 	C: Treat both `( ; )' and `( & )' as syntax errors.
@@ -1557,6 +1557,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2009/12/23
+Jeffrey Allen Neitzel						2009/12/30
 
 @(#)$Id$

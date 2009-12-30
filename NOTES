@@ -115,9 +115,9 @@ Like the original, this port of the shell is not 8-bit clean as it
 uses the high-order bit of characters for quoting.  Thus, the only
 complete character set it can handle is 7-bit ASCII.
 
-Aside from those differences which are detailed either here or
-in the manual page, the CHANGES-sh_to_sh6 file contains further
-information regarding how this port differs from the original.
+Aside from those differences which are detailed either here or in
+the manual page, the CHANGES6 file contains further information
+regarding how this port differs from the original.
 
 Further details regarding the substantial differences:
 
@@ -154,6 +154,6 @@ Further details regarding the substantial differences:
 3) The original implementation of the shell does shell accounting
    in order to record command execution data; this port does not.
 
-Jeffrey Allen Neitzel						2009/12/18
+Jeffrey Allen Neitzel						2009/12/30
 
 @(#)$Id$
