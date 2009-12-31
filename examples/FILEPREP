@@ -76,8 +76,8 @@ if ! { fd2 which oshdir >/dev/null } goto NotFound
 : NotFound
 
 	(\
-	 echo -n "<$1 ( rm -f $1 ; sed 's,@SOURCE_OSHDIR@,"                 ;\
-	 echo ": See http://v6shell.org/command_files/oshdir.osh .,' >$1 )" ;\
+	 echo -n "<$1 ( rm -f $1 ; sed 's,@SOURCE_OSHDIR@,"             ;\
+	 echo ": See http://v6shell.org/v6scripts/oshdir.osh .,' >$1 )" ;\
 	) >$d/oshdir
 	: fallthrough
 
