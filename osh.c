@@ -30,9 +30,9 @@
  */
 /*
  *	Derived from: osh-20061230
- *		osh.c	(1.1 (jneitzel) 2006/12/26)
- *		sh6.c	(1.3 (jneitzel) 2006/09/15)
- *		glob6.c	(1.3 (jneitzel) 2006/09/23)
+ *			osh.c	(1.1 (jneitzel) 2006/12/26)
+ *			sh6.c	(1.3 (jneitzel) 2006/09/15)
+ *			glob6.c	(1.3 (jneitzel) 2006/09/23)
  */
 /*-
  * Copyright (C) Caldera International Inc.  2001-2002.  All rights reserved.
