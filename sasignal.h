@@ -2,7 +2,7 @@
  * osh - an enhanced port of the Sixth Edition (V6) UNIX Thompson shell
  */
 /*-
- * Copyright (c) 2008-2009
+ * Copyright (c) 2008-2010
  *	Jeffrey Allen Neitzel <jan (at) v6shell (dot) org>.
  *	All rights reserved.
  *

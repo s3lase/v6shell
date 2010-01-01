@@ -2,7 +2,7 @@
  * goto.c - a port of the Sixth Edition (V6) UNIX transfer command
  */
 /*-
- * Copyright (c) 2004-2009
+ * Copyright (c) 2004-2010
  *	Jeffrey Allen Neitzel <jan (at) v6shell (dot) org>.
  *	All rights reserved.
  *

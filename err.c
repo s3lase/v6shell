@@ -2,7 +2,7 @@
  * err.c - shell and utility error-handling routines
  */
 /*-
- * Copyright (c) 2004-2009
+ * Copyright (c) 2004-2010
  *	Jeffrey Allen Neitzel <jan (at) v6shell (dot) org>.
  *	All rights reserved.
  *
