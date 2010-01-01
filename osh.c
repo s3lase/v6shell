@@ -29,16 +29,10 @@
  *	@(#)$Id$
  */
 /*
- *	Derived from:
- *		- osh-20061230:
- *			sh6.c   (1.3 (jneitzel) 2006/09/15)
- *			glob6.c (1.3 (jneitzel) 2006/09/23)
- *		- osh-060124:
- *			osh.h       (1.8 (jneitzel) 2006/01/20)
- *			osh.c       (1.108 (jneitzel) 2006/01/20)
- *			osh-parse.c (1.8 (jneitzel) 2006/01/20)
- *			osh-exec.c  (1.7 (jneitzel) 2006/01/20)
- *			osh-misc.c  (1.5 (jneitzel) 2006/01/20)
+ *	Derived from: osh-20061230
+ *		osh.c	(1.1 (jneitzel) 2006/12/26)
+ *		sh6.c	(1.3 (jneitzel) 2006/09/15)
+ *		glob6.c	(1.3 (jneitzel) 2006/09/23)
  */
 /*-
  * Copyright (C) Caldera International Inc.  2001-2002.  All rights reserved.
