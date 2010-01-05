@@ -286,8 +286,9 @@ static	char		*rc_build(/*@out@*/ /*@returned@*/ char *,
 static	bool		rc_open(/*@null@*/ const char *);
 static	void		fd_free(void);
 static	bool		fd_type(int, mode_t);
-static	void		atrim(char *);
-/*@null@*/
+/*@maynotreturn@*/ /*@null@*/
+static	char		*atrim(/*@returned@*/ char *);
+/*@maynotreturn@*/ /*@null@*/
 static	char		*gtrim(/*@returned@*/ char *);
 /*@null@*/
 static	char		*gchar(/*@returned@*/ const char *);
@@ -1105,7 +1106,7 @@ vtrim(char **vp)
 	char **p;
 
 	for (p = vp; *p != NULL; p++)
-		atrim(*p);
+		(void)atrim(*p);
 }
 
 /*
@@ -1381,8 +1382,8 @@ exec1(struct tnode *t)
 			(void)umask(m = umask(0));
 			fd_print(FD1, "%04o\n", (unsigned)m);
 		} else {
-			atrim(t->nav[1]);
-			for (m = 0, p = t->nav[1]; *p >= '0' && *p <= '7'; p++)
+			m = 0;
+			for (p = atrim(t->nav[1]); *p >= '0' && *p <= '7'; p++)
 				m = m * 8 + (*p - '0');
 			if (*t->nav[1] == '\0' || *p != '\0' || m > 0777) {
 				err(-1, FMT4S, getmyname(),
@@ -1402,8 +1403,7 @@ exec1(struct tnode *t)
 		 */
 		if (t->nav[1] != NULL && t->nav[2] == NULL) {
 
-			atrim(t->nav[1]);
-			for (p = t->nav[1]; *p != '=' && *p != '\0'; p++)
+			for (p = atrim(t->nav[1]); *p != '=' && *p != '\0'; p++)
 				;	/* nothing */
 			if (*t->nav[1] == '\0' || *p == '=') {
 				err(-1, FMT4S, getmyname(),
@@ -1475,11 +1475,10 @@ exec2(struct tnode *t, int *pin, int *pout)
 		i  = 0;
 		if (*t->nfin == '-' && *(t->nfin + 1) == '\0')
 			i = 1;
-		atrim(t->nfin);
 		if (i != 0)
 			i = dup(dupfd0);
 		else
-			i = open(t->nfin, O_RDONLY);
+			i = open(atrim(t->nfin), O_RDONLY);
 		if (i == -1)
 			err(FC_ERR, FMT3S, getmyname(), t->nfin, ERR_OPEN);
 		if (dup2(i, FD0) == -1)
@@ -1494,8 +1493,7 @@ exec2(struct tnode *t, int *pin, int *pout)
 			i = O_WRONLY | O_APPEND | O_CREAT;
 		else
 			i = O_WRONLY | O_TRUNC | O_CREAT;
-		atrim(t->nfout);
-		if ((i = open(t->nfout, i, 0666)) == -1)
+		if ((i = open(atrim(t->nfout), i, 0666)) == -1)
 			err(FC_ERR, FMT3S, getmyname(), t->nfout, ERR_CREATE);
 		if (dup2(i, FD1) == -1)
 			err(FC_ERR, FMT2S, getmyname(), strerror(errno));
@@ -1589,11 +1587,9 @@ do_chdir(char **av)
 				pwd = -1;
 			goto chdirerr;
 		}
-	} else {
-		atrim(av[1]);
-		if (chdir(av[1]) == -1)
+	} else
+		if (chdir(atrim(av[1])) == -1)
 			goto chdirerr;
-	}
 
 	if (cwd != -1) {
 		if (cwd != PWD && (pwd = dup2(cwd, PWD)) == PWD)
@@ -2242,10 +2238,11 @@ fd_type(int fd, mode_t type)
 }
 
 /*
- * Remove any unquoted quote characters from the argument pointed
- * to by ap.  This function never returns on error.
+ * Remove (trim) any unquoted quote characters from argument
+ * pointed to by ap, make copy of, and return pointer to it.
+ * This function never returns on error.
  */
-static void
+static char *
 atrim(char *ap)
 {
 	size_t siz;
@@ -2259,7 +2256,7 @@ atrim(char *ap)
 			*b = '\0';
 			siz = (b - buf) + 1;
 			(void)memcpy(ap, buf, siz);
-			return;
+			return ap;
 		case '"':
 		case '\'':
 			c = *a++;
@@ -2282,14 +2279,20 @@ atrim(char *ap)
 
 aterr:
 	err(ESTATUS, "%s: %s %s\n", getmyname(), ERR_TRIM, ap);
+	/*NOTREACHED*/
+	return NULL;
 }
 
 /*
- * Prepare the glob() pattern pointed to by ap.  Remove any unquoted
- * quote characters, and escape (w/ a backslash `\') any previously
- * quoted glob or quote characters as needed.  Reallocate memory for
- * (if needed), make a copy of, and return a pointer to the new
- * glob() pattern, nap.  This function never returns on error.
+ * Prepare glob() pattern pointed to by ap.
+ *
+ *	1) Remove (trim) any unquoted quote characters;
+ *	2) Escape (w/ backslash `\') any previously quoted
+ *	   glob or quote characters as needed;
+ *	3) Reallocate memory for (if needed), make copy of,
+ *	   and return pointer to new glob() pattern, nap.
+ *
+ * This function never returns on error.
  */
 static char *
 gtrim(char *ap)
@@ -2347,15 +2350,15 @@ gtrim(char *ap)
 	}
 
 gterr:
-	err(FC_ERR, "%s: %s %s\n", getmyname(), ERR_TRIM, ap);
+	err(SH_ERR, FMT2S, getmyname(), ERR_PATTOOLONG);
 	/*NOTREACHED*/
 	return NULL;
 }
 
 /*
- * Return a pointer to the first unquoted glob character (`*', `?', `[')
- * in the argument pointed to by ap.  Otherwise, return a NULL pointer on
- * error or if the argument contains no glob characters.
+ * Return pointer to first unquoted glob character (`*', `?', `[')
+ * in argument pointed to by ap.  Otherwise, return NULL pointer
+ * on error or if argument contains no glob characters.
  */
 static char *
 gchar(const char *ap)
@@ -2548,7 +2551,7 @@ glob1(const char **gav, char *as, int *pmc)
 	ds = as;
 	slash = false;
 	if ((ps = gchar(as)) == NULL) {
-		atrim(as);
+		(void)atrim(as);
 		gav = gavnew(gav);
 		*gavp++ = gcat(as, "", slash);
 		*gavp = NULL;
@@ -2699,7 +2702,7 @@ gopendir(char *buf, const char *dname)
 
 	for (*buf = '\0', b = buf, d = dname; b < &buf[PATHMAX]; b++, d++)
 		if ((*b = *d) == '\0') {
-			atrim(buf);
+			(void)atrim(buf);
 			break;
 		}
 	return (b >= &buf[PATHMAX]) ? NULL : opendir(buf);
