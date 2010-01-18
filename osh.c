@@ -318,7 +318,7 @@ main(int argc, char **argv)
 	bool dosigs = false;
 
 	sh_init(argv[0]);
-	if (argv[0] == NULL || *argv[0] == '\0')
+	if (argv[0] == NULL || *argv[0] == EOS)
 		err(SH_ERR, FMT2S, getmyname(), ERR_ALINVAL);
 	if (fd_type(FD0, FD_ISDIR))
 		goto done;
@@ -493,8 +493,8 @@ cmd_verbose(void)
 
 	if (!verbose_flag)
 		return;
-	for (vp = word; **vp != '\n'; vp++)
-		fd_print(FD2, "%s%s", *vp, (**(vp + 1) != '\n') ? " " : "");
+	for (vp = word; **vp != EOL; vp++)
+		fd_print(FD2, "%s%s", *vp, (**(vp + 1) != EOL) ? " " : "");
 	fd_print(FD2, FMT1S, "");
 }
 
@@ -516,7 +516,7 @@ rpx_line(void)
 		wp = linep;
 		if (get_word() == EOF)
 			return EOF;
-	} while (*wp != '\n');
+	} while (*wp != EOL);
 
 	cmd_verbose();
 
@@ -571,18 +571,18 @@ get_word(void)
 			while ((c = xgetc(!DOLSUB)) != c1) {
 				if (c == EOF)
 					return EOF;
-				if (c == '\n') {
+				if (c == EOL) {
 					if (!error)
 						error_message = ERR_SYNTAX;
 					peekc = c;
-					*linep++ = '\0';
+					*linep++ = EOS;
 					error = true;
 					return 1;
 				}
 				if (c == '\\') {
 					if ((c = xgetc(!DOLSUB)) == EOF)
 						return EOF;
-					if (c == '\n')
+					if (c == EOL)
 						c = ' ';
 					else {
 						peekc = c;
@@ -597,7 +597,7 @@ get_word(void)
 		case '\\':
 			if ((c = xgetc(!DOLSUB)) == EOF)
 				return EOF;
-			if (c == '\n')
+			if (c == EOL)
 				continue;
 			*linep++ = '\\';
 			*linep++ = c;
@@ -607,9 +607,9 @@ get_word(void)
 		case ';': case '&':
 		case '|': case '^':
 		case '<': case '>':
-		case '\n':
+		case EOL:
 			*linep++ = c;
-			*linep++ = '\0';
+			*linep++ = EOS;
 			return 1;
 
 		default:
@@ -622,7 +622,7 @@ get_word(void)
 			if (c == '\\') {
 				if ((c = xgetc(!DOLSUB)) == EOF)
 					return EOF;
-				if (c == '\n')
+				if (c == EOL)
 					c = ' ';
 				else {
 					*linep++ = '\\';
@@ -634,7 +634,7 @@ get_word(void)
 				peekc = c;
 				if (any(c, "\"'"))
 					break;
-				*linep++ = '\0';
+				*linep++ = EOS;
 				return 1;
 			}
 			*linep++ = c;
@@ -654,15 +654,15 @@ xgetc(bool dolsub)
 {
 	int c;
 
-	if (peekc != '\0') {
+	if (peekc != EOS) {
 		c = peekc;
-		peekc = '\0';
+		peekc = EOS;
 		return c;
 	}
 
 	if (wordp >= &word[WORDMAX - 2]) {
 		wordp -= 4;
-		while ((c = xgetc(!DOLSUB)) != EOF && c != '\n')
+		while ((c = xgetc(!DOLSUB)) != EOF && c != EOL)
 			;	/* nothing */
 		wordp += 4;
 		error_message = ERR_TMARGS;
@@ -670,7 +670,7 @@ xgetc(bool dolsub)
 	}
 	if (linep >= &line[LINEMAX - 5]) {
 		linep -= 10;
-		while ((c = xgetc(!DOLSUB)) != EOF && c != '\n')
+		while ((c = xgetc(!DOLSUB)) != EOF && c != EOL)
 			;	/* nothing */
 		linep += 10;
 		error_message = ERR_TMCHARS;
@@ -680,7 +680,7 @@ xgetc(bool dolsub)
 getd:
 	if (dolp != NULL) {
 		c = *dolp++;
-		if (c != '\0')
+		if (c != EOS)
 			return c;
 		dolp = NULL;
 	}
@@ -690,19 +690,19 @@ getd:
 		if ((dolp = get_dolp(c)) != NULL)
 			goto getd;
 	}
-	/* Ignore all NUL characters. */
-	if (c == '\0') do {
+	/* Ignore all EOS/NUL characters. */
+	if (c == EOS) do {
 		if (++nul_count >= LINEMAX) {
 			error_message = ERR_TMCHARS;
 			goto geterr;
 		}
 		c = readc();
-	} while (c == '\0');
+	} while (c == EOS);
 	return c;
 
 geterr:
 	error = true;
-	return '\n';
+	return EOL;
 }
 
 /*
@@ -714,14 +714,14 @@ geterr:
 static int
 readc(void)
 {
-	unsigned char c;
+	UChar c;
 
 	if (argv2p != NULL) {
 		if (argv2p == (char *)-1)
 			return EOF;
-		if ((c = (*argv2p++ & 0377)) == '\0') {
+		if ((c = UCHAR(*argv2p++)) == EOS) {
 			argv2p = (char *)-1;
-			c = '\n';
+			c = UEOL;
 		}
 		return c;
 	}
@@ -741,7 +741,7 @@ get_dolp(int c)
 	int n, r;
 	const char *v;
 
-	*dolbuf = '\0';
+	*dolbuf = EOS;
 	switch (c) {
 	case '$':
 		r = snprintf(dolbuf,sizeof(dolbuf),"%05u",(unsigned)getmypid());
@@ -902,7 +902,7 @@ syn1(char **p1, char **p2)
 
 		case ';':
 		case '&':
-		case '\n':
+		case EOL:
 			if (subcnt == 0) {
 				c = **p;
 				t = talloc();
@@ -1075,7 +1075,7 @@ any(int c, const char *as)
 	const char *s;
 
 	s = as;
-	while (*s != '\0')
+	while (*s != EOS)
 		if (*s++ == c)
 			return true;
 	return false;
@@ -1308,9 +1308,9 @@ exec1(struct tnode *t)
 		    (t->nav[2] == NULL || t->nav[3] == NULL)) {
 
 			vtrim(t->nav);
-			for (p = t->nav[1]; *p != '=' && *p != '\0'; p++)
+			for (p = t->nav[1]; *p != '=' && *p != EOS; p++)
 				;	/* nothing */
-			if (*t->nav[1] == '\0' || *p == '=') {
+			if (*t->nav[1] == EOS || *p == '=') {
 				err(-1, FMT4S, getmyname(),
 				    t->nav[0], t->nav[1], ERR_BADNAME);
 				return;
@@ -1383,9 +1383,9 @@ exec1(struct tnode *t)
 			fd_print(FD1, "%04o\n", (unsigned)m);
 		} else {
 			m = 0;
-			for (p = atrim(t->nav[1]); *p >= '0' && *p <= '7'; p++)
+			for (p=atrim(t->nav[1]);*p>='0'&&*p<='7';p++)
 				m = m * 8 + (*p - '0');
-			if (*t->nav[1] == '\0' || *p != '\0' || m > 0777) {
+			if (*t->nav[1] == EOS || *p != EOS || m > 0777) {
 				err(-1, FMT4S, getmyname(),
 				    t->nav[0], t->nav[1], ERR_BADMASK);
 				return;
@@ -1403,9 +1403,9 @@ exec1(struct tnode *t)
 		 */
 		if (t->nav[1] != NULL && t->nav[2] == NULL) {
 
-			for (p = atrim(t->nav[1]); *p != '=' && *p != '\0'; p++)
+			for (p=atrim(t->nav[1]);*p!='='&&*p!=EOS;p++)
 				;	/* nothing */
-			if (*t->nav[1] == '\0' || *p == '=') {
+			if (*t->nav[1] == EOS || *p == '=') {
 				err(-1, FMT4S, getmyname(),
 				    t->nav[0], t->nav[1], ERR_BADNAME);
 				return;
@@ -1473,7 +1473,7 @@ exec2(struct tnode *t, int *pin, int *pout)
 	if (t->nfin != NULL && (f & FPIN) == 0) {
 		f |= FFIN;
 		i  = 0;
-		if (*t->nfin == '-' && *(t->nfin + 1) == '\0')
+		if (*t->nfin == '-' && *(t->nfin + 1) == EOS)
 			i = 1;
 		if (i != 0)
 			i = dup(dupfd0);
@@ -1571,7 +1571,7 @@ do_chdir(char **av)
 
 	if (av[1] == NULL) {
 		home = getenv("HOME");
-		if (home == NULL || *home == '\0') {
+		if (home == NULL || *home == EOS) {
 			emsg = ERR_NOHOMEDIR;
 			goto chdirerr;
 		}
@@ -1587,9 +1587,8 @@ do_chdir(char **av)
 				pwd = -1;
 			goto chdirerr;
 		}
-	} else
-		if (chdir(atrim(av[1])) == -1)
-			goto chdirerr;
+	} else if (chdir(atrim(av[1])) == -1)
+		goto chdirerr;
 
 	if (cwd != -1) {
 		if (cwd != PWD && (pwd = dup2(cwd, PWD)) == PWD)
@@ -1660,7 +1659,7 @@ do_sigign(char **av, enum tnflags f)
 		for (i = 2; av[i] != NULL; i++) {
 			errno = 0;
 			lsigno = strtol(av[i], &sigbad, 10);
-			if (errno != 0 || *av[i] == '\0' || *sigbad != '\0' ||
+			if (errno  != 0 || *av[i] == EOS || *sigbad != EOS ||
 			    lsigno <= 0 || lsigno >= NSIG) {
 				sigerr = i;
 				goto sigdone;
@@ -1884,7 +1883,7 @@ prsig(int s, pid_t tp, pid_t cp)
 	const char *c, *m;
 
 	e = WTERMSIG(s);
-	if (e >= NSIGMSG || (e >= 0 && *sigmsg[e] != '\0')) {
+	if (e >= NSIGMSG || (e >= 0 && *sigmsg[e] != EOS)) {
 		if (e < NSIGMSG)
 			m = sigmsg[e];
 		else {
@@ -2011,7 +2010,7 @@ sh_magic(void)
 	if (fd_type(FD0, FD_ISREG) && lseek(FD0, (off_t)0, SEEK_CUR) == 0) {
 		if (readc() == '#' && readc() == '!') {
 			for (len = 2; len < LINEMAX; len++)
-				if ((c = readc()) == '\n' || c == EOF)
+				if ((c = readc()) == EOL || c == EOF)
 					return;
 			err(-1, FMT2S, getmyname(), ERR_TMCHARS);
 		} else
@@ -2141,14 +2140,14 @@ rc_build(char *path, const char *file, size_t size)
 	int len;
 	const char *home;
 
-	*path = '\0';
+	*path = EOS;
 	home  = getenv("HOME");
-	if (home != NULL && *home != '\0') {
+	if (home != NULL && *home != EOS) {
 		len = snprintf(path, size, "%s/%s", home, file);
 		if (len < 0 || len >= (int)size) {
 			err(-1, "%s: %s/%s: %s\n",
 			    getmyname(), home, file, strerror(ENAMETOOLONG));
-			*path = '\0';
+			*path = EOS;
 		}
 	}
 	return path;
@@ -2166,7 +2165,7 @@ rc_open(const char *file)
 {
 	int fd;
 
-	if (file == NULL || *file == '\0')
+	if (file == NULL || *file == EOS)
 		return false;
 
 	if ((fd = open(file, O_RDONLY | O_NONBLOCK)) == -1)
@@ -2249,11 +2248,11 @@ atrim(char *ap)
 	char buf[LINEMAX], c;
 	char *a, *b;
 
-	*buf = '\0';
+	*buf = EOS;
 	for (a = ap, b = buf; b < &buf[LINEMAX]; a++, b++) {
 		switch (*a) {
-		case '\0':
-			*b = '\0';
+		case EOS:
+			*b = EOS;
 			siz = (b - buf) + 1;
 			(void)memcpy(ap, buf, siz);
 			return ap;
@@ -2261,14 +2260,14 @@ atrim(char *ap)
 		case '\'':
 			c = *a++;
 			while (*a != c && b < &buf[LINEMAX]) {
-				if (*a == '\0')
+				if (*a == EOS)
 					goto aterr;
 				*b++ = *a++;
 			}
 			b--;
 			continue;
 		case '\\':
-			if (*++a == '\0') {
+			if (*++a == EOS) {
 				a--, b--;
 				continue;
 			}
@@ -2301,11 +2300,11 @@ gtrim(char *ap)
 	char buf[PATHMAX], c;
 	char *a, *b, *nap;
 
-	*buf = '\0';
+	*buf = EOS;
 	for (a = ap, b = buf; b < &buf[PATHMAX]; a++, b++) {
 		switch (*a) {
-		case '\0':
-			*b = '\0';
+		case EOS:
+			*b = EOS;
 			siz = (b - buf) + 1;
 			nap = ap;
 			if (siz > strlen(ap) + 1) {
@@ -2319,7 +2318,7 @@ gtrim(char *ap)
 			c = *a++;
 			while (*a != c && b < &buf[PATHMAX]) {
 				switch (*a) {
-				case '\0':
+				case EOS:
 					goto gterr;
 				case '*': case '?': case '[': case ']':
 				case '-': case '"': case '\'': case '\\':
@@ -2334,7 +2333,7 @@ gtrim(char *ap)
 			continue;
 		case '\\':
 			switch (*++a) {
-			case '\0':
+			case EOS:
 				a--, b--;
 				continue;
 			case '*': case '?': case '[': case ']':
@@ -2366,16 +2365,16 @@ gchar(const char *ap)
 	char c;
 	const char *a;
 
-	for (a = ap; *a != '\0'; a++)
+	for (a = ap; *a != EOS; a++)
 		switch (*a) {
 		case '"':
 		case '\'':
 			for (c = *a++; *a != c; a++)
-				if (*a == '\0')
+				if (*a == EOS)
 					return NULL;
 			continue;
 		case '\\':
-			if (*++a == '\0')
+			if (*++a == EOS)
 				return NULL;
 			continue;
 		case '*':
@@ -2453,7 +2452,8 @@ static	const char	**gave;	/* points to current gav end          */
 static	size_t		gavtot;	/* total bytes used for all arguments */
 
 static	const char	**gavnew(/*@only@*/ const char **);
-static	char		*gcat(const char *, const char *, bool);
+static	char		*gcat(/*@null@*/ const char *,
+			      /*@null@*/ const char *, bool);
 static	const char	**glob1(/*@only@*/ const char **, char *, int *);
 static	bool		glob2(const UChar *, const UChar *);
 static	void		gsort(const char **);
@@ -2513,8 +2513,14 @@ gcat(const char *src1, const char *src2, bool slash)
 	char *b, buf[PATHMAX], c, *dst;
 	const char *s;
 
-	*buf = '\0', b = buf, s = src1;
-	while ((c = *s++) != '\0') {
+	if (src1 == NULL || src2 == NULL) {
+		/* never true, but appease splint(1) */
+		err(SH_ERR, FMT2S, getmyname(), "gcat: Invalid argument");
+		/*NOTREACHED*/
+	}
+
+	*buf = EOS, b = buf, s = src1;
+	while ((c = *s++) != EOS) {
 		if (b >= &buf[PATHMAX - 1])
 			err(SH_ERR, FMT2S, getmyname(), strerror(ENAMETOOLONG));
 		*b++ = c;
@@ -2526,7 +2532,7 @@ gcat(const char *src1, const char *src2, bool slash)
 		if (b >= &buf[PATHMAX])
 			err(SH_ERR, FMT2S, getmyname(), strerror(ENAMETOOLONG));
 		*b++ = c = *s++;
-	} while (c != '\0');
+	} while (c != EOS);
 
 	siz = b - buf;
 	gavtot += siz;
@@ -2551,9 +2557,8 @@ glob1(const char **gav, char *as, int *pmc)
 	ds = as;
 	slash = false;
 	if ((ps = gchar(as)) == NULL) {
-		(void)atrim(as);
 		gav = gavnew(gav);
-		*gavp++ = gcat(as, "", slash);
+		*gavp++ = gcat(atrim(as), "", slash);
 		*gavp = NULL;
 		return gav;
 	}
@@ -2563,7 +2568,7 @@ glob1(const char **gav, char *as, int *pmc)
 			break;
 		}
 		if (*--ps == '/') {
-			*ps = '\0';
+			*ps = EOS;
 			if (ds == ps)
 				ds = "/";
 			else
@@ -2572,17 +2577,17 @@ glob1(const char **gav, char *as, int *pmc)
 			break;
 		}
 	}
-	if ((dirp = gopendir(dirbuf, *ds != '\0' ? ds : ".")) == NULL) {
+	if ((dirp = gopendir(dirbuf, *ds != EOS ? ds : ".")) == NULL) {
 		err(SH_ERR, FMT2S, getmyname(), ERR_NODIR);
 		/*NOTREACHED*/
 	}
-	if (*ds != '\0')
+	if (*ds != EOS)
 		ds = dirbuf;
 	gidx = (ptrdiff_t)(gavp - gav);
 	while ((entry = readdir(dirp)) != NULL) {
 		if (entry->d_name[0] == '.' && *ps != '.')
 			continue;
-		if (glob2((UChar *)entry->d_name, (UChar *)ps)) {
+		if (glob2(UCPTR(entry->d_name), UCPTR(ps))) {
 			gav = gavnew(gav);
 			*gavp++ = gcat(ds, entry->d_name, slash);
 			(*pmc)++;
@@ -2606,7 +2611,7 @@ glob2(const UChar *ename, const UChar *pattern)
 
 	ec = *e++;
 	switch (pc = *p++) {
-	case '\0':
+	case EOS:
 		return ec == EOS;
 
 	case '*':
@@ -2632,7 +2637,7 @@ glob2(const UChar *ename, const UChar *pattern)
 	case '[':
 		if (*p == EOS)
 			break;
-		for (c = EOS, cok = rok = 0, n = p + 1; ; ) {
+		for (c = UEOS, cok = rok = 0, n = p + 1; ; ) {
 			pc = *p++;
 			if (pc == UCHAR(']') && p > n) {
 				if (cok > 0 || rok > 0)
@@ -2650,7 +2655,7 @@ glob2(const UChar *ename, const UChar *pattern)
 					rok++;
 				else if (c == ec)
 					cok--;
-				c = EOS;
+				c = UEOS;
 			} else {
 				if (pc == UCHAR('\\')) {
 					pc = *p++;
@@ -2700,8 +2705,8 @@ gopendir(char *buf, const char *dname)
 	char *b;
 	const char *d;
 
-	for (*buf = '\0', b = buf, d = dname; b < &buf[PATHMAX]; b++, d++)
-		if ((*b = *d) == '\0') {
+	for (*buf = EOS, b = buf, d = dname; b < &buf[PATHMAX]; b++, d++)
+		if ((*b = *d) == EOS) {
 			(void)atrim(buf);
 			break;
 		}
