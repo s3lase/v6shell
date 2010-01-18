@@ -106,7 +106,11 @@
 #define	IS_DIGIT(d, c)	((d) >= 0 && (d) <= 9 && "0123456789"[(d) % 10] == (c))
 
 typedef	unsigned char	UChar;
-#define	UCHAR(c)	((UChar)c)
-#define	EOS		UCHAR('\0')
+#define	UCHAR(c)	((UChar)(c))
+#define	UCPTR(p)	((UChar *)(p))
+#define	EOL		'\n'
+#define	EOS		'\0'
+#define	UEOL		UCHAR(EOL)
+#define	UEOS		UCHAR(EOS)
 
 #endif	/* !DEFS_H */
