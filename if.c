@@ -236,9 +236,9 @@ e3(void)
 	if (equal(a, "-t")) {
 		/* Does the descriptor refer to a terminal device? */
 		b = nxtarg(RETERR);
-		if (b == NULL || *b == '\0')
+		if (b == NULL || *b == EOS)
 			err(FC_ERR, FMT3S, getmyname(), a, ERR_DIGIT);
-		if (*b >= '0' && *b <= '9' && *(b + 1) == '\0') {
+		if (*b >= '0' && *b <= '9' && *(b + 1) == EOS) {
 			d = *b - '0';
 			if (IS_DIGIT(d, *b))
 				return isatty(d) != 0;
@@ -314,7 +314,7 @@ ifaccess(const char *file, int mode)
 	struct stat sb;
 	bool ra;
 
-	if (file == NULL || *file == '\0')
+	if (file == NULL || *file == EOS)
 		return false;
 
 	ra = access(file, mode) == 0;
@@ -337,7 +337,7 @@ ifstat1(const char *file, mode_t type)
 	struct stat sb;
 	bool rs;
 
-	if (file == NULL || *file == '\0')
+	if (file == NULL || *file == EOS)
 		return false;
 
 	if (type == S_IFLNK) {
@@ -363,9 +363,9 @@ ifstat2(const char *file1, const char *file2, int act)
 	struct stat sb1, sb2;
 	bool rs;
 
-	if (file1 == NULL || *file1 == '\0')
+	if (file1 == NULL || *file1 == EOS)
 		return false;
-	if (file2 == NULL || *file2 == '\0')
+	if (file2 == NULL || *file2 == EOS)
 		return false;
 
 	if (stat(file1, &sb1) < 0)

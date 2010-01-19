@@ -158,11 +158,11 @@ gcat(const char *src1, const char *src2)
 	char *b, buf[PATHMAX], c, *dst;
 	const char *s;
 
-	*buf = '\0', b = buf, s = src1;
-	while ((c = *s++) != '\0') {
+	*buf = EOS, b = buf, s = src1;
+	while ((c = *s++) != EOS) {
 		if (b >= &buf[PATHMAX - 1])
 			err(SH_ERR, FMT1S, strerror(ENAMETOOLONG));
-		if ((c &= ASCII) == '\0') {
+		if ((c &= ASCII) == EOS) {
 			*b++ = '/';
 			break;
 		}
@@ -174,14 +174,16 @@ gcat(const char *src1, const char *src2)
 		if (b >= &buf[PATHMAX])
 			err(SH_ERR, FMT1S, strerror(ENAMETOOLONG));
 		*b++ = c = *s++;
-	} while (c != '\0');
+	} while (c != EOS);
 
 	siz = b - buf;
 	gavtot += siz;
 	if (gavtot > GAVMAX)
 		err(SH_ERR, FMT1S, ERR_E2BIG);
-	if ((dst = malloc(siz)) == NULL)
+	if ((dst = malloc(siz)) == NULL) {
 		err(SH_ERR, FMT1S, ERR_NOMEM);
+		/*NOTREACHED*/
+	}
 
 	(void)memcpy(dst, buf, siz);
 	return dst;
@@ -198,7 +200,7 @@ glob1(const char **gav, char *as, int *pmc)
 
 	ds = ps = as;
 	while (*ps != '*' && *ps != '?' && *ps != '[')
-		if (*ps++ == '\0') {
+		if (*ps++ == EOS) {
 			gav = gavnew(gav);
 			*gavp++ = gcat(as, "");
 			*gavp = NULL;
@@ -212,20 +214,22 @@ glob1(const char **gav, char *as, int *pmc)
 			break;
 		}
 		if ((*--ps & ASCII) == '/') {
-			*ps = '\0';
+			*ps = EOS;
 			if (ds == ps)
 				ds = "/";
 			*ps++ = (char)QUOTE;
 			break;
 		}
 	}
-	if ((dirp = gopendir(*ds != '\0' ? ds : ".")) == NULL)
+	if ((dirp = gopendir(*ds != EOS ? ds : ".")) == NULL) {
 		err(SH_ERR, FMT1S, ERR_NODIR);
+		/*NOTREACHED*/
+	}
 	gidx = (ptrdiff_t)(gavp - gav);
 	while ((entry = readdir(dirp)) != NULL) {
 		if (entry->d_name[0] == '.' && (*ps & ASCII) != '.')
 			continue;
-		if (glob2((UChar *)entry->d_name, (UChar *)ps)) {
+		if (glob2(UCPTR(entry->d_name), UCPTR(ps))) {
 			gav = gavnew(gav);
 			*gavp++ = gcat(ds, entry->d_name);
 			(*pmc)++;
@@ -251,7 +255,7 @@ glob2(const UChar *ename, const UChar *pattern)
 			ec = (UChar)QUOTE;
 
 	switch (pc = *p++) {
-	case '\0':
+	case EOS:
 		return ec == EOS;
 
 	case '*':
@@ -277,7 +281,7 @@ glob2(const UChar *ename, const UChar *pattern)
 	case '[':
 		if (*p == EOS)
 			break;
-		for (c = EOS, cok = rok = 0, n = p + 1; ; ) {
+		for (c = UEOS, cok = rok = 0, n = p + 1; ; ) {
 			pc = *p++;
 			if (pc == UCHAR(']') && p > n) {
 				if (cok > 0 || rok > 0)
@@ -294,7 +298,7 @@ glob2(const UChar *ename, const UChar *pattern)
 					rok++;
 				else if (c == ec)
 					cok--;
-				c = EOS;
+				c = UEOS;
 			} else {
 				c = pc & ASCII;
 				if (ec == c)
@@ -334,8 +338,8 @@ gopendir(const char *dname)
 	char *b, buf[PATHMAX];
 	const char *d;
 
-	for (*buf = '\0', b = buf, d = dname; b < &buf[PATHMAX]; b++, d++)
-		if ((*b = (*d & ASCII)) == '\0')
+	for (*buf = EOS, b = buf, d = dname; b < &buf[PATHMAX]; b++, d++)
+		if ((*b = (*d & ASCII)) == EOS)
 			break;
 	return (b >= &buf[PATHMAX]) ? NULL : opendir(buf);
 }

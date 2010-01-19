@@ -136,14 +136,14 @@ setmyname(const char *s)
 {
 	const char *p;
 
-	if (s != NULL && *s != '\0') {
+	if (s != NULL && *s != EOS) {
 		if ((p = strrchr(s, '/')) != NULL)
 			p++;
 		else
 			p = s;
-		if (*p == '-' && *(p + 1) != '\0')
+		if (*p == '-' && *(p + 1) != EOS)
 			p++;
-		else if (*p == '\0')
+		else if (*p == EOS)
 			/* should never (but can) be true */
 			p = MYNAME;
 	} else

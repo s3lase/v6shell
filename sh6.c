@@ -171,7 +171,7 @@ main(int argc, char **argv)
 	bool dosigs = false;
 
 	sh_init();
-	if (argv[0] == NULL || *argv[0] == '\0')
+	if (argv[0] == NULL || *argv[0] == EOS)
 		err(SH_ERR, FMT1S, ERR_ALINVAL);
 	if (fd_isdir(FD0))
 		goto done;
@@ -239,7 +239,7 @@ rpx_line(void)
 	do {
 		wp = linep;
 		get_word();
-	} while (*wp != '\n');
+	} while (*wp != EOL);
 
 	if (error) {
 		err(SH_ERR, FMT1S, error_message);
@@ -283,16 +283,16 @@ loop:
 	case '\'':
 		c1 = c;
 		while ((c = xgetc(!DOLSUB)) != c1) {
-			if (c == '\n') {
+			if (c == EOL) {
 				if (!error)
 					error_message = ERR_SYNTAX;
 				peekc = c;
-				*linep++ = '\0';
+				*linep++ = EOS;
 				error = true;
 				return;
 			}
 			if (c == '\\') {
-				if ((c = xgetc(!DOLSUB)) == '\n')
+				if ((c = xgetc(!DOLSUB)) == EOL)
 					c = ' ';
 				else {
 					peekc = c;
@@ -304,7 +304,7 @@ loop:
 		break;
 
 	case '\\':
-		if ((c = xgetc(!DOLSUB)) == '\n')
+		if ((c = xgetc(!DOLSUB)) == EOL)
 			goto loop;
 		c |= QUOTE;
 		peekc = c;
@@ -314,9 +314,9 @@ loop:
 	case ';': case '&':
 	case '|': case '^':
 	case '<': case '>':
-	case '\n':
+	case EOL:
 		*linep++ = c;
-		*linep++ = '\0';
+		*linep++ = EOS;
 		return;
 
 	default:
@@ -325,7 +325,7 @@ loop:
 
 	for (;;) {
 		if ((c = xgetc(DOLSUB)) == '\\') {
-			if ((c = xgetc(!DOLSUB)) == '\n')
+			if ((c = xgetc(!DOLSUB)) == EOL)
 				c = ' ';
 			else
 				c |= QUOTE;
@@ -334,7 +334,7 @@ loop:
 			peekc = c;
 			if (any(c, "\"'"))
 				goto loop;
-			*linep++ = '\0';
+			*linep++ = EOS;
 			return;
 		}
 		*linep++ = c;
@@ -354,15 +354,15 @@ xgetc(bool dolsub)
 	int n;
 	char c;
 
-	if (peekc != '\0') {
+	if (peekc != EOS) {
 		c = peekc;
-		peekc = '\0';
+		peekc = EOS;
 		return c;
 	}
 
 	if (wordp >= &word[WORDMAX - 2]) {
 		wordp -= 4;
-		while (xgetc(!DOLSUB) != '\n')
+		while (xgetc(!DOLSUB) != EOL)
 			;	/* nothing */
 		wordp += 4;
 		error_message = ERR_TMARGS;
@@ -370,7 +370,7 @@ xgetc(bool dolsub)
 	}
 	if (linep >= &line[LINEMAX - 5]) {
 		linep -= 10;
-		while (xgetc(!DOLSUB) != '\n')
+		while (xgetc(!DOLSUB) != EOL)
 			;	/* nothing */
 		linep += 10;
 		error_message = ERR_TMCHARS;
@@ -380,7 +380,7 @@ xgetc(bool dolsub)
 getd:
 	if (dolp != NULL) {
 		c = *dolp++ & ASCII;
-		if (c != '\0')
+		if (c != EOS)
 			return c;
 		dolp = NULL;
 	}
@@ -399,18 +399,18 @@ getd:
 		}
 	}
 	/* Ignore all NUL characters. */
-	if (c == '\0') do {
+	if (c == EOS) do {
 		if (++nul_count >= LINEMAX) {
 			error_message = ERR_TMCHARS;
 			goto geterr;
 		}
 		c = readc();
-	} while (c == '\0');
+	} while (c == EOS);
 	return c;
 
 geterr:
 	error = true;
-	return '\n';
+	return EOL;
 }
 
 /*
@@ -428,9 +428,9 @@ readc(void)
 	if (argv2p != NULL) {
 		if (argv2p == (char *)-1)
 			exit(status);
-		if ((c = (*argv2p++ & ASCII)) == '\0') {
+		if ((c = (*argv2p++ & ASCII)) == EOS) {
 			argv2p = (char *)-1;
-			c = '\n';
+			c = EOL;
 		}
 		return c;
 	}
@@ -438,7 +438,7 @@ readc(void)
 		exit(status);
 	if (read(FD0, &c, (size_t)1) != 1)
 		exit(status);
-	if ((c &= ASCII) == '\n' && one_line_flag == 2)
+	if ((c &= ASCII) == EOL && one_line_flag == 2)
 		one_line_flag = 1;
 
 	return c;
@@ -536,7 +536,7 @@ syn1(char **p1, char **p2)
 
 		case ';':
 		case '&':
-		case '\n':
+		case EOL:
 			if (subcnt == 0) {
 				c = **p;
 				t = talloc();
@@ -709,7 +709,7 @@ vscan(char **vp, int (*func)(int))
 	if (vp == NULL)
 		return;
 	while ((ap = *vp++) != NULL)
-		while ((c = *ap) != '\0')
+		while ((c = *ap) != EOS)
 			*ap++ = (*func)(c);
 }
 
@@ -725,7 +725,7 @@ ascan(char *ap, int (*func)(int))
 
 	if (ap == NULL)
 		return;
-	while ((c = *ap) != '\0')
+	while ((c = *ap) != EOS)
 		*ap++ = (*func)(c);
 }
 
@@ -762,7 +762,7 @@ any(int c, const char *as)
 	const char *s;
 
 	s = as;
-	while (*s != '\0')
+	while (*s != EOS)
 		if (*s++ == c)
 			return true;
 	return false;
@@ -1036,7 +1036,7 @@ prsig(int s, pid_t tp, pid_t cp)
 	const char *c, *m;
 
 	e = WTERMSIG(s);
-	if (e >= NSIGMSG || (e >= 0 && *sigmsg[e] != '\0')) {
+	if (e >= NSIGMSG || (e >= 0 && *sigmsg[e] != EOS)) {
 		if (e < NSIGMSG)
 			m = sigmsg[e];
 		else {
@@ -1108,7 +1108,7 @@ sh_init(void)
 	 */
 	i = snprintf(apid, sizeof(apid), "%05u", (unsigned)getmypid());
 	if (i < 0 || i >= (int)sizeof(apid))
-		*apid = '\0';
+		*apid = EOS;
 
 	/*
 	 * Fail if any of the descriptors 0, 1, or 2 is not open.
@@ -1140,7 +1140,7 @@ sh_magic(void)
 	if (lseek(FD0, (off_t)0, SEEK_CUR) == 0) {
 		if (readc() == '#' && readc() == '!') {
 			for (len = 2; len < LINEMAX; len++)
-				if (readc() == '\n')
+				if (readc() == EOL)
 					return;
 			err(SH_ERR, FMT1S, ERR_TMCHARS);
 		}

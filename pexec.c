@@ -87,7 +87,7 @@ pexec(const char *file, char *const *argv)
 		errno = EINVAL;
 		goto fail;
 	}
-	if (*file == '\0' || *argv[0] == '\0')
+	if (*file == EOS || *argv[0] == EOS)
 		goto fail;
 	flen = strlen(file);
 
@@ -95,13 +95,13 @@ pexec(const char *file, char *const *argv)
 	 * If the name of the specified file contains one or more
 	 * `/' characters, it is used as the path name to execute.
 	 */
-	for (f = file; *f != '\0'; f++)
+	for (f = file; *f != EOS; f++)
 		if (*f == '/') {
 			pnp = file;
 			upp = "";
 			goto exec_pathname;
 		}
-	*pnbuf = '\0';
+	*pnbuf = EOS;
 	pnp = pnbuf;
 
 	/*
@@ -110,12 +110,12 @@ pexec(const char *file, char *const *argv)
 	 * performed in such a case.
 	 */
 	upp = getenv("PATH");
-	if (upp == NULL || *upp == '\0')
+	if (upp == NULL || *upp == EOS)
 		goto fail;
 
 	do {
 		/* Find the end of this PATH element. */
-		for (d = upp; *upp != ':' && *upp != '\0'; upp++)
+		for (d = upp; *upp != ':' && *upp != EOS; upp++)
 			;	/* nothing */
 		/*
 		 * Since this is a shell PATH, double, leading, and/or
@@ -146,7 +146,7 @@ pexec(const char *file, char *const *argv)
 		(void)memcpy(pnbuf, d, dlen);
 		pnbuf[dlen] = '/';
 		(void)memcpy(pnbuf + dlen + 1, file, flen);
-		pnbuf[dlen + flen + 1] = '\0';
+		pnbuf[dlen + flen + 1] = EOS;
 
 exec_pathname:
 		(void)execve(pnp, argv, environ);
@@ -168,7 +168,7 @@ exec_pathname:
 			 * Fail if it is unset or is set to an unusable value.
 			 */
 			esh = getenv("EXECSHELL");
-			if (esh==NULL||*esh=='\0'||strlen(esh)>=sizeof(pnbuf))
+			if (esh==NULL||*esh==EOS||strlen(esh)>=sizeof(pnbuf))
 				goto fail;
 			for (cnt = 0; argv[cnt] != NULL; cnt++)
 				;	/* nothing */

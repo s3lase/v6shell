@@ -94,7 +94,7 @@ main(int argc, char **argv)
 	setmyname(argv[0]);
 	setmypid(getpid());
 
-	if (argc < 2 || *argv[1] == '\0' || isatty(FD0) != 0)
+	if (argc < 2 || *argv[1] == EOS || isatty(FD0) != 0)
 		err(FC_ERR, FMT2S, getmyname(), ERR_GENERIC);
 	if ((siz = strlen(argv[1]) + 1) > sizeof(label))
 		err(FC_ERR, FMT3S, getmyname(), argv[1], ERR_LABTOOLONG);
@@ -131,7 +131,7 @@ getlabel(char *buf, int fc, size_t siz)
 		while (c == ' ' || c == '\t')
 			c = xgetc();
 		if (c != ':') {
-			while (c != '\n' && c != EOF)
+			while (c != EOL && c != EOF)
 				c = xgetc();
 			continue;
 		}
@@ -148,8 +148,8 @@ getlabel(char *buf, int fc, size_t siz)
 		 */
 		b = buf;
 		do {
-			if (c == '\n' || c == ' ' || c == '\t' || c == EOF) {
-				*b = '\0';
+			if (c == EOL || c == ' ' || c == '\t' || c == EOF) {
+				*b = EOS;
 				break;
 			}
 			*b = c;
@@ -157,7 +157,7 @@ getlabel(char *buf, int fc, size_t siz)
 		} while (++b < &buf[siz]);
 
 		/* Ignore any remaining characters on labelled line. */
-		while (c != '\n' && c != EOF)
+		while (c != EOL && c != EOF)
 			c = xgetc();
 		if (c == EOF)
 			break;
@@ -167,7 +167,7 @@ getlabel(char *buf, int fc, size_t siz)
 		return true;
 	}
 
-	*buf = '\0';
+	*buf = EOS;
 	return false;
 }
 
