@@ -560,8 +560,8 @@ get_word(void)
 		case EOF:
 			return EOF;
 
-		case ' ':
-		case '\t':
+		case SPC:
+		case TAB:
 			continue;
 
 		case '"':
@@ -583,7 +583,7 @@ get_word(void)
 					if ((c = xgetc(!DOLSUB)) == EOF)
 						return EOF;
 					if (c == EOL)
-						c = ' ';
+						c = SPC;
 					else {
 						peekc = c;
 						c = '\\';
@@ -623,7 +623,7 @@ get_word(void)
 				if ((c = xgetc(!DOLSUB)) == EOF)
 					return EOF;
 				if (c == EOL)
-					c = ' ';
+					c = SPC;
 				else {
 					*linep++ = '\\';
 					*linep++ = c;

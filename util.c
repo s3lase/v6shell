@@ -289,7 +289,7 @@ getlabel(char *buf, int fc, size_t siz)
 
 	while ((c = xgetc()) != EOF) {
 		/* `:' may be preceded by blanks. */
-		while (c == ' ' || c == '\t')
+		while (c == SPC || c == TAB)
 			c = xgetc();
 		if (c != ':') {
 			while (c != EOL && c != EOF)
@@ -298,7 +298,7 @@ getlabel(char *buf, int fc, size_t siz)
 		}
 
 		/* Prepare for possible label. */
-		while ((c = xgetc()) == ' ' || c == '\t')
+		while ((c = xgetc()) == SPC || c == TAB)
 			;	/* nothing   */
 		if (c != fc)	/* not label */
 			continue;
@@ -309,7 +309,7 @@ getlabel(char *buf, int fc, size_t siz)
 		 */
 		b = buf;
 		do {
-			if (c == EOL || c == ' ' || c == '\t' || c == EOF) {
+			if (c == EOL || c == SPC || c == TAB || c == EOF) {
 				*b = EOS;
 				break;
 			}

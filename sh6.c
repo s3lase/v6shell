@@ -275,8 +275,8 @@ get_word(void)
 
 loop:
 	switch (c = xgetc(DOLSUB)) {
-	case ' ':
-	case '\t':
+	case SPC:
+	case TAB:
 		goto loop;
 
 	case '"':
@@ -293,7 +293,7 @@ loop:
 			}
 			if (c == '\\') {
 				if ((c = xgetc(!DOLSUB)) == EOL)
-					c = ' ';
+					c = SPC;
 				else {
 					peekc = c;
 					c = '\\';
@@ -326,7 +326,7 @@ loop:
 	for (;;) {
 		if ((c = xgetc(DOLSUB)) == '\\') {
 			if ((c = xgetc(!DOLSUB)) == EOL)
-				c = ' ';
+				c = SPC;
 			else
 				c |= QUOTE;
 		}

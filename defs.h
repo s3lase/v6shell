@@ -110,6 +110,8 @@ typedef	unsigned char	UChar;
 #define	UCPTR(p)	((UChar *)(p))
 #define	EOL		'\n'
 #define	EOS		'\0'
+#define	SPC		' '
+#define	TAB		'\t'
 #define	UEOL		UCHAR(EOL)
 #define	UEOS		UCHAR(EOS)
 
