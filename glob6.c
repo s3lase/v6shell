@@ -163,7 +163,7 @@ gcat(const char *src1, const char *src2)
 		if (b >= &buf[PATHMAX - 1])
 			err(SH_ERR, FMT1S, strerror(ENAMETOOLONG));
 		if ((c &= ASCII) == EOS) {
-			*b++ = '/';
+			*b++ = SLASH;
 			break;
 		}
 		*b++ = c;
@@ -199,7 +199,7 @@ glob1(const char **gav, char *as, int *pmc)
 	char *ps;
 
 	ds = ps = as;
-	while (*ps != '*' && *ps != '?' && *ps != '[')
+	while (*ps != ASTERISK && *ps != QUESTION && *ps != LBRACKET)
 		if (*ps++ == EOS) {
 			gav = gavnew(gav);
 			*gavp++ = gcat(as, "");
@@ -213,7 +213,7 @@ glob1(const char **gav, char *as, int *pmc)
 			ds = "";
 			break;
 		}
-		if ((*--ps & ASCII) == '/') {
+		if ((*--ps & ASCII) == SLASH) {
 			*ps = EOS;
 			if (ds == ps)
 				ds = "/";
@@ -227,7 +227,7 @@ glob1(const char **gav, char *as, int *pmc)
 	}
 	gidx = (ptrdiff_t)(gavp - gav);
 	while ((entry = readdir(dirp)) != NULL) {
-		if (entry->d_name[0] == '.' && (*ps & ASCII) != '.')
+		if (entry->d_name[0] == DOT && (*ps & ASCII) != DOT)
 			continue;
 		if (glob2(UCPTR(entry->d_name), UCPTR(ps))) {
 			gav = gavnew(gav);
@@ -258,12 +258,12 @@ glob2(const UChar *ename, const UChar *pattern)
 	case EOS:
 		return ec == EOS;
 
-	case '*':
+	case ASTERISK:
 		/*
 		 * Ignore all but the last `*' in a group of consecutive
 		 * `*' characters to avoid unnecessary glob2() recursion.
 		 */
-		while (*p++ == UCHAR('*'))
+		while (*p++ == UCHAR(ASTERISK))
 			;	/* nothing */
 		if (*--p == EOS)
 			return true;
@@ -273,24 +273,24 @@ glob2(const UChar *ename, const UChar *pattern)
 				return true;
 		break;
 
-	case '?':
+	case QUESTION:
 		if (ec != EOS)
 			return glob2(e, p);
 		break;
 
-	case '[':
+	case LBRACKET:
 		if (*p == EOS)
 			break;
-		for (c = UEOS, cok = rok = 0, n = p + 1; ; ) {
+		for (c = UCHAR(EOS), cok = rok = 0, n = p + 1; ; ) {
 			pc = *p++;
-			if (pc == UCHAR(']') && p > n) {
+			if (pc == UCHAR(RBRACKET) && p > n) {
 				if (cok > 0 || rok > 0)
 					return glob2(e, p);
 				break;
 			}
 			if (*p == EOS)
 				break;
-			if (pc == UCHAR('-') && c != EOS && *p != UCHAR(']')) {
+			if (pc == UCHAR(HYPHEN) && c != EOS && *p != UCHAR(RBRACKET)) {
 				pc = *p++ & ASCII;
 				if (*p == EOS)
 					break;
@@ -298,7 +298,7 @@ glob2(const UChar *ename, const UChar *pattern)
 					rok++;
 				else if (c == ec)
 					cok--;
-				c = UEOS;
+				c = UCHAR(EOS);
 			} else {
 				c = pc & ASCII;
 				if (ec == c)

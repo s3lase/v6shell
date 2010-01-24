@@ -96,7 +96,7 @@ pexec(const char *file, char *const *argv)
 	 * `/' characters, it is used as the path name to execute.
 	 */
 	for (f = file; *f != EOS; f++)
-		if (*f == '/') {
+		if (*f == SLASH) {
 			pnp = file;
 			upp = "";
 			goto exec_pathname;
@@ -115,7 +115,7 @@ pexec(const char *file, char *const *argv)
 
 	do {
 		/* Find the end of this PATH element. */
-		for (d = upp; *upp != ':' && *upp != EOS; upp++)
+		for (d = upp; *upp != COLON && *upp != EOS; upp++)
 			;	/* nothing */
 		/*
 		 * Since this is a shell PATH, double, leading, and/or
@@ -144,7 +144,7 @@ pexec(const char *file, char *const *argv)
 			continue;
 		}
 		(void)memcpy(pnbuf, d, dlen);
-		pnbuf[dlen] = '/';
+		pnbuf[dlen] = SLASH;
 		(void)memcpy(pnbuf + dlen + 1, file, flen);
 		pnbuf[dlen + flen + 1] = EOS;
 
@@ -185,7 +185,7 @@ exec_pathname:
 		default:
 			goto fail;
 		}
-	} while (*upp++ == ':');	/* Otherwise, *upp was NUL. */
+	} while (*upp++ == COLON);	/* Otherwise, *upp was NUL. */
 	if (eacces != 0)
 		errno = EACCES;
 

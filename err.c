@@ -137,11 +137,11 @@ setmyname(const char *s)
 	const char *p;
 
 	if (s != NULL && *s != EOS) {
-		if ((p = strrchr(s, '/')) != NULL)
+		if ((p = strrchr(s, SLASH)) != NULL)
 			p++;
 		else
 			p = s;
-		if (*p == '-' && *(p + 1) != EOS)
+		if (*p == HYPHEN && *(p + 1) != EOS)
 			p++;
 		else if (*p == EOS)
 			/* should never (but can) be true */

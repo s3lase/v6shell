@@ -180,7 +180,7 @@ main(int argc, char **argv)
 		name = argv[1];
 		dolv = &argv[1];
 		dolc = argc - 1;
-		if (*argv[1] == '-') {
+		if (*argv[1] == HYPHEN) {
 			dosigs = true;
 			if (argv[1][1] == 'c' && argc > 2) {
 				dolv  += 1;
@@ -275,12 +275,12 @@ get_word(void)
 
 loop:
 	switch (c = xgetc(DOLSUB)) {
-	case SPC:
+	case SPACE:
 	case TAB:
 		goto loop;
 
-	case '"':
-	case '\'':
+	case DQUOT:
+	case SQUOT:
 		c1 = c;
 		while ((c = xgetc(!DOLSUB)) != c1) {
 			if (c == EOL) {
@@ -291,29 +291,29 @@ loop:
 				error = true;
 				return;
 			}
-			if (c == '\\') {
+			if (c == BQUOT) {
 				if ((c = xgetc(!DOLSUB)) == EOL)
-					c = SPC;
+					c = SPACE;
 				else {
 					peekc = c;
-					c = '\\';
+					c = BQUOT;
 				}
 			}
 			*linep++ = c | QUOTE;
 		}
 		break;
 
-	case '\\':
+	case BQUOT:
 		if ((c = xgetc(!DOLSUB)) == EOL)
 			goto loop;
 		c |= QUOTE;
 		peekc = c;
 		break;
 
-	case '(': case ')':
-	case ';': case '&':
-	case '|': case '^':
-	case '<': case '>':
+	case LPARENTHESIS: case RPARENTHESIS:
+	case SEMICOLON:    case AMPERSAND:
+	case VERTICALBAR:  case CARET:
+	case LESSTHAN:     case GREATERTHAN:
 	case EOL:
 		*linep++ = c;
 		*linep++ = EOS;
@@ -324,15 +324,15 @@ loop:
 	}
 
 	for (;;) {
-		if ((c = xgetc(DOLSUB)) == '\\') {
+		if ((c = xgetc(DOLSUB)) == BQUOT) {
 			if ((c = xgetc(!DOLSUB)) == EOL)
-				c = SPC;
+				c = SPACE;
 			else
 				c |= QUOTE;
 		}
-		if (any(c, " \t\"'();&|^<>\n")) {
+		if (any(c, WORDPACK)) {
 			peekc = c;
-			if (any(c, "\"'"))
+			if (any(c, QUOTPACK))
 				goto loop;
 			*linep++ = EOS;
 			return;
@@ -385,7 +385,7 @@ getd:
 		dolp = NULL;
 	}
 	c = readc();
-	if (c == '$' && dolsub) {
+	if (c == DOLLAR && dolsub) {
 		c = readc();
 		if (c >= '0' && c <= '9') {
 			n = c - '0';
@@ -393,12 +393,12 @@ getd:
 				dolp = (n > 0) ? dolv[n] : name;
 			goto getd;
 		}
-		if (c == '$') {
+		if (c == DOLLAR) {
 			dolp = apid;
 			goto getd;
 		}
 	}
-	/* Ignore all NUL characters. */
+	/* Ignore all EOS/NUL characters. */
 	if (c == EOS) do {
 		if (++nul_count >= LINEMAX) {
 			error_message = ERR_TMCHARS;
@@ -501,7 +501,7 @@ syntax(char **p1, char **p2)
 {
 
 	while (p1 < p2)
-		if (any(**p1, ";&\n"))
+		if (any(**p1, EOC))
 			p1++;
 		else
 			return syn1(p1, p2);
@@ -524,25 +524,25 @@ syn1(char **p1, char **p2)
 	subcnt = 0;
 	for (p = p1; p < p2; p++)
 		switch (**p) {
-		case '(':
+		case LPARENTHESIS:
 			subcnt++;
 			continue;
 
-		case ')':
+		case RPARENTHESIS:
 			subcnt--;
 			if (subcnt < 0)
 				goto synerr;
 			continue;
 
-		case ';':
-		case '&':
+		case SEMICOLON:
+		case AMPERSAND:
 		case EOL:
 			if (subcnt == 0) {
 				c = **p;
 				t = talloc();
 				t->ntype  = TLIST;
 				t->nleft  = syn2(p1, p);
-				if (c == '&' && t->nleft != NULL)
+				if (c == AMPERSAND && t->nleft != NULL)
 					t->nleft->nflags |= FAND | FINTR | FPRS;
 				t->nright = syntax(p + 1, p2);
 				t->nflags = 0;
@@ -575,16 +575,16 @@ syn2(char **p1, char **p2)
 	subcnt = 0;
 	for (p = p1; p < p2; p++)
 		switch (**p) {
-		case '(':
+		case LPARENTHESIS:
 			subcnt++;
 			continue;
 
-		case ')':
+		case RPARENTHESIS:
 			subcnt--;
 			continue;
 
-		case '|':
-		case '^':
+		case VERTICALBAR:
+		case CARET:
 			if (subcnt == 0) {
 				t = talloc();
 				t->ntype  = TPIPE;
@@ -614,7 +614,7 @@ syn3(char **p1, char **p2)
 	char *fin, *fout;
 
 	flags = 0;
-	if (**p2 == ')')
+	if (**p2 == RPARENTHESIS)
 		flags |= FNOFORK;
 
 	fin    = NULL;
@@ -625,7 +625,7 @@ syn3(char **p1, char **p2)
 	subcnt = 0;
 	for (p = p1; p < p2; p++)
 		switch (c = **p) {
-		case '(':
+		case LPARENTHESIS:
 			if (subcnt == 0) {
 				if (lp != NULL)
 					goto synerr;
@@ -634,26 +634,26 @@ syn3(char **p1, char **p2)
 			subcnt++;
 			continue;
 
-		case ')':
+		case RPARENTHESIS:
 			subcnt--;
 			if (subcnt == 0)
 				rp = p;
 			continue;
 
-		case '>':
+		case GREATERTHAN:
 			p++;
-			if (p < p2 && **p == '>')
+			if (p < p2 && **p == GREATERTHAN)
 				flags |= FCAT;
 			else
 				p--;
 			/*FALLTHROUGH*/
 
-		case '<':
+		case LESSTHAN:
 			if (subcnt == 0) {
 				p++;
-				if (p == p2 || any(**p, "(<>"))
+				if (p == p2 || any(**p, REDERR))
 					goto synerr;
-				if (c == '<') {
+				if (c == LESSTHAN) {
 					if (fin != NULL)
 						goto synerr;
 					fin = *p;
@@ -737,7 +737,7 @@ static int
 tglob(int c)
 {
 
-	if (any(c, "*?["))
+	if (any(c, GLOBCHARS))
 		glob_flag = true;
 	return c;
 }
@@ -1138,7 +1138,7 @@ sh_magic(void)
 	if (fstat(FD0, &sb) == -1 || !S_ISREG(sb.st_mode))
 		return;
 	if (lseek(FD0, (off_t)0, SEEK_CUR) == 0) {
-		if (readc() == '#' && readc() == '!') {
+		if (readc() == HASH && readc() == BANG) {
 			for (len = 2; len < LINEMAX; len++)
 				if (readc() == EOL)
 					return;

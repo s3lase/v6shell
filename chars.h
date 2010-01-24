@@ -39,11 +39,13 @@ typedef	unsigned char	UChar;
 #define	UCHAR(c)	((UChar)(c))
 #define	UCPTR(p)	((UChar *)(p))
 
+#define	BANG		'!'
 #define	COLON		':'
 #define	DOLLAR		'$'
 #define	DOT		'.'
 #define	EOL		'\n'
 #define	EOS		'\0'
+#define	HASH		'#'
 #define	SLASH		'/'
 #define	SPACE		' '
 #define	TAB		'\t'
@@ -74,5 +76,6 @@ typedef	unsigned char	UChar;
 #define	QUOTPACK	"\"'"
 #define	EOC		";&\n"
 #define	REDERR		"(<>"
+#define	GLOBCHARS	"*?["
 
 #endif	/* !CHARS_H */

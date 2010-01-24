@@ -323,7 +323,7 @@ main(int argc, char **argv)
 	if (fd_type(FD0, FD_ISDIR))
 		goto done;
 
-	if (argc > 1 && *argv[1] == '-' && argv[1][1] == 'v') {
+	if (argc > 1 && *argv[1] == HYPHEN && argv[1][1] == 'v') {
 		verbose_flag = true;
 		av0p = argv[0], argv = &argv[1], argv[0] = av0p;
 		argc--;
@@ -332,7 +332,7 @@ main(int argc, char **argv)
 		name = argv[1];
 		dolv = &argv[1];
 		dolc = argc - 1;
-		if (*argv[1] == '-') {
+		if (*argv[1] == HYPHEN) {
 			dosigs = true;
 			if (argv[1][1] == 'c' && argc > 2) {
 				shtype = ST_ONELINE;
@@ -378,7 +378,7 @@ main(int argc, char **argv)
 			if (sasignal(SIGTERM, SIG_IGN) == SIG_DFL)
 				sig_child |= SC_SIGTERM;
 			if (rc_flag == 0) {
-				if (*argv[0] == '-') {
+				if (*argv[0] == HYPHEN) {
 					is_login = true;
 					rc_flag  = DO_SYSTEM_LOGIN;
 				} else
@@ -560,12 +560,12 @@ get_word(void)
 		case EOF:
 			return EOF;
 
-		case SPC:
+		case SPACE:
 		case TAB:
 			continue;
 
-		case '"':
-		case '\'':
+		case DQUOT:
+		case SQUOT:
 			c1 = c;
 			*linep++ = c;
 			while ((c = xgetc(!DOLSUB)) != c1) {
@@ -579,14 +579,14 @@ get_word(void)
 					error = true;
 					return 1;
 				}
-				if (c == '\\') {
+				if (c == BQUOT) {
 					if ((c = xgetc(!DOLSUB)) == EOF)
 						return EOF;
 					if (c == EOL)
-						c = SPC;
+						c = SPACE;
 					else {
 						peekc = c;
-						c = '\\';
+						c = BQUOT;
 					}
 				}
 				*linep++ = c;
@@ -594,19 +594,19 @@ get_word(void)
 			*linep++ = c;
 			break;
 
-		case '\\':
+		case BQUOT:
 			if ((c = xgetc(!DOLSUB)) == EOF)
 				return EOF;
 			if (c == EOL)
 				continue;
-			*linep++ = '\\';
+			*linep++ = BQUOT;
 			*linep++ = c;
 			break;
 
-		case '(': case ')':
-		case ';': case '&':
-		case '|': case '^':
-		case '<': case '>':
+		case LPARENTHESIS: case RPARENTHESIS:
+		case SEMICOLON:    case AMPERSAND:
+		case VERTICALBAR:  case CARET:
+		case LESSTHAN:     case GREATERTHAN:
 		case EOL:
 			*linep++ = c;
 			*linep++ = EOS;
@@ -619,20 +619,20 @@ get_word(void)
 		for (;;) {
 			if ((c = xgetc(DOLSUB)) == EOF)
 				return EOF;
-			if (c == '\\') {
+			if (c == BQUOT) {
 				if ((c = xgetc(!DOLSUB)) == EOF)
 					return EOF;
 				if (c == EOL)
-					c = SPC;
+					c = SPACE;
 				else {
-					*linep++ = '\\';
+					*linep++ = BQUOT;
 					*linep++ = c;
 					continue;
 				}
 			}
-			if (any(c, " \t\"'();&|^<>\n")) {
+			if (any(c, WORDPACK)) {
 				peekc = c;
-				if (any(c, "\"'"))
+				if (any(c, QUOTPACK))
 					break;
 				*linep++ = EOS;
 				return 1;
@@ -685,7 +685,7 @@ getd:
 		dolp = NULL;
 	}
 	c = readc();
-	if (c == '$' && dolsub) {
+	if (c == DOLLAR && dolsub) {
 		c = readc();
 		if ((dolp = get_dolp(c)) != NULL)
 			goto getd;
@@ -721,7 +721,7 @@ readc(void)
 			return EOF;
 		if ((c = UCHAR(*argv2p++)) == EOS) {
 			argv2p = (char *)-1;
-			c = UEOL;
+			c = UCHAR(EOL);
 		}
 		return c;
 	}
@@ -743,7 +743,7 @@ get_dolp(int c)
 
 	*dolbuf = EOS;
 	switch (c) {
-	case '$':
+	case DOLLAR:
 		r = snprintf(dolbuf,sizeof(dolbuf),"%05u",(unsigned)getmypid());
 		v = (r < 0 || r >= (int)sizeof(dolbuf)) ? NULL : dolbuf;
 		break;
@@ -867,7 +867,7 @@ syntax(char **p1, char **p2)
 {
 
 	while (p1 < p2)
-		if (any(**p1, ";&\n"))
+		if (any(**p1, EOC))
 			p1++;
 		else
 			return syn1(p1, p2);
@@ -890,25 +890,25 @@ syn1(char **p1, char **p2)
 	subcnt = 0;
 	for (p = p1; p < p2; p++)
 		switch (**p) {
-		case '(':
+		case LPARENTHESIS:
 			subcnt++;
 			continue;
 
-		case ')':
+		case RPARENTHESIS:
 			subcnt--;
 			if (subcnt < 0)
 				goto synerr;
 			continue;
 
-		case ';':
-		case '&':
+		case SEMICOLON:
+		case AMPERSAND:
 		case EOL:
 			if (subcnt == 0) {
 				c = **p;
 				t = talloc();
 				t->ntype  = TLIST;
 				t->nleft  = syn2(p1, p);
-				if (c == '&' && t->nleft != NULL)
+				if (c == AMPERSAND && t->nleft != NULL)
 					t->nleft->nflags |= FAND | FINTR | FPRS;
 				t->nright = syntax(p + 1, p2);
 				t->nflags = 0;
@@ -941,16 +941,16 @@ syn2(char **p1, char **p2)
 	subcnt = 0;
 	for (p = p1; p < p2; p++)
 		switch (**p) {
-		case '(':
+		case LPARENTHESIS:
 			subcnt++;
 			continue;
 
-		case ')':
+		case RPARENTHESIS:
 			subcnt--;
 			continue;
 
-		case '|':
-		case '^':
+		case VERTICALBAR:
+		case CARET:
 			if (subcnt == 0) {
 				t = talloc();
 				t->ntype  = TPIPE;
@@ -980,7 +980,7 @@ syn3(char **p1, char **p2)
 	char *fin, *fout;
 
 	flags = 0;
-	if (**p2 == ')')
+	if (**p2 == RPARENTHESIS)
 		flags |= FNOFORK;
 
 	fin    = NULL;
@@ -991,7 +991,7 @@ syn3(char **p1, char **p2)
 	subcnt = 0;
 	for (p = p1; p < p2; p++)
 		switch (c = **p) {
-		case '(':
+		case LPARENTHESIS:
 			if (subcnt == 0) {
 				if (lp != NULL)
 					goto synerr;
@@ -1000,26 +1000,26 @@ syn3(char **p1, char **p2)
 			subcnt++;
 			continue;
 
-		case ')':
+		case RPARENTHESIS:
 			subcnt--;
 			if (subcnt == 0)
 				rp = p;
 			continue;
 
-		case '>':
+		case GREATERTHAN:
 			p++;
-			if (p < p2 && **p == '>')
+			if (p < p2 && **p == GREATERTHAN)
 				flags |= FCAT;
 			else
 				p--;
 			/*FALLTHROUGH*/
 
-		case '<':
+		case LESSTHAN:
 			if (subcnt == 0) {
 				p++;
-				if (p == p2 || any(**p, "(<>"))
+				if (p == p2 || any(**p, REDERR))
 					goto synerr;
-				if (c == '<') {
+				if (c == LESSTHAN) {
 					if (fin != NULL)
 						goto synerr;
 					fin = xstrdup(*p);
@@ -1473,7 +1473,7 @@ exec2(struct tnode *t, int *pin, int *pout)
 	if (t->nfin != NULL && (f & FPIN) == 0) {
 		f |= FFIN;
 		i  = 0;
-		if (*t->nfin == '-' && *(t->nfin + 1) == EOS)
+		if (*t->nfin == HYPHEN && *(t->nfin + 1) == EOS)
 			i = 1;
 		if (i != 0)
 			i = dup(dupfd0);
@@ -2008,7 +2008,7 @@ sh_magic(void)
 	int c;
 
 	if (fd_type(FD0, FD_ISREG) && lseek(FD0, (off_t)0, SEEK_CUR) == 0) {
-		if (readc() == '#' && readc() == '!') {
+		if (readc() == HASH && readc() == BANG) {
 			for (len = 2; len < LINEMAX; len++)
 				if ((c = readc()) == EOL || c == EOF)
 					return;
@@ -2256,8 +2256,8 @@ atrim(char *ap)
 			siz = (b - buf) + 1;
 			(void)memcpy(ap, buf, siz);
 			return ap;
-		case '"':
-		case '\'':
+		case DQUOT:
+		case SQUOT:
 			c = *a++;
 			while (*a != c && b < &buf[LINEMAX]) {
 				if (*a == EOS)
@@ -2266,7 +2266,7 @@ atrim(char *ap)
 			}
 			b--;
 			continue;
-		case '\\':
+		case BQUOT:
 			if (*++a == EOS) {
 				a--, b--;
 				continue;
@@ -2313,16 +2313,17 @@ gtrim(char *ap)
 			}
 			(void)memcpy(nap, buf, siz);
 			return nap;
-		case '"':
-		case '\'':
+		case DQUOT:
+		case SQUOT:
 			c = *a++;
 			while (*a != c && b < &buf[PATHMAX]) {
 				switch (*a) {
 				case EOS:
 					goto gterr;
-				case '*': case '?': case '[': case ']':
-				case '-': case '"': case '\'': case '\\':
-					*b = '\\';
+				case ASTERISK: case QUESTION:
+				case LBRACKET: case RBRACKET: case HYPHEN:
+				case DQUOT:    case SQUOT:    case BQUOT:
+					*b = BQUOT;
 					if (++b >= &buf[PATHMAX])
 						goto gterr;
 					break;
@@ -2331,14 +2332,15 @@ gtrim(char *ap)
 			}
 			b--;
 			continue;
-		case '\\':
+		case BQUOT:
 			switch (*++a) {
 			case EOS:
 				a--, b--;
 				continue;
-			case '*': case '?': case '[': case ']':
-			case '-': case '"': case '\'': case '\\':
-				*b = '\\';
+			case ASTERISK: case QUESTION:
+			case LBRACKET: case RBRACKET: case HYPHEN:
+			case DQUOT:    case SQUOT:    case BQUOT:
+				*b = BQUOT;
 				if (++b >= &buf[PATHMAX])
 					goto gterr;
 				break;
@@ -2367,19 +2369,19 @@ gchar(const char *ap)
 
 	for (a = ap; *a != EOS; a++)
 		switch (*a) {
-		case '"':
-		case '\'':
+		case DQUOT:
+		case SQUOT:
 			for (c = *a++; *a != c; a++)
 				if (*a == EOS)
 					return NULL;
 			continue;
-		case '\\':
+		case BQUOT:
 			if (*++a == EOS)
 				return NULL;
 			continue;
-		case '*':
-		case '?':
-		case '[':
+		case ASTERISK:
+		case QUESTION:
+		case LBRACKET:
 			return (char *)a;
 		}
 	return NULL;
@@ -2526,7 +2528,7 @@ gcat(const char *src1, const char *src2, bool slash)
 		*b++ = c;
 	}
 	if (slash)
-		*b++ = '/';
+		*b++ = SLASH;
 	s = src2;
 	do {
 		if (b >= &buf[PATHMAX])
@@ -2567,7 +2569,7 @@ glob1(const char **gav, char *as, int *pmc)
 			ds = "";
 			break;
 		}
-		if (*--ps == '/') {
+		if (*--ps == SLASH) {
 			*ps = EOS;
 			if (ds == ps)
 				ds = "/";
@@ -2585,7 +2587,7 @@ glob1(const char **gav, char *as, int *pmc)
 		ds = dirbuf;
 	gidx = (ptrdiff_t)(gavp - gav);
 	while ((entry = readdir(dirp)) != NULL) {
-		if (entry->d_name[0] == '.' && *ps != '.')
+		if (entry->d_name[0] == DOT && *ps != DOT)
 			continue;
 		if (glob2(UCPTR(entry->d_name), UCPTR(ps))) {
 			gav = gavnew(gav);
@@ -2614,12 +2616,12 @@ glob2(const UChar *ename, const UChar *pattern)
 	case EOS:
 		return ec == EOS;
 
-	case '*':
+	case ASTERISK:
 		/*
 		 * Ignore all but the last `*' in a group of consecutive
 		 * `*' characters to avoid unnecessary glob2() recursion.
 		 */
-		while (*p++ == UCHAR('*'))
+		while (*p++ == UCHAR(ASTERISK))
 			;	/* nothing */
 		if (*--p == EOS)
 			return true;
@@ -2629,25 +2631,25 @@ glob2(const UChar *ename, const UChar *pattern)
 				return true;
 		break;
 
-	case '?':
+	case QUESTION:
 		if (ec != EOS)
 			return glob2(e, p);
 		break;
 
-	case '[':
+	case LBRACKET:
 		if (*p == EOS)
 			break;
-		for (c = UEOS, cok = rok = 0, n = p + 1; ; ) {
+		for (c = UCHAR(EOS), cok = rok = 0, n = p + 1; ; ) {
 			pc = *p++;
-			if (pc == UCHAR(']') && p > n) {
+			if (pc == UCHAR(RBRACKET) && p > n) {
 				if (cok > 0 || rok > 0)
 					return glob2(e, p);
 				break;
 			}
 			if (*p == EOS)
 				break;
-			if (pc == UCHAR('-') && c != EOS && *p != UCHAR(']')) {
-				if ((pc = *p++) == UCHAR('\\'))
+			if (pc == UCHAR(HYPHEN) && c != EOS && *p != UCHAR(RBRACKET)) {
+				if ((pc = *p++) == UCHAR(BQUOT))
 					pc = *p++;
 				if (*p == EOS)
 					break;
@@ -2655,9 +2657,9 @@ glob2(const UChar *ename, const UChar *pattern)
 					rok++;
 				else if (c == ec)
 					cok--;
-				c = UEOS;
+				c = UCHAR(EOS);
 			} else {
-				if (pc == UCHAR('\\')) {
+				if (pc == UCHAR(BQUOT)) {
 					pc = *p++;
 					if (*p == EOS)
 						break;
@@ -2669,7 +2671,7 @@ glob2(const UChar *ename, const UChar *pattern)
 		}
 		break;
 
-	case '\\':
+	case BQUOT:
 		if (*p != EOS)
 			pc = *p++;
 		/*FALLTHROUGH*/
