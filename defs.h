@@ -54,6 +54,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "chars.h"
+
 #ifdef	PATH_MAX
 #define	PATHMAX		PATH_MAX
 #else
@@ -104,45 +106,5 @@
 
 #define	EQUAL(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
 #define	IS_DIGIT(d, c)	((d) >= 0 && (d) <= 9 && "0123456789"[(d) % 10] == (c))
-
-/*
- * Characters
- */
-typedef	unsigned char	UChar;
-#define	UCHAR(c)	((UChar)(c))
-#define	UCPTR(p)	((UChar *)(p))
-
-#define	COLON		':'
-#define	DOLLAR		'$'
-#define	DOT		'.'
-#define	EOL		'\n'
-#define	EOS		'\0'
-#define	SLASH		'/'
-#define	SPACE		' '
-#define	TAB		'\t'
-
-#define	BQUOT		'\\'
-#define	DQUOT		'"'
-#define	SQUOT		'\''
-
-#define	LPARENTHESIS	'('
-#define	RPARENTHESIS	')'
-#define	SEMICOLON	';'
-#define	AMPERSAND	'&'
-#define	VERTICALBAR	'|'
-#define	CARET		'^'
-#define	LESSTHAN	'<'
-#define	GREATERTHAN	'>'
-
-#define	ASTERISK	'*'
-#define	QUESTION	'?'
-#define	LBRACKET	'['
-#define	RBRACKET	']'
-#define	HYPHEN		'-'
-
-#define	WORDPACK	" \t\"'();&|^<>\n"
-#define	QUOTPACK	"\"'"
-#define	EOC		";&\n"
-#define	REDERR		"(<>"
 
 #endif	/* !DEFS_H */
