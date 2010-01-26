@@ -651,7 +651,7 @@ syn3(char **p1, char **p2)
 		case LESSTHAN:
 			if (subcnt == 0) {
 				p++;
-				if (p == p2 || any(**p, REDERR))
+				if (p == p2 || any(**p, REDIRERR))
 					goto synerr;
 				if (c == LESSTHAN) {
 					if (fin != NULL)

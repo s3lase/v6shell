@@ -54,8 +54,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "chars.h"
-
 #ifdef	PATH_MAX
 #define	PATHMAX		PATH_MAX
 #else
@@ -96,9 +94,9 @@
 #define	FD2		STDERR_FILENO
 
 #define	F_GZ		1		/* `-s'  primary for if(1) utility  */
-#define	F_OT		2		/* `-ot' primary for if(1) utility  */
-#define	F_NT		3		/* `-nt' primary for if(1) utility  */
-#define	F_EF		4		/* `-ef' primary for if(1) utility  */
+#define	F_OT		2		/* `-ot' ...                        */
+#define	F_NT		3		/* `-nt' ...                        */
+#define	F_EF		4		/* `-ef' ...                        */
 
 #define	DOLSUB		true
 #define	FORKED		true
@@ -106,5 +104,53 @@
 
 #define	EQUAL(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
 #define	IS_DIGIT(d, c)	((d) >= 0 && (d) <= 9 && "0123456789"[(d) % 10] == (c))
+
+/*
+ * special character literals
+ */
+#define	BANG		'!'
+#define	COLON		':'
+#define	DOLLAR		'$'
+#define	DOT		'.'
+#define	EOL		'\n'
+#define	EOS		'\0'
+#define	HASH		'#'
+#define	SLASH		'/'
+#define	SPACE		' '
+#define	TAB		'\t'
+#define	BQUOT		'\\'
+#define	DQUOT		'"'
+#define	SQUOT		'\''
+
+#define	LPARENTHESIS	'('
+#define	RPARENTHESIS	')'
+#define	SEMICOLON	';'
+#define	AMPERSAND	'&'
+#define	VERTICALBAR	'|'
+#define	CARET		'^'
+#define	LESSTHAN	'<'
+#define	GREATERTHAN	'>'
+
+#define	ASTERISK	'*'
+#define	QUESTION	'?'
+#define	LBRACKET	'['
+#define	RBRACKET	']'
+#define	HYPHEN		'-'
+
+/*
+ * special string literals
+ */
+#define	EOC		";&\n"
+#define	GLOBCHARS	"*?["
+#define	QUOTPACK	"\"'"
+#define	REDIRERR	"(<>"
+#define	WORDPACK	" \t\"'();&|^<>\n"
+
+/*
+ * typedefs and related macros
+ */
+typedef	unsigned char	UChar;
+#define	UCHAR(c)	((UChar)(c))
+#define	UCPTR(p)	((UChar *)(p))
 
 #endif	/* !DEFS_H */
