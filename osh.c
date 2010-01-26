@@ -287,9 +287,9 @@ static	bool		rc_open(/*@null@*/ const char *);
 static	void		fd_free(void);
 static	bool		fd_type(int, mode_t);
 /*@maynotreturn@*/ /*@null@*/
-static	char		*atrim(/*@returned@*/ char *);
+static	char		*atrim(/*@returned@*/ UChar *);
 /*@maynotreturn@*/ /*@null@*/
-static	char		*gtrim(/*@returned@*/ char *);
+static	char		*gtrim(/*@returned@*/ UChar *);
 /*@null@*/
 static	char		*gchar(/*@returned@*/ const char *);
 static	void		xfree(/*@null@*/ /*@only@*/ void *);
@@ -1106,7 +1106,7 @@ vtrim(char **vp)
 	char **p;
 
 	for (p = vp; *p != NULL; p++)
-		(void)atrim(*p);
+		(void)atrim(UCPTR(*p));
 }
 
 /*
@@ -1383,7 +1383,7 @@ exec1(struct tnode *t)
 			fd_print(FD1, "%04o\n", (unsigned)m);
 		} else {
 			m = 0;
-			for (p=atrim(t->nav[1]);*p>='0'&&*p<='7';p++)
+			for (p=atrim(UCPTR(t->nav[1]));*p>='0'&&*p<='7';p++)
 				m = m * 8 + (*p - '0');
 			if (*t->nav[1] == EOS || *p != EOS || m > 0777) {
 				err(-1, FMT4S, getmyname(),
@@ -1403,7 +1403,7 @@ exec1(struct tnode *t)
 		 */
 		if (t->nav[1] != NULL && t->nav[2] == NULL) {
 
-			for (p=atrim(t->nav[1]);*p!='='&&*p!=EOS;p++)
+			for (p=atrim(UCPTR(t->nav[1]));*p!='='&&*p!=EOS;p++)
 				;	/* nothing */
 			if (*t->nav[1] == EOS || *p == '=') {
 				err(-1, FMT4S, getmyname(),
@@ -1478,7 +1478,7 @@ exec2(struct tnode *t, int *pin, int *pout)
 		if (i != 0)
 			i = dup(dupfd0);
 		else
-			i = open(atrim(t->nfin), O_RDONLY);
+			i = open(atrim(UCPTR(t->nfin)), O_RDONLY);
 		if (i == -1)
 			err(FC_ERR, FMT3S, getmyname(), t->nfin, ERR_OPEN);
 		if (dup2(i, FD0) == -1)
@@ -1493,7 +1493,7 @@ exec2(struct tnode *t, int *pin, int *pout)
 			i = O_WRONLY | O_APPEND | O_CREAT;
 		else
 			i = O_WRONLY | O_TRUNC | O_CREAT;
-		if ((i = open(atrim(t->nfout), i, 0666)) == -1)
+		if ((i = open(atrim(UCPTR(t->nfout)), i, 0666)) == -1)
 			err(FC_ERR, FMT3S, getmyname(), t->nfout, ERR_CREATE);
 		if (dup2(i, FD1) == -1)
 			err(FC_ERR, FMT2S, getmyname(), strerror(errno));
@@ -1587,7 +1587,7 @@ do_chdir(char **av)
 				pwd = -1;
 			goto chdirerr;
 		}
-	} else if (chdir(atrim(av[1])) == -1)
+	} else if (chdir(atrim(UCPTR(av[1]))) == -1)
 		goto chdirerr;
 
 	if (cwd != -1) {
@@ -2242,20 +2242,20 @@ fd_type(int fd, mode_t type)
  * This function never returns on error.
  */
 static char *
-atrim(char *ap)
+atrim(UChar *ap)
 {
 	size_t siz;
-	char buf[LINEMAX], c;
-	char *a, *b;
+	UChar buf[LINEMAX], c;
+	UChar *a, *b;
 
-	*buf = EOS;
+	*buf = UCHAR(EOS);
 	for (a = ap, b = buf; b < &buf[LINEMAX]; a++, b++) {
 		switch (*a) {
 		case EOS:
-			*b = EOS;
+			*b = UCHAR(EOS);
 			siz = (b - buf) + 1;
 			(void)memcpy(ap, buf, siz);
-			return ap;
+			return (char *)ap;
 		case DQUOT:
 		case SQUOT:
 			c = *a++;
@@ -2277,7 +2277,7 @@ atrim(char *ap)
 	}
 
 aterr:
-	err(ESTATUS, "%s: %s %s\n", getmyname(), ERR_TRIM, ap);
+	err(ESTATUS, "%s: %s %s\n", getmyname(), ERR_TRIM, (const char *)ap);
 	/*NOTREACHED*/
 	return NULL;
 }
@@ -2294,25 +2294,25 @@ aterr:
  * This function never returns on error.
  */
 static char *
-gtrim(char *ap)
+gtrim(UChar *ap)
 {
 	size_t siz;
-	char buf[PATHMAX], c;
-	char *a, *b, *nap;
+	UChar buf[PATHMAX], c;
+	UChar *a, *b, *nap;
 
-	*buf = EOS;
+	*buf = UCHAR(EOS);
 	for (a = ap, b = buf; b < &buf[PATHMAX]; a++, b++) {
 		switch (*a) {
 		case EOS:
-			*b = EOS;
+			*b = UCHAR(EOS);
 			siz = (b - buf) + 1;
 			nap = ap;
-			if (siz > strlen(ap) + 1) {
+			if (siz > strlen((const char *)ap) + 1) {
 				xfree(nap);
 				nap = xmalloc(siz);
 			}
 			(void)memcpy(nap, buf, siz);
-			return nap;
+			return (char *)nap;
 		case DQUOT:
 		case SQUOT:
 			c = *a++;
@@ -2323,7 +2323,7 @@ gtrim(char *ap)
 				case ASTERISK: case QUESTION:
 				case LBRACKET: case RBRACKET: case HYPHEN:
 				case DQUOT:    case SQUOT:    case BQUOT:
-					*b = BQUOT;
+					*b = UCHAR(BQUOT);
 					if (++b >= &buf[PATHMAX])
 						goto gterr;
 					break;
@@ -2340,7 +2340,7 @@ gtrim(char *ap)
 			case ASTERISK: case QUESTION:
 			case LBRACKET: case RBRACKET: case HYPHEN:
 			case DQUOT:    case SQUOT:    case BQUOT:
-				*b = BQUOT;
+				*b = UCHAR(BQUOT);
 				if (++b >= &buf[PATHMAX])
 					goto gterr;
 				break;
@@ -2478,7 +2478,7 @@ glob(char **av)
 	*gav = NULL, gavp = gav;
 	gave = &gav[GAVNEW - 1];
 	while (*av != NULL) {
-		*av = gtrim(*av);
+		*av = gtrim(UCPTR(*av));
 		gav = glob1(gav, *av, &pmc);
 		av++;
 	}
@@ -2560,7 +2560,7 @@ glob1(const char **gav, char *as, int *pmc)
 	slash = false;
 	if ((ps = gchar(as)) == NULL) {
 		gav = gavnew(gav);
-		*gavp++ = gcat(atrim(as), "", slash);
+		*gavp++ = gcat(atrim(UCPTR(as)), "", slash);
 		*gavp = NULL;
 		return gav;
 	}
@@ -2709,7 +2709,7 @@ gopendir(char *buf, const char *dname)
 
 	for (*buf = EOS, b = buf, d = dname; b < &buf[PATHMAX]; b++, d++)
 		if ((*b = *d) == EOS) {
-			(void)atrim(buf);
+			(void)atrim(UCPTR(buf));
 			break;
 		}
 	return (b >= &buf[PATHMAX]) ? NULL : opendir(buf);
