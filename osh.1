@@ -706,12 +706,12 @@ The shell treats the following built-in commands specially.
 \fB:\fR [\fIarg ...\fR]
 Does nothing and sets the exit status to zero.
 .TP
-\fBcd\fR [\fIdir\fR] (+)
+\fBcd\fR [\fIdir ...\fR] (+)
 Is a synonym for the
 .B chdir
 special command.
 .TP
-\fBchdir\fR [\fIdir\fR]
+\fBchdir\fR [\fIdir ...\fR]
 Changes the shell's current working directory to
 .IR dir .
 (+) If
@@ -746,7 +746,7 @@ See the
 .IR fd2 (1)
 manual page for full details.
 .TP
-\fBgoto\fR \fIlabel\fR (+)
+\fBgoto\fR \fIlabel\fR [\fI...\fR] (+)
 Transfers shell control to the `\fB:\fR \fIlabel\fR' line
 of the current command file.
 See the

@@ -244,7 +244,7 @@ static	int	xgetc(void);
  *	goto - transfer command
  *
  * SYNOPSIS
- *	goto label
+ *	goto label [...]
  *
  * DESCRIPTION
  *	See the goto(1) manual page for full details.
