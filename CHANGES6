@@ -4,6 +4,7 @@ command in porting them to run on modern UNIX systems.
 
 -------------------------------------------------------------------------------
 [osh-current]:
+	* See GIT.LOG (or do a `git log') for changes during development.
 
 -------------------------------------------------------------------------------
 [osh-20091218]:
@@ -394,6 +395,6 @@ glob.c:
     Date: May 14, 1975
     From: Sixth Edition UNIX /usr/source/s1/glob.c
 
-Jeffrey Allen Neitzel						2009/12/23
+Jeffrey Allen Neitzel						2010/01/28
 
 @(#)$Id$
