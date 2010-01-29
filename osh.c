@@ -292,12 +292,13 @@ static	char		*atrim(/*@returned@*/ UChar *);
 static	char		*gtrim(/*@returned@*/ UChar *);
 /*@null@*/
 static	char		*gchar(/*@returned@*/ const char *);
+static	void		vfree(/*@null@*/ char **);
 static	void		xfree(/*@null@*/ /*@only@*/ void *);
 /*@out@*/
 static	void		*xmalloc(size_t);
 static	void		*xrealloc(/*@only@*/ void *, size_t);
 static	char		*xstrdup(const char *);
-/*@maynotreturn@*/
+/*@maynotreturn@*/ /*@null@*/
 static	const char	**glob(char **);
 
 /*
@@ -425,9 +426,7 @@ logout:
 
 done:
 	xfree(tty);
-	tty = NULL;
 	xfree(user);
-	user = NULL;
 	return status;
 }
 
@@ -829,7 +828,6 @@ talloc(void)
 static void
 tfree(struct tnode *t)
 {
-	char **p;
 
 	if (t == NULL)
 		return;
@@ -842,11 +840,7 @@ tfree(struct tnode *t)
 	case TCOMMAND:
 		xfree(t->nfin);
 		xfree(t->nfout);
-		if (t->nav != NULL) {
-			for (p = t->nav; *p != NULL; p++)
-				free(*p);
-			free(t->nav);
-		}
+		vfree(t->nav);
 		break;
 	case TSUBSHELL:
 		xfree(t->nfin);
@@ -1173,6 +1167,11 @@ execute(struct tnode *t, int *pin, int *pout)
 			err(-1, FMT2S, getmyname(), "execute: Invalid command");
 			return;
 		}
+		if (vtglob(t->nav)) {
+			if ((t->nav = (char **)glob(t->nav)) == NULL)
+				return;
+		} else
+			vtrim(t->nav);
 		switch (t->nkey) {
 		case SBI_ECHO:
 			break;
@@ -1288,7 +1287,6 @@ exec1(struct tnode *t)
 		 */
 		if (PROMPT) {
 			p = (t->nkey == SBI_LOGIN) ? PATH_LOGIN : PATH_NEWGRP;
-			vtrim(t->nav);
 			(void)sasignal(SIGINT, SIG_DFL);
 			(void)sasignal(SIGQUIT, SIG_DFL);
 			(void)pexec(p, (char *const *)t->nav);
@@ -1307,7 +1305,6 @@ exec1(struct tnode *t)
 		if (t->nav[1] != NULL &&
 		    (t->nav[2] == NULL || t->nav[3] == NULL)) {
 
-			vtrim(t->nav);
 			for (p = t->nav[1]; *p != '=' && *p != EOS; p++)
 				;	/* nothing */
 			if (*t->nav[1] == EOS || *p == '=') {
@@ -1349,7 +1346,6 @@ exec1(struct tnode *t)
 		 *
 		 * usage: sigign [+ | - signal_number ...]
 		 */
-		vtrim(t->nav);
 		do_sigign(t->nav, t->nflags);
 		return;
 
@@ -1360,7 +1356,6 @@ exec1(struct tnode *t)
 		 * usage: source file [arg1 ...]
 		 */
 		if (t->nav[1] != NULL) {
-			vtrim(t->nav);
 			do_source(t->nav);
 			return;
 		}
@@ -1383,7 +1378,7 @@ exec1(struct tnode *t)
 			fd_print(FD1, "%04o\n", (unsigned)m);
 		} else {
 			m = 0;
-			for (p=atrim(UCPTR(t->nav[1]));*p>='0'&&*p<='7';p++)
+			for (p=t->nav[1];*p>='0'&&*p<='7';p++)
 				m = m * 8 + (*p - '0');
 			if (*t->nav[1] == EOS || *p != EOS || m > 0777) {
 				err(-1, FMT4S, getmyname(),
@@ -1403,7 +1398,7 @@ exec1(struct tnode *t)
 		 */
 		if (t->nav[1] != NULL && t->nav[2] == NULL) {
 
-			for (p=atrim(UCPTR(t->nav[1]));*p!='='&&*p!=EOS;p++)
+			for (p=t->nav[1];*p!='='&&*p!=EOS;p++)
 				;	/* nothing */
 			if (*t->nav[1] == EOS || *p == '=') {
 				err(-1, FMT4S, getmyname(),
@@ -1444,7 +1439,7 @@ exec2(struct tnode *t, int *pin, int *pout)
 	struct tnode *t1;
 	enum tnflags f;
 	int i;
-	const char **av, **gav;
+	const char **av;
 	const char *cmd;
 
 	f = t->nflags;
@@ -1532,15 +1527,8 @@ exec2(struct tnode *t, int *pin, int *pout)
 		err(FC_ERR, FMT2S, getmyname(), "exec2: Invalid command");
 		/*NOTREACHED*/
 	}
-	if (vtglob(t->nav)) {
-		gav = glob(t->nav);
-		av  = gav;
-		cmd = av[0];
-	} else {
-		vtrim(t->nav);
-		av  = (const char **)t->nav;
-		cmd = av[0];
-	}
+	av  = (const char **)t->nav;
+	cmd = av[0];
 	if (t->nkey == SBI_UNKNOWN)
 		(void)err_pexec(cmd, (char *const *)av);
 	else
@@ -1587,7 +1575,7 @@ do_chdir(char **av)
 				pwd = -1;
 			goto chdirerr;
 		}
-	} else if (chdir(atrim(UCPTR(av[1]))) == -1)
+	} else if (chdir(av[1]) == -1)
 		goto chdirerr;
 
 	if (cwd != -1) {
@@ -2351,7 +2339,7 @@ gtrim(UChar *ap)
 	}
 
 gterr:
-	err(SH_ERR, FMT2S, getmyname(), ERR_PATTOOLONG);
+	err(GSTATUS, FMT2S, getmyname(), ERR_PATTOOLONG);
 	/*NOTREACHED*/
 	return NULL;
 }
@@ -2388,14 +2376,36 @@ gchar(const char *ap)
 }
 
 /*
+ * Deallocate the argument vector pointed to by vp.
+ */
+static void
+vfree(char **vp)
+{
+	char **p;
+
+	if (vp != NULL) {
+		for (p = vp; *p != NULL; p++) {
+/* fd_print(FD2, "vfree: ptr == %p == \"%s\"\n", *p, *p); */
+			free(*p);
+			*p = NULL;
+		}
+/* fd_print(FD2, "vfree: ptr == %p\n", vp); */
+		free(vp);
+		vp = NULL;
+	}
+}
+
+/*
  * Deallocate the memory allocation pointed to by p.
  */
 static void
 xfree(void *p)
 {
 
-	if (p != NULL)
+	if (p != NULL) {
 		free(p);
+		p = NULL;
+	}
 }
 
 /*
@@ -2454,8 +2464,10 @@ static	const char	**gave;	/* points to current gav end          */
 static	size_t		gavtot;	/* total bytes used for all arguments */
 
 static	const char	**gavnew(/*@only@*/ const char **);
+/*@null@*/
 static	char		*gcat(/*@null@*/ const char *,
 			      /*@null@*/ const char *, bool);
+/*@null@*/
 static	const char	**glob1(/*@only@*/ const char **, char *, int *);
 static	bool		glob2(const UChar *, const UChar *);
 static	void		gsort(const char **);
@@ -2465,29 +2477,42 @@ static	DIR		*gopendir(/*@out@*/ char *, const char *);
 /*
  * Attempt to generate file-name arguments which match the given
  * pattern arguments in av.  Return a pointer to a newly allocated
- * argument vector, gav, on success.  Do not return on error.
+ * argument vector, gav, on success.  Return NULL on error.
  */
 static const char **
 glob(char **av)
 {
 	const char **gav;	/* points to generated argument vector */
+	char **sav;
 	int pmc = 0;		/* pattern-match count                 */
+	bool gok = true;	/* glob OK error flag                  */
 
-	gav = xmalloc(GAVNEW * sizeof(char *));
-
+	sav  = av;
+	gav  = xmalloc(GAVNEW * sizeof(char *));
 	*gav = NULL, gavp = gav;
 	gave = &gav[GAVNEW - 1];
+
 	while (*av != NULL) {
 		*av = gtrim(UCPTR(*av));
-		gav = glob1(gav, *av, &pmc);
+		if ((gav = glob1(gav, *av, &pmc)) == NULL) {
+			gok = false;
+			break;
+		}
 		av++;
 	}
+
 	gavp = NULL;
 
-	if (pmc == 0)
-		err(SH_ERR, FMT2S, getmyname(), ERR_NOMATCH);
+	if (pmc == 0 && gok) {
+		gok = false;
+		err(GSTATUS, FMT2S, getmyname(), ERR_NOMATCH);
+	}
 
-	return gav;
+	if (!gok)
+		vfree((char **)gav);
+	vfree(sav);
+
+	return gok ? gav : NULL;
 }
 
 static const char **
@@ -2517,29 +2542,36 @@ gcat(const char *src1, const char *src2, bool slash)
 
 	if (src1 == NULL || src2 == NULL) {
 		/* never true, but appease splint(1) */
-		err(SH_ERR, FMT2S, getmyname(), "gcat: Invalid argument");
+		err(GSTATUS, FMT2S, getmyname(), "gcat: Invalid argument");
+		return NULL;
 		/*NOTREACHED*/
 	}
 
 	*buf = EOS, b = buf, s = src1;
 	while ((c = *s++) != EOS) {
-		if (b >= &buf[PATHMAX - 1])
-			err(SH_ERR, FMT2S, getmyname(), strerror(ENAMETOOLONG));
+		if (b >= &buf[PATHMAX - 1]) {
+			err(GSTATUS, FMT2S, getmyname(), strerror(ENAMETOOLONG));
+			return NULL;
+		}
 		*b++ = c;
 	}
 	if (slash)
 		*b++ = SLASH;
 	s = src2;
 	do {
-		if (b >= &buf[PATHMAX])
-			err(SH_ERR, FMT2S, getmyname(), strerror(ENAMETOOLONG));
+		if (b >= &buf[PATHMAX]) {
+			err(GSTATUS, FMT2S, getmyname(), strerror(ENAMETOOLONG));
+			return NULL;
+		}
 		*b++ = c = *s++;
 	} while (c != EOS);
 
 	siz = b - buf;
 	gavtot += siz;
-	if (gavtot > GAVMAX)
-		err(SH_ERR, FMT2S, getmyname(), ERR_E2BIG);
+	if (gavtot > GAVMAX) {
+		err(GSTATUS, FMT2S, getmyname(), ERR_E2BIG);
+		return NULL;
+	}
 	dst = xmalloc(siz);
 
 	(void)memcpy(dst, buf, siz);
@@ -2553,14 +2585,17 @@ glob1(const char **gav, char *as, int *pmc)
 	struct dirent *entry;
 	ptrdiff_t gidx;
 	bool slash;
-	char dirbuf[PATHMAX], *ps;
+	char dirbuf[PATHMAX], *p, *ps;
 	const char *ds;
 
 	ds = as;
 	slash = false;
 	if ((ps = gchar(as)) == NULL) {
 		gav = gavnew(gav);
-		*gavp++ = gcat(atrim(UCPTR(as)), "", slash);
+		if ((p = gcat(atrim(UCPTR(as)), "", slash)) == NULL) {
+			return NULL;
+		}
+		*gavp++ = p;
 		*gavp = NULL;
 		return gav;
 	}
@@ -2580,7 +2615,8 @@ glob1(const char **gav, char *as, int *pmc)
 		}
 	}
 	if ((dirp = gopendir(dirbuf, *ds != EOS ? ds : ".")) == NULL) {
-		err(SH_ERR, FMT2S, getmyname(), ERR_NODIR);
+		err(GSTATUS, FMT2S, getmyname(), ERR_NODIR);
+		return NULL;
 		/*NOTREACHED*/
 	}
 	if (*ds != EOS)
@@ -2591,7 +2627,10 @@ glob1(const char **gav, char *as, int *pmc)
 			continue;
 		if (glob2(UCPTR(entry->d_name), UCPTR(ps))) {
 			gav = gavnew(gav);
-			*gavp++ = gcat(ds, entry->d_name, slash);
+			if ((p = gcat(ds, entry->d_name, slash)) == NULL) {
+				return NULL;
+			}
+			*gavp++ = p;
 			(*pmc)++;
 		}
 	}

@@ -99,6 +99,7 @@
 
 #define	ESTATUS		((getpid() == getmypid()) ? SH_ERR : FC_ERR)
 #define	EXIT(s)		((getpid() == getmypid()) ? exit((s)) : _exit((s)))
+#define	GSTATUS		((getpid() == getmypid()) ? -1 : SH_ERR)
 
 #undef	DEBUG
 
