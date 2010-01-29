@@ -2279,7 +2279,7 @@ aterr:
  *	3) Reallocate memory for (if needed), make copy of,
  *	   and return pointer to new glob() pattern, nap.
  *
- * This function never returns on error.
+ * This function may not return on error.
  */
 static char *
 gtrim(UChar *ap)
@@ -2339,8 +2339,7 @@ gtrim(UChar *ap)
 	}
 
 gterr:
-	err(GSTATUS, FMT2S, getmyname(), ERR_PATTOOLONG);
-	/*NOTREACHED*/
+	err(-1, FMT2S, getmyname(), ERR_PATTOOLONG);
 	return NULL;
 }
 
@@ -2505,7 +2504,7 @@ glob(char **av)
 
 	if (pmc == 0 && gok) {
 		gok = false;
-		err(GSTATUS, FMT2S, getmyname(), ERR_NOMATCH);
+		err(-1, FMT2S, getmyname(), ERR_NOMATCH);
 	}
 
 	if (!gok)
@@ -2542,15 +2541,14 @@ gcat(const char *src1, const char *src2, bool slash)
 
 	if (src1 == NULL || src2 == NULL) {
 		/* never true, but appease splint(1) */
-		err(GSTATUS, FMT2S, getmyname(), "gcat: Invalid argument");
+		err(-1, FMT2S, getmyname(), "gcat: Invalid argument");
 		return NULL;
-		/*NOTREACHED*/
 	}
 
 	*buf = EOS, b = buf, s = src1;
 	while ((c = *s++) != EOS) {
 		if (b >= &buf[PATHMAX - 1]) {
-			err(GSTATUS, FMT2S, getmyname(), strerror(ENAMETOOLONG));
+			err(-1, FMT2S, getmyname(), strerror(ENAMETOOLONG));
 			return NULL;
 		}
 		*b++ = c;
@@ -2560,7 +2558,7 @@ gcat(const char *src1, const char *src2, bool slash)
 	s = src2;
 	do {
 		if (b >= &buf[PATHMAX]) {
-			err(GSTATUS, FMT2S, getmyname(), strerror(ENAMETOOLONG));
+			err(-1, FMT2S, getmyname(), strerror(ENAMETOOLONG));
 			return NULL;
 		}
 		*b++ = c = *s++;
@@ -2569,7 +2567,7 @@ gcat(const char *src1, const char *src2, bool slash)
 	siz = b - buf;
 	gavtot += siz;
 	if (gavtot > GAVMAX) {
-		err(GSTATUS, FMT2S, getmyname(), ERR_E2BIG);
+		err(-1, FMT2S, getmyname(), ERR_E2BIG);
 		return NULL;
 	}
 	dst = xmalloc(siz);
@@ -2592,9 +2590,8 @@ glob1(const char **gav, char *as, int *pmc)
 	slash = false;
 	if ((ps = gchar(as)) == NULL) {
 		gav = gavnew(gav);
-		if ((p = gcat(atrim(UCPTR(as)), "", slash)) == NULL) {
+		if ((p = gcat(atrim(UCPTR(as)), "", slash)) == NULL)
 			return NULL;
-		}
 		*gavp++ = p;
 		*gavp = NULL;
 		return gav;
@@ -2615,9 +2612,8 @@ glob1(const char **gav, char *as, int *pmc)
 		}
 	}
 	if ((dirp = gopendir(dirbuf, *ds != EOS ? ds : ".")) == NULL) {
-		err(GSTATUS, FMT2S, getmyname(), ERR_NODIR);
+		err(-1, FMT2S, getmyname(), ERR_NODIR);
 		return NULL;
-		/*NOTREACHED*/
 	}
 	if (*ds != EOS)
 		ds = dirbuf;
@@ -2627,9 +2623,8 @@ glob1(const char **gav, char *as, int *pmc)
 			continue;
 		if (glob2(UCPTR(entry->d_name), UCPTR(ps))) {
 			gav = gavnew(gav);
-			if ((p = gcat(ds, entry->d_name, slash)) == NULL) {
+			if ((p = gcat(ds, entry->d_name, slash)) == NULL)
 				return NULL;
-			}
 			*gavp++ = p;
 			(*pmc)++;
 		}
