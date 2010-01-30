@@ -2339,6 +2339,7 @@ gtrim(UChar *ap)
 	}
 
 gterr:
+	xfree(ap);
 	err(-1, FMT2S, getmyname(), ERR_PATTOOLONG);
 	return NULL;
 }
@@ -2384,11 +2385,9 @@ vfree(char **vp)
 
 	if (vp != NULL) {
 		for (p = vp; *p != NULL; p++) {
-/* fd_print(FD2, "vfree: ptr == %p == \"%s\"\n", *p, *p); */
 			free(*p);
 			*p = NULL;
 		}
-/* fd_print(FD2, "vfree: ptr == %p\n", vp); */
 		free(vp);
 		vp = NULL;
 	}
@@ -2458,16 +2457,16 @@ xstrdup(const char *src)
 	return dst;
 }
 
-static	const char	**gavp;	/* points to current gav position     */
-static	const char	**gave;	/* points to current gav end          */
-static	size_t		gavtot;	/* total bytes used for all arguments */
+static	const char	**gavp;	/* points to current gav position      */
+static	const char	**gave;	/* points to current gav end           */
+static	size_t		gavtot;	/* total bytes used for all arguments  */
 
 static	const char	**gavnew(/*@only@*/ const char **);
 /*@null@*/
 static	char		*gcat(/*@null@*/ const char *,
 			      /*@null@*/ const char *, bool);
 /*@null@*/
-static	const char	**glob1(/*@only@*/ const char **, char *, int *);
+static	const char	**glob1(/*@only@*/ const char **,char *,int *,bool *);
 static	bool		glob2(const UChar *, const UChar *);
 static	void		gsort(const char **);
 /*@null@*/
@@ -2481,37 +2480,38 @@ static	DIR		*gopendir(/*@out@*/ char *, const char *);
 static const char **
 glob(char **av)
 {
-	const char **gav;	/* points to generated argument vector */
 	char **sav;
+	const char **gav;	/* points to generated argument vector */
 	int pmc = 0;		/* pattern-match count                 */
-	bool gok = true;	/* glob OK error flag                  */
+	bool gerr = false;	/* glob error flag                     */
+
+	gavtot = 0;
 
 	sav  = av;
 	gav  = xmalloc(GAVNEW * sizeof(char *));
 	*gav = NULL, gavp = gav;
 	gave = &gav[GAVNEW - 1];
-
 	while (*av != NULL) {
-		*av = gtrim(UCPTR(*av));
-		if ((gav = glob1(gav, *av, &pmc)) == NULL) {
-			gok = false;
+		if ((*av = gtrim(UCPTR(*av))) == NULL) {
+			gerr = true;
 			break;
 		}
+		gav = glob1(gav, *av, &pmc, &gerr);
+		if (gerr)
+			break;
 		av++;
 	}
-
 	gavp = NULL;
 
-	if (pmc == 0 && gok) {
-		gok = false;
+	if (pmc == 0 && !gerr) {
 		err(-1, FMT2S, getmyname(), ERR_NOMATCH);
+		gerr = true;
 	}
-
-	if (!gok)
+	if (gerr)
 		vfree((char **)gav);
 	vfree(sav);
 
-	return gok ? gav : NULL;
+	return gerr ? NULL : gav;
 }
 
 static const char **
@@ -2577,7 +2577,7 @@ gcat(const char *src1, const char *src2, bool slash)
 }
 
 static const char **
-glob1(const char **gav, char *as, int *pmc)
+glob1(const char **gav, char *as, int *pmc, bool *gerr)
 {
 	DIR *dirp;
 	struct dirent *entry;
@@ -2590,8 +2590,10 @@ glob1(const char **gav, char *as, int *pmc)
 	slash = false;
 	if ((ps = gchar(as)) == NULL) {
 		gav = gavnew(gav);
-		if ((p = gcat(atrim(UCPTR(as)), "", slash)) == NULL)
-			return NULL;
+		if ((p = gcat(atrim(UCPTR(as)), "", slash)) == NULL) {
+			*gerr = true;
+			return gav;
+		}
 		*gavp++ = p;
 		*gavp = NULL;
 		return gav;
@@ -2613,7 +2615,8 @@ glob1(const char **gav, char *as, int *pmc)
 	}
 	if ((dirp = gopendir(dirbuf, *ds != EOS ? ds : ".")) == NULL) {
 		err(-1, FMT2S, getmyname(), ERR_NODIR);
-		return NULL;
+		*gerr = true;
+		return gav;
 	}
 	if (*ds != EOS)
 		ds = dirbuf;
@@ -2623,8 +2626,11 @@ glob1(const char **gav, char *as, int *pmc)
 			continue;
 		if (glob2(UCPTR(entry->d_name), UCPTR(ps))) {
 			gav = gavnew(gav);
-			if ((p = gcat(ds, entry->d_name, slash)) == NULL)
-				return NULL;
+			if ((p = gcat(ds, entry->d_name, slash)) == NULL) {
+				(void)closedir(dirp);
+				*gerr = true;
+				return gav;
+			}
 			*gavp++ = p;
 			(*pmc)++;
 		}
@@ -2632,6 +2638,7 @@ glob1(const char **gav, char *as, int *pmc)
 	(void)closedir(dirp);
 	gsort(gav + gidx);
 	*gavp = NULL;
+	*gerr = false;
 	return gav;
 }
 
