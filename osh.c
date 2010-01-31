@@ -2339,7 +2339,6 @@ gtrim(UChar *ap)
 	}
 
 gterr:
-	xfree(ap);
 	err(-1, FMT2S, getmyname(), ERR_PATTOOLONG);
 	return NULL;
 }
@@ -2480,7 +2479,7 @@ static	DIR		*gopendir(/*@out@*/ char *, const char *);
 static const char **
 glob(char **av)
 {
-	char **sav;
+	char *gp, **sav;
 	const char **gav;	/* points to generated argument vector */
 	int pmc = 0;		/* pattern-match count                 */
 	bool gerr = false;	/* glob error flag                     */
@@ -2492,11 +2491,11 @@ glob(char **av)
 	*gav = NULL, gavp = gav;
 	gave = &gav[GAVNEW - 1];
 	while (*av != NULL) {
-		if ((*av = gtrim(UCPTR(*av))) == NULL) {
+		if ((gp = gtrim(UCPTR(*av))) == NULL) {
 			gerr = true;
 			break;
 		}
-		gav = glob1(gav, *av, &pmc, &gerr);
+		gav = glob1(gav, gp, &pmc, &gerr);
 		if (gerr)
 			break;
 		av++;
