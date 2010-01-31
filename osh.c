@@ -1170,7 +1170,7 @@ execute(struct tnode *t, int *pin, int *pout)
 		if (vtglob(t->nav)) {
 			if ((t->nav = (char **)glob(t->nav)) == NULL)
 				return;
-		} else
+		} else if (t->nkey != SBI_CD && t->nkey != SBI_CHDIR)
 			vtrim(t->nav);
 		switch (t->nkey) {
 		case SBI_ECHO:
@@ -1575,7 +1575,7 @@ do_chdir(char **av)
 				pwd = -1;
 			goto chdirerr;
 		}
-	} else if (chdir(av[1]) == -1)
+	} else if (chdir(atrim(UCPTR(av[1]))) == -1)
 		goto chdirerr;
 
 	if (cwd != -1) {
