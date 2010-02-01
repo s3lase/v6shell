@@ -126,6 +126,7 @@
 #define	HALT		true
 #define	PROMPT		((shtype & ST_MASK) == ST_INTERACTIVE)
 #define	SHTYPE(f)	((shtype & (f)) != 0)
+#define	NO_TRIM(k)	((k) != SBI_CD && (k) != SBI_CHDIR)
 
 /*
  * Signal state flags
@@ -299,7 +300,7 @@ static	void		*xmalloc(size_t);
 static	void		*xrealloc(/*@only@*/ void *, size_t);
 static	char		*xstrdup(const char *);
 /*@maynotreturn@*/ /*@null@*/
-static	const char	**glob(char **);
+static	const char	**glob(enum sbikey, char **);
 
 /*
  * NAME
@@ -1168,9 +1169,9 @@ execute(struct tnode *t, int *pin, int *pout)
 			return;
 		}
 		if (vtglob(t->nav)) {
-			if ((t->nav = (char **)glob(t->nav)) == NULL)
+			if ((t->nav = (char **)glob(t->nkey, t->nav)) == NULL)
 				return;
-		} else if (t->nkey != SBI_CD && t->nkey != SBI_CHDIR)
+		} else if (NO_TRIM(t->nkey))
 			vtrim(t->nav);
 		switch (t->nkey) {
 		case SBI_ECHO:
@@ -2465,7 +2466,8 @@ static	const char	**gavnew(/*@only@*/ const char **);
 static	char		*gcat(/*@null@*/ const char *,
 			      /*@null@*/ const char *, bool);
 /*@null@*/
-static	const char	**glob1(/*@only@*/ const char **,char *,int *,bool *);
+static	const char	**glob1(enum sbikey, /*@only@*/ const char **,
+				char *, int *, bool *);
 static	bool		glob2(const UChar *, const UChar *);
 static	void		gsort(const char **);
 /*@null@*/
@@ -2477,7 +2479,7 @@ static	DIR		*gopendir(/*@out@*/ char *, const char *);
  * argument vector, gav, on success.  Return NULL on error.
  */
 static const char **
-glob(char **av)
+glob(enum sbikey key, char **av)
 {
 	char *gp, **sav;
 	const char **gav;	/* points to generated argument vector */
@@ -2495,7 +2497,7 @@ glob(char **av)
 			gerr = true;
 			break;
 		}
-		gav = glob1(gav, gp, &pmc, &gerr);
+		gav = glob1(key, gav, gp, &pmc, &gerr);
 		if (gerr)
 			break;
 		av++;
@@ -2576,7 +2578,7 @@ gcat(const char *src1, const char *src2, bool slash)
 }
 
 static const char **
-glob1(const char **gav, char *as, int *pmc, bool *gerr)
+glob1(enum sbikey key, const char **gav, char *as, int *pmc, bool *gerr)
 {
 	DIR *dirp;
 	struct dirent *entry;
@@ -2589,7 +2591,9 @@ glob1(const char **gav, char *as, int *pmc, bool *gerr)
 	slash = false;
 	if ((ps = gchar(as)) == NULL) {
 		gav = gavnew(gav);
-		if ((p = gcat(atrim(UCPTR(as)), "", slash)) == NULL) {
+		if (NO_TRIM(key))
+			(void)atrim(UCPTR(as));
+		if ((p = gcat(as, "", slash)) == NULL) {
 			*gerr = true;
 			return gav;
 		}
