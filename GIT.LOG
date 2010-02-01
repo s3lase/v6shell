@@ -1,0 +1,219 @@
+The following commit logs reflect current development in v6shell/master.
+
+-------------------------------------------------------------------------------
+commit 16c73d11a1e79d351c3b18483d670cda60b808aa
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Mon Feb 1 14:59:41 2010 +0000
+
+    Update OSH_DATE in Makefile.
+
+commit 48f8b5f313e1aa38088c6a473bf84e30fc3e21f4
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Mon Feb 1 14:19:57 2010 +0000
+
+    Listed changes cover special argument-list requirements for `cd' & 'chdir':
+    
+    1) Change glob() & glob1() prototypes and calls, adding enum sbikey;
+    
+    2) Add NO_TRIM(k) macro for special `cd' & 'chdir' no-trim conditions;
+    
+    3) Fully test changes for both globbed and unglobbed argument lists;
+    
+    .
+
+commit 52b447e705468d56279945759f794e9061dcc584
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Sun Jan 31 18:48:57 2010 +0000
+
+    Change when atrim() is called for `cd' & 'chdir' so they behave as
+    always; `cd -' changes to previous working directory; `cd \-' (or
+    '-' or "-") changes to `-' directory.
+
+commit d68fef26171d93690566608e5f9a2f1b4a9abc73
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Sun Jan 31 05:40:38 2010 +0000
+
+    Update OSH_DATE in Makefile to today's date.
+
+commit 7540fe01cdee8c7d78e941c39b17c6abda193f11
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Sun Jan 31 05:24:39 2010 +0000
+
+    Finish tweaks for new osh globbing in main shell process, not child process.
+    These globbing changes are all subject to final review.
+
+commit 4121b587be797da657436db3caa6f8d3734e9c43
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Sat Jan 30 17:15:46 2010 +0000
+
+    Clean up osh glob-related error handling, and fix glob-related memory leaks.
+
+commit 99ea914826f2ba4e0a8d2680de030cd05eb45ded
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Fri Jan 29 20:21:42 2010 +0000
+
+    Remove GSTATUS macro; use -1 in err() calls instead.
+
+commit 5c738e88150973b72e7f0d050dc467174a5802d8
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Fri Jan 29 17:34:52 2010 +0000
+
+    Change osh globbing so it's handled in main osh process; needs some cleanup.
+
+commit 7463107420cc9ca5b8839fe42596e9cd961c3908
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Thu Jan 28 23:18:09 2010 +0000
+
+    Update CHANGES & CHANGES6 for osh-current.
+
+commit 39e9644cac65cfc5da28af90f7fbf8b90ccf05e8
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Thu Jan 28 16:59:42 2010 +0000
+
+    Change usage synopsis for cd, chdir, & goto to reflect the fact
+    that they can take multiple, not just one, argument(s).
+
+commit 4911e9082154b59a18f39835288c2fd87f23603c
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Thu Jan 28 16:38:26 2010 +0000
+
+    Add GIT.LOG to .gitignore .
+
+commit d236b6f2932d39d8a938cfc22b089a22aec7973e
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Tue Jan 26 18:52:51 2010 +0000
+
+    Use unsigned characters (see defs.h UChar typedef & related macros)
+    for processing in atrim() & gtrim().
+
+commit 7908aea7d6ec5f63997582816673379af9d4e713
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Tue Jan 26 17:52:17 2010 +0000
+
+    Update defs.h and friends after ditching chars.h .
+
+commit 1b54896357d80e8ca41083374703518660d57d57
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Tue Jan 26 17:48:51 2010 +0000
+
+    Ditch chars.h; use defs.h instead.
+
+commit 9296045dcb15ba853da761a8925c9f35bf782f69
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Sun Jan 24 20:10:08 2010 +0000
+
+    Pull char & string literal defs from chars.h into *.c; finish later.
+
+commit f79ea69c54260238e3b35b4f7f48f2f95191fc40
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Sun Jan 24 06:01:34 2010 +0000
+
+    Move recently added char & string literal defs from defs.h to chars.h
+    (new header file); add chars.h to Makefile .
+
+commit dabf4e44980b6fc4c1f3d99c5cf0c13f25080c10
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Sun Jan 24 05:43:39 2010 +0000
+
+    defs.h: Add more character & string literal definitions.
+
+commit 7232a37a552e664a083cc65ff4192c4c95a56819
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Tue Jan 19 12:39:02 2010 +0000
+
+    Replace all ' ' w/ SPC and all '\t' w/ TAB.
+
+commit 5d2b95fd67c3114cb624b9242bce47697f0ecd0f
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Tue Jan 19 02:23:54 2010 +0000
+
+    Replace '\0' w/ EOS and '\n' w/ EOL in other *.c files where needed.
+
+commit 3f09eb49e99a1bbd3541c85d901ab5a6f86b3f78
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Mon Jan 18 17:49:32 2010 +0000
+
+    osh.c: Replace '\0' instances w/ EOS, '\n' instances w/ EOL, etc.
+
+commit 2a9d26fe5c4fd183b5ead91ae8e307c804e79cb6
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Mon Jan 18 17:32:08 2010 +0000
+
+    defs.h: Define EOL as '\n', EOS as '\0', add missing () to UCHAR(c)
+            macro, define new UCPTR(p) macro, etc.
+
+commit c1a000ddf00ef5dc9543851486f220acf9f790f6
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Wed Jan 6 12:34:01 2010 +0000
+
+    Capitalize "osh project" in PROJECT file.
+
+commit 3c9c4491f64709f4b3f7487d8d1c198638194618
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Tue Jan 5 15:29:07 2010 +0000
+
+    Revise atrim(), gtrim(), & gchar() functions as follows:
+    
+    1) Change the atrim() function from a static void to a static char *,
+       and change all atrim() calls accordingly;
+    
+    2) Change the gtrim() function diagnostic from
+       "osh: Cannot trim <glob_pattern>" to "osh: Pattern too long",
+       and change its error exit status from FC_ERR to SH_ERR.  This
+       makes such an error non-fatal for the sake of compatibility.
+    
+    3) Add a /*@maynotreturn@*/ splint(1) annotation to the atrim() &
+       gtrim() functions;
+    
+    4) Revise all atrim(), gtrim(), & gchar() function comments as well;
+    
+    .
+
+commit ed5205f025ba281319617f5be9f60b49c4b91e5f
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Fri Jan 1 18:58:53 2010 +0000
+
+    Add missing tabs.
+
+commit 1bebd392e06f35946bd01b7e2f1b5e4e2da0e35e
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Fri Jan 1 18:47:51 2010 +0000
+
+    osh.c: Adjust "Derived from:" references to reflect immediate
+           ancestry of current code.
+
+commit 6f1b25358d75e2b611d02ed9afa4126acd105dc3
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Fri Jan 1 05:32:20 2010 +0000
+
+    Revise Copyright-notice dates accordingly for 2010.
+
+commit 1766da1d7e694958705e8655302dc9c629b8fd39
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Thu Dec 31 02:27:15 2009 +0000
+
+    Replace "command_files" w/ "v6scripts" in examples/FILEPREP .
+
+commit e3a2f1a1c404f58a1484f8f3061d04c7697fab6a
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Wed Dec 30 17:58:09 2009 +0000
+
+    Replace all instances of "CHANGES-sh_to_sh6" w/ "CHANGES6" .
+
+commit 6491c936e5e2867c662e7d065ee4e072b55f6f8c
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Wed Dec 30 17:56:52 2009 +0000
+
+    Move CHANGES-sh_to_sh6 to CHANGES6; too long names are no fun.
+
+commit d22036c7d66d676cafc320e40cc235e7ce29d605
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Wed Dec 23 16:35:26 2009 +0000
+
+    osh.c, sh6.c: Use defs.h SBUFMM(m) macro for prsig() buf[] .
+
+commit d8165f8a6107409b7229b63c1129a45128682d0c
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Wed Dec 23 16:28:21 2009 +0000
+
+    CHANGES*: osh-current opened w/ empty lists
