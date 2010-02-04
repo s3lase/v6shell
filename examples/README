@@ -1,8 +1,18 @@
+Welcome to osh rc files!
+
+The Sixth Edition Thompson shell did not read/execute rc (init and
+logout) files.  The fact that osh does so is simply one of its
+enhancements.  This makes osh a much better login shell than it
+might be otherwise, as the ability to execute rc files can make
+things much easier for the user.  An rc file is simply a regular
+shell script, aka command file, that the shell treats specially.
+
 This collection of osh(1) rc files may be studied as is, used as
 templates, modified, and/or installed for personal or general use.
 
-For full details about how osh handles rc files, see "Startup and
-shutdown" subsection of osh(1) manual page.
+For full details about how osh handles rc files, please refer to
+the "Startup and shutdown" subsection of osh(1) manual page @
+http://v6shell.org/man/osh.1.html#StartupAndShutdown .
 
 -------
 INSTALL:
@@ -21,11 +31,18 @@ Depending on system configuration, you may need to become superuser
 in order to successfully install system-wide rc files.
 
 -------
+I install and use variations of these files on several different
+systems.  This includes GNU/Linux, Mac OS X, NetBSD, OpenBSD, and
+OpenSolaris.  On GNU/Linux systems, you may wish to refer to the
+manual pages for the utilities invoked in these files as there might
+be incompatibilities that I have not encountered.  For example,
+this is true for stty(1).
+
 If you have any comments or questions about this software, I encourage
 you to contact me via email.  Thanks & Enjoy!
 
 Jeffrey Allen Neitzel
 <jan (at) v6shell (dot) org>
-http://v6shell.org/rc_files/					2009/12/18
+http://v6shell.org/rc_files/					2010/02/04
 
 @(#)$Id$
