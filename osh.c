@@ -126,7 +126,7 @@
 #define	HALT		true
 #define	PROMPT		((shtype & ST_MASK) == ST_INTERACTIVE)
 #define	SHTYPE(f)	((shtype & (f)) != 0)
-#define	NO_TRIM(k)	((k) != SBI_CD && (k) != SBI_CHDIR)
+#define	DO_TRIM(k)	((k) != SBI_CD && (k) != SBI_CHDIR)
 
 /*
  * Signal state flags
@@ -1171,7 +1171,7 @@ execute(struct tnode *t, int *pin, int *pout)
 		if (vtglob(t->nav)) {
 			if ((t->nav = (char **)glob(t->nkey, t->nav)) == NULL)
 				return;
-		} else if (NO_TRIM(t->nkey))
+		} else if (DO_TRIM(t->nkey))
 			vtrim(t->nav);
 		switch (t->nkey) {
 		case SBI_ECHO:
@@ -2591,7 +2591,7 @@ glob1(enum sbikey key, const char **gav, char *as, int *pmc, bool *gerr)
 	slash = false;
 	if ((ps = gchar(as)) == NULL) {
 		gav = gavnew(gav);
-		if (NO_TRIM(key))
+		if (DO_TRIM(key))
 			(void)atrim(UCPTR(as));
 		if ((p = gcat(as, "", slash)) == NULL) {
 			*gerr = true;
