@@ -7,12 +7,12 @@ might be otherwise, as the ability to execute rc files can make
 things much easier for the user.  An rc file is simply a regular
 shell script, aka command file, that the shell treats specially.
 
-This collection of osh(1) rc files may be studied as is, used as
-templates, modified, and/or installed for personal or general use.
-
 For full details about how osh handles rc files, please refer to
 the "Startup and shutdown" subsection of osh(1) manual page @
 http://v6shell.org/man/osh.1.html#StartupAndShutdown .
+
+This collection of osh(1) rc files may be studied as is, used as
+templates, modified, and/or installed for personal or general use.
 
 -------
 INSTALL:
