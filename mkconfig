@@ -29,12 +29,22 @@ definePathnameConstant()
 	utility="$2"
 	dirlist="/bin /sbin /usr/bin /usr/sbin /usr/libexec /usr/games"
 	for dir in $dirlist ; do
-		pathname=""
 		if test -f "$dir/$utility" -a -x "$dir/$utility" ; then
 			pathname="$dir/$utility" ; break
+		else
+			pathname=""
 		fi
 	done
-	echo "#define	$constant	\"$pathname\""
+	wpathname="`which $utility 2>/dev/null`"
+	if test X"$wpathname" = X"$pathname" ; then
+		definition="#define	$constant	\"$pathname\""
+	elif test X"$wpathname" != X ; then
+		definition="#define	$constant	\"$wpathname\""
+	else
+		# Though this should rarely be true, it is possible.
+		definition="#define	$constant	\"\""
+	fi
+	echo "$definition"
 }
 
 UNAME_S="`uname -s`"
