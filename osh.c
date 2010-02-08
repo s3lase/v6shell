@@ -1440,8 +1440,6 @@ execute2(struct tnode *t, int *pin, int *pout)
 	struct tnode *t1;
 	enum tnflags f;
 	int i;
-	const char **av;
-	const char *cmd;
 
 	f = t->nflags;
 
@@ -1528,12 +1526,10 @@ execute2(struct tnode *t, int *pin, int *pout)
 		err(FC_ERR, FMT2S, getmyname(), "execute2: Invalid command");
 		/*NOTREACHED*/
 	}
-	av  = (const char **)t->nav;
-	cmd = av[0];
 	if (t->nkey == SBI_UNKNOWN)
-		(void)err_pexec(cmd, (char *const *)av);
+		(void)err_pexec(t->nav[0], (char *const *)t->nav);
 	else
-		_exit(uexec(t->nkey, vacount(av), (char **)av));
+		_exit(uexec(t->nkey, vacount((const char **)t->nav), t->nav));
 	/*NOTREACHED*/
 }
 
