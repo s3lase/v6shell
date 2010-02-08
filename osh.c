@@ -1379,7 +1379,7 @@ execute1(struct tnode *t)
 			fd_print(FD1, "%04o\n", (unsigned)m);
 		} else {
 			m = 0;
-			for (p=t->nav[1];*p>='0'&&*p<='7';p++)
+			for (p = t->nav[1]; *p >= '0' && *p <= '7'; p++)
 				m = m * 8 + (*p - '0');
 			if (*t->nav[1] == EOS || *p != EOS || m > 0777) {
 				err(-1, FMT4S, getmyname(),
@@ -1399,7 +1399,7 @@ execute1(struct tnode *t)
 		 */
 		if (t->nav[1] != NULL && t->nav[2] == NULL) {
 
-			for (p=t->nav[1];*p!='='&&*p!=EOS;p++)
+			for (p = t->nav[1]; *p != '=' && *p != EOS; p++)
 				;	/* nothing */
 			if (*t->nav[1] == EOS || *p == '=') {
 				err(-1, FMT4S, getmyname(),
