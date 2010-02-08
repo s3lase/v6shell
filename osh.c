@@ -264,9 +264,9 @@ static	void		vtrim(char **);
 static	int		vacount(const char **);
 static	void		execute(/*@null@*/ struct tnode *,
 				/*@null@*/ int *, /*@null@*/ int *);
-static	void		exec1(struct tnode *);
-static	void		exec2(struct tnode *,
-			      /*@null@*/ int *, /*@null@*/ int *);
+static	void		execute1(struct tnode *);
+static	void		execute2(struct tnode *,
+				 /*@null@*/ int *, /*@null@*/ int *);
 static	void		do_chdir(char **);
 static	void		do_sigign(char **, enum tnflags);
 static	void		set_ss_flags(int, action_type);
@@ -1200,7 +1200,7 @@ execute(struct tnode *t, int *pin, int *pout)
 		case SBI_FD2: case SBI_GOTO: case SBI_IF: case SBI_UNKNOWN:
 			break;
 		default:
-			exec1(t);
+			execute1(t);
 			return;
 		}
 		/*FALLTHROUGH*/
@@ -1226,7 +1226,7 @@ execute(struct tnode *t, int *pin, int *pout)
 			return;
 		}
 		/**** Child! ****/
-		exec2(t, pin, pout);
+		execute2(t, pin, pout);
 		/*NOTREACHED*/
 	}
 }
@@ -1236,14 +1236,14 @@ execute(struct tnode *t, int *pin, int *pout)
  * t->nkey and t->nav fields in the shell command tree pointed to by t.
  */
 static void
-exec1(struct tnode *t)
+execute1(struct tnode *t)
 {
 	mode_t m;
 	const char *emsg, *p;
 
 	if (t->nav == NULL || t->nav[0] == NULL) {
 		/* should never (but can) be true */
-		err(-1, FMT2S, getmyname(), "exec1: Invalid command");
+		err(-1, FMT2S, getmyname(), "execute1: Invalid command");
 		return;
 	}
 	switch (t->nkey) {
@@ -1435,7 +1435,7 @@ exec1(struct tnode *t)
  * the shell command tree pointed to by t.
  */
 static void
-exec2(struct tnode *t, int *pin, int *pout)
+execute2(struct tnode *t, int *pin, int *pout)
 {
 	struct tnode *t1;
 	enum tnflags f;
@@ -1525,7 +1525,7 @@ exec2(struct tnode *t, int *pin, int *pout)
 	}
 	if (t->nav == NULL || t->nav[0] == NULL) {
 		/* should never (but can) be true */
-		err(FC_ERR, FMT2S, getmyname(), "exec2: Invalid command");
+		err(FC_ERR, FMT2S, getmyname(), "execute2: Invalid command");
 		/*NOTREACHED*/
 	}
 	av  = (const char **)t->nav;
