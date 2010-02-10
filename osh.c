@@ -1579,9 +1579,8 @@ do_chdir(char **av)
 		if (cwd != PWD && (pwd = dup2(cwd, PWD)) == PWD)
 			(void)fcntl(pwd, F_SETFD, FD_CLOEXEC);
 		(void)close(cwd);
-	} else
-		if (close(pwd) != -1)
-			pwd = -1;
+	} else if (close(pwd) != -1)
+		pwd = -1;
 	status = SH_TRUE;
 	return;
 
