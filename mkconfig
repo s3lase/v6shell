@@ -36,12 +36,12 @@ definePathnameConstant()
 		fi
 	done
 	wpathname="`which $utility 2>/dev/null`"
-	if test X"$wpathname" = X"$pathname" ; then
+	if test X"$pathname" != X -a X"$wpathname" = X"$pathname" ; then
 		definition="#define	$constant	\"$pathname\""
 	elif test X"$wpathname" != X ; then
 		definition="#define	$constant	\"$wpathname\""
 	else
-		# Though this should rarely be true, it is possible.
+		# This should rarely be true, but it is possible.
 		definition="#define	$constant	\"\""
 	fi
 	echo "$definition"
