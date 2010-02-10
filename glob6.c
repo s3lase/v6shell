@@ -263,7 +263,7 @@ glob2(const UChar *ename, const UChar *pattern)
 		 * Ignore all but the last `*' in a group of consecutive
 		 * `*' characters to avoid unnecessary glob2() recursion.
 		 */
-		while (*p++ == UCHAR(ASTERISK))
+		while (*p++ == ASTERISK)
 			;	/* nothing */
 		if (*--p == EOS)
 			return true;
@@ -283,14 +283,14 @@ glob2(const UChar *ename, const UChar *pattern)
 			break;
 		for (c = UCHAR(EOS), cok = rok = 0, n = p + 1; ; ) {
 			pc = *p++;
-			if (pc == UCHAR(RBRACKET) && p > n) {
+			if (pc == RBRACKET && p > n) {
 				if (cok > 0 || rok > 0)
 					return glob2(e, p);
 				break;
 			}
 			if (*p == EOS)
 				break;
-			if (pc == UCHAR(HYPHEN) && c != EOS && *p != UCHAR(RBRACKET)) {
+			if (pc == HYPHEN && c != EOS && *p != RBRACKET) {
 				pc = *p++ & ASCII;
 				if (*p == EOS)
 					break;
