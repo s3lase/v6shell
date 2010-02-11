@@ -289,7 +289,7 @@ static	void		fd_free(void);
 static	bool		fd_type(int, mode_t);
 /*@maynotreturn@*/ /*@null@*/
 static	char		*atrim(/*@returned@*/ UChar *);
-/*@maynotreturn@*/ /*@null@*/
+/*@null@*/
 static	char		*gtrim(/*@returned@*/ UChar *);
 /*@null@*/
 static	char		*gchar(/*@returned@*/ const char *);
@@ -1906,6 +1906,10 @@ sh_errexit(int es)
 #endif
 
 	switch (es) {
+	case -2:
+		/* For compatibility, glob() errors are not fatal. */
+		status = SH_ERR;
+		return;
 	case -1:
 		status = SH_ERR;
 		/*FALLTHROUGH*/
@@ -2267,7 +2271,7 @@ aterr:
 }
 
 /*
- * Prepare glob() pattern pointed to by ap.
+ * Prepare possible glob() pattern pointed to by ap.
  *
  *	1) Remove (trim) any unquoted quote characters;
  *	2) Escape (w/ backslash `\') any previously quoted
@@ -2275,7 +2279,7 @@ aterr:
  *	3) Reallocate memory for (if needed), make copy of,
  *	   and return pointer to new glob() pattern, nap.
  *
- * This function may not return on error.
+ * This function returns NULL on error.
  */
 static char *
 gtrim(UChar *ap)
@@ -2335,7 +2339,8 @@ gtrim(UChar *ap)
 	}
 
 gterr:
-	err(-1, FMT2S, getmyname(), ERR_PATTOOLONG);
+	err(-2, FMT2S, getmyname(), (gchar((const char *)ap) != NULL) ?
+	    ERR_PATTOOLONG : strerror(ENAMETOOLONG));
 	return NULL;
 }
 
@@ -2500,7 +2505,7 @@ glob(enum sbikey key, char **av)
 	gavp = NULL;
 
 	if (pmc == 0 && !gerr) {
-		err(-1, FMT2S, getmyname(), ERR_NOMATCH);
+		err(-2, FMT2S, getmyname(), ERR_NOMATCH);
 		gerr = true;
 	}
 	if (gerr)
@@ -2537,14 +2542,14 @@ gcat(const char *src1, const char *src2, bool slash)
 
 	if (src1 == NULL || src2 == NULL) {
 		/* never true, but appease splint(1) */
-		err(-1, FMT2S, getmyname(), "gcat: Invalid argument");
+		err(-2, FMT2S, getmyname(), "gcat: Invalid argument");
 		return NULL;
 	}
 
 	*buf = EOS, b = buf, s = src1;
 	while ((c = *s++) != EOS) {
 		if (b >= &buf[PATHMAX - 1]) {
-			err(-1, FMT2S, getmyname(), strerror(ENAMETOOLONG));
+			err(-2, FMT2S, getmyname(), strerror(ENAMETOOLONG));
 			return NULL;
 		}
 		*b++ = c;
@@ -2554,7 +2559,7 @@ gcat(const char *src1, const char *src2, bool slash)
 	s = src2;
 	do {
 		if (b >= &buf[PATHMAX]) {
-			err(-1, FMT2S, getmyname(), strerror(ENAMETOOLONG));
+			err(-2, FMT2S, getmyname(), strerror(ENAMETOOLONG));
 			return NULL;
 		}
 		*b++ = c = *s++;
@@ -2563,7 +2568,7 @@ gcat(const char *src1, const char *src2, bool slash)
 	siz = b - buf;
 	gavtot += siz;
 	if (gavtot > GAVMAX) {
-		err(-1, FMT2S, getmyname(), ERR_E2BIG);
+		err(-2, FMT2S, getmyname(), ERR_E2BIG);
 		return NULL;
 	}
 	dst = xmalloc(siz);
@@ -2612,7 +2617,7 @@ glob1(enum sbikey key, const char **gav, char *as, int *pmc, bool *gerr)
 		}
 	}
 	if ((dirp = gopendir(dirbuf, *ds != EOS ? ds : ".")) == NULL) {
-		err(-1, FMT2S, getmyname(), ERR_NODIR);
+		err(-2, FMT2S, getmyname(), ERR_NODIR);
 		*gerr = true;
 		return gav;
 	}
