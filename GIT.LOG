@@ -1,6 +1,99 @@
 The following commit logs reflect current development in v6shell/master.
 
 -------------------------------------------------------------------------------
+commit df48e82889d3fb6fd88c378e2273a8702d34c993
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Thu Feb 11 20:10:20 2010 +0000
+
+    Prepare to release master branch as osh-20100226-beta1.
+
+commit 0e06165ff51e5e9db1955a4991f00c8c7c9ca466
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Thu Feb 11 19:43:45 2010 +0000
+
+    Ensure that glob-related errors aren't fatal for backward compatibility.
+
+commit 6de41f45f164db70d896e1d2666a0c18f8345e37
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Wed Feb 10 18:49:03 2010 +0000
+
+    glob6.c, osh.c: Only use UCHAR(c) macro when it's absolutely required.
+
+commit 124de1c95a9c22718f0306f4993d0b8ba46c13e5
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Wed Feb 10 18:29:56 2010 +0000
+
+    osh.c: Remove 1 unnecessary newline.
+
+commit 9cb226f172d96b1b04e1d2bf2d414860eac46ae4
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Wed Feb 10 18:27:55 2010 +0000
+
+    mkconfig: Tweak which comparison a bit.
+
+commit ca828c539977349be745f9a16afce2a155c4b5cf
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Mon Feb 8 21:52:12 2010 +0000
+
+    mkconfig: Use additional which comparison for login & newgrp pathname
+              searches to allow for cases where sysadmin may use locally
+              modified versions of these utilities to deal w/ uniquely
+              local needs.
+
+commit da24429cd965870193e1aaaef536fefe6340a6f1
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Mon Feb 8 21:48:39 2010 +0000
+
+    osh.c: execute2(): Ditch 2 unnecessary local variables.
+
+commit 5574d4a7f7cbcf25369e9867e6513a64560930f4
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Mon Feb 8 16:20:33 2010 +0000
+
+    osh.c: execute1(): Re-add previously removed blanks for readable code's sake.
+
+commit 390575bd62b86602bb441b2190ae5d9e4270f8b6
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Mon Feb 8 06:10:11 2010 +0000
+
+    osh.c: Rename exec[12]() to execute[12]() to match other naming patterns.
+
+commit f2295e5137d3c4ed01e898ddd499f9333720d7d1
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Fri Feb 5 16:11:50 2010 +0000
+
+    Remove final slash from http://v6shell.org/rc_files/ URL.
+
+commit 958f1a39065371106b5cdff8a9acbbb35dbcb1b0
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Fri Feb 5 15:58:41 2010 +0000
+
+    Flip two paragraphs in examples/README so that it flows a little better.
+
+commit 6bff91de5485a7c45f8833bd9c8a245d317812e0
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Fri Feb 5 15:39:43 2010 +0000
+
+    osh.c: Rename NO_TRIM(k) macro to DO_TRIM(k), matching logic of its use.
+
+commit 3eb3dbb2cae88f5a3c997d9ab0ed3b716a79c7d2
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Fri Feb 5 00:21:55 2010 +0000
+
+    Remove final slash from http://v6shell.org/rc_files URL.
+
+commit 68a5722bac0d7e737c9c37aec14d5d9c121c99bd
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Thu Feb 4 18:08:07 2010 +0000
+
+    Revise the examples/README file.
+
+commit 3e59626d9dc962a09779e5efaa62ff60ceef7ff4
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Mon Feb 1 16:15:48 2010 +0000
+
+    Add GIT.LOG; update .gitignore accordingly.
+
 commit 16c73d11a1e79d351c3b18483d670cda60b808aa
 Author: J.A. Neitzel <jan@v6shell.org>
 Date:   Mon Feb 1 14:59:41 2010 +0000
@@ -217,3 +310,4 @@ Author: J.A. Neitzel <jan@v6shell.org>
 Date:   Wed Dec 23 16:28:21 2009 +0000
 
     CHANGES*: osh-current opened w/ empty lists
+
