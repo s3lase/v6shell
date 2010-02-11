@@ -2,7 +2,7 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-current]:
+[osh-20100226-beta1]:
 	* See GIT.LOG (or do a `git log') for changes during development.
 
 -------------------------------------------------------------------------------
@@ -1558,6 +1558,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2010/01/28
+Jeffrey Allen Neitzel						2010/02/12
 
 @(#)$Id$
