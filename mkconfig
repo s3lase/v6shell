@@ -27,8 +27,8 @@ definePathnameConstant()
 {
 	const="$1" ; util="$2"
 	dirlist="/bin /sbin /usr/bin /usr/sbin /usr/libexec /usr/games"
-	moderr="modify value in \"$CONFIG_H\" if incorrect."
-	modout="/* Modify value if incorrect. */"
+	moderr="	  Modify value in \"$CONFIG_H\" if this is incorrect."
+	modout="	/* Modify value if incorrect. */"
 	for dir in $dirlist ; do
 		if test -f "$dir/$util" -a -x "$dir/$util" ; then
 			pname="$dir/$util" ; break
@@ -39,15 +39,15 @@ definePathnameConstant()
 
 	wpname="`which $util 2>/dev/null`"
 	if test X"$pname" != X -a X"$wpname" = X"$pname" ; then
-		echo "$const is \"$pname\"; $moderr" >&2
-		def="#define	$const	\"$pname\"	$modout"
+		(echo "$PROGNAME: $const == \"$pname\"";echo "$moderr") >&2
+		def="#define	$const	\"$pname\"$modout"
 	elif test X"$wpname" != X ; then
-		echo "$const is \"$wpname\"; $moderr" >&2
-		def="#define	$const	\"$wpname\"	$modout"
+		(echo "$PROGNAME: $const == \"$wpname\"";echo "$moderr") >&2
+		def="#define	$const	\"$wpname\"$modout"
 	else
 		# This should rarely be true, but it is possible.
-		echo "$const is \"\"; $moderr" >&2
-		def="#define	$const	\"\"	$modout"
+		(echo "$PROGNAME: $const == \"\"";echo "$moderr") >&2
+		def="#define	$const	\"\"$modout"
 	fi
 
 	echo "$def"
