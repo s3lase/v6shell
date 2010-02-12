@@ -3,7 +3,23 @@ Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
 [osh-20100226-beta1]:
-	* See GIT.LOG (or do a `git log') for changes during development.
+	* Refer to GIT.LOG for all changes since last release.
+
+mkconfig:
+	* Added a search comparison that uses which(1) to find login & newgrp
+	  pathname(s).  This allows for those cases where a sysadmin may use
+	  locally modified versions of these utilities to deal w/ uniquely
+	  local needs.  Notice that this is in addition to the way login &
+	  newgrp pathname(s) have been performed before.
+
+osh.c:
+	* Changed osh globbing so it's handled in main osh process.  This is
+	  for user convenience to allow (for example):
+
+		% mkdir some_really_long_directory_name... ; cd some*...
+
+	  ...
+	  and globbing for other special built-in commands as well.
 
 -------------------------------------------------------------------------------
 [osh-20091218]:

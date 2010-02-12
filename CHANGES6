@@ -4,7 +4,9 @@ command in porting them to run on modern UNIX systems.
 
 -------------------------------------------------------------------------------
 [osh-20100226-beta1]:
-	* See GIT.LOG (or do a `git log') for changes during development.
+	* Refer to GIT.LOG for all changes since last release.
+
+	* No user-visible changes.
 
 -------------------------------------------------------------------------------
 [osh-20091218]:
