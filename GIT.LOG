@@ -1,6 +1,24 @@
 The following commit logs reflect current development in v6shell/master.
 
 -------------------------------------------------------------------------------
+commit 785dceec432e80635aeadc44086025b9d723ee24
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Fri Feb 12 20:20:39 2010 +0000
+
+    Update CHANGES* for osh-20100226-beta1.
+
+commit 6f5705afc0fe18dd67f3993d07e122790002031e
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Fri Feb 12 19:23:43 2010 +0000
+
+    Prettify new mkconfig diagnostics some more.
+
+commit 2af17966c075a7ea83a203a064bcf01ef126ca77
+Author: J.A. Neitzel <jan@v6shell.org>
+Date:   Fri Feb 12 18:31:51 2010 +0000
+
+    Prettify definePathnameConstant() in mkconfig; add some stderr diagnostics.
+
 commit df48e82889d3fb6fd88c378e2273a8702d34c993
 Author: J.A. Neitzel <jan@v6shell.org>
 Date:   Thu Feb 11 20:10:20 2010 +0000
