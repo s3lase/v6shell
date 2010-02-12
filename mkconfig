@@ -25,26 +25,32 @@ trap 'status=$? ; rm -f $CONFIG_H ; exit $status' HUP INT QUIT TERM
 #
 definePathnameConstant()
 {
-	constant="$1"
-	utility="$2"
+	const="$1" ; util="$2"
 	dirlist="/bin /sbin /usr/bin /usr/sbin /usr/libexec /usr/games"
+	moderr="modify value in \"$CONFIG_H\" if incorrect."
+	modout="/* Modify value if incorrect. */"
 	for dir in $dirlist ; do
-		if test -f "$dir/$utility" -a -x "$dir/$utility" ; then
-			pathname="$dir/$utility" ; break
+		if test -f "$dir/$util" -a -x "$dir/$util" ; then
+			pname="$dir/$util" ; break
 		else
-			pathname=""
+			pname=""
 		fi
 	done
-	wpathname="`which $utility 2>/dev/null`"
-	if test X"$pathname" != X -a X"$wpathname" = X"$pathname" ; then
-		definition="#define	$constant	\"$pathname\""
-	elif test X"$wpathname" != X ; then
-		definition="#define	$constant	\"$wpathname\""
+
+	wpname="`which $util 2>/dev/null`"
+	if test X"$pname" != X -a X"$wpname" = X"$pname" ; then
+		echo "$const is \"$pname\"; $moderr" >&2
+		def="#define	$const	\"$pname\"	$modout"
+	elif test X"$wpname" != X ; then
+		echo "$const is \"$wpname\"; $moderr" >&2
+		def="#define	$const	\"$wpname\"	$modout"
 	else
 		# This should rarely be true, but it is possible.
-		definition="#define	$constant	\"\""
+		echo "$const is \"\"; $moderr" >&2
+		def="#define	$const	\"\"	$modout"
 	fi
-	echo "$definition"
+
+	echo "$def"
 }
 
 UNAME_S="`uname -s`"
