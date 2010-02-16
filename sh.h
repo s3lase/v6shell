@@ -33,7 +33,7 @@
 #define	SH_H
 
 /*
- * Signal child flags
+ * signal child flags
  */
 enum scflags {
 	SC_SIGINT  = 01,
@@ -43,7 +43,7 @@ enum scflags {
 
 #ifdef	OSH_SHELL
 /*
- * Shell special built-in (sbi) command keys
+ * shell special built-in (sbi) command keys
  */
 enum sbikey {
 	SBI_NULL,   SBI_CD,       SBI_CHDIR, SBI_ECHO,   SBI_EXEC,
@@ -54,7 +54,7 @@ enum sbikey {
 #endif
 
 /*
- * Shell command tree node flags
+ * shell command tree node flags
  */
 enum tnflags {
 	FAND    = 0001,		/* A `&'  designates asynchronous execution.  */
@@ -68,7 +68,7 @@ enum tnflags {
 };
 
 /*
- * Shell command tree node structure
+ * shell command tree node structure
  */
 struct tnode {
 /*@null@*/struct tnode	 *nleft;	/* Pointer to left node.            */

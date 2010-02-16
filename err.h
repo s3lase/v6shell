@@ -33,12 +33,12 @@
 #define	ERR_H
 
 /*
- * Required include files
+ * required header files
  */
 #include <stdarg.h>
 
 /*
- * Diagnostics
+ * diagnostics
  */
 #define	ERR_PAREN	") expected"
 #define	ERR_GARGCOUNT	"Arg count"
@@ -90,7 +90,7 @@
 #define	FMT4S		"%s: %s: %s: %s\n"
 
 /*
- * Exit status values
+ * exit status values
  */
 #define	FC_ERR		124	/* fatal child error (changed in pwait()) */
 #define	SH_ERR		2	/* shell-detected error (default value)   */

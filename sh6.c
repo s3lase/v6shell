@@ -73,10 +73,10 @@
 #include "sh.h"
 
 /*
- * ==== Global variables ====
+ * **** Global Variables ****
  */
 /*
- * Shell signal messages
+ * shell signal messages
  */
 static	const char *const sigmsg[] = {
 	" -- Core dumped",
@@ -121,7 +121,7 @@ static	char		*word[WORDMAX];	/* argument/word pointer array      */
 static	char		**wordp;
 
 /*
- * ==== Function prototypes ====
+ * **** Function Prototypes ****
  */
 static	void		rpx_line(void);
 static	void		get_word(void);

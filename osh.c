@@ -129,7 +129,7 @@
 #define	DO_TRIM(k)	((k) != SBI_CD && (k) != SBI_CHDIR)
 
 /*
- * Signal state flags
+ * signal state flags
  */
 enum ssflags {
 	SS_SIGINT  = 01,
@@ -138,7 +138,7 @@ enum ssflags {
 };
 
 /*
- * Shell type flags
+ * shell type flags
  */
 enum stflags {
 	ST_ONELINE     = 001,
@@ -150,12 +150,12 @@ enum stflags {
 };
 
 /*
- * ==== Global variables ====
+ * **** Global Variables ****
  */
 uid_t	sheuid;	/* effective shell user ID */
 
 /*
- * Shell sbi command structure array
+ * shell sbi command structure array
  */
 static	const struct sbicmd {
 	const char *sbi_command;
@@ -183,7 +183,7 @@ static	const struct sbicmd {
 #define	NSBICMD		((int)(sizeof(sbi) / sizeof(sbi[0])))
 
 /*
- * Shell signal messages
+ * shell signal messages
  */
 static	const char *const sigmsg[] = {
 	" -- Core dumped",
@@ -238,7 +238,7 @@ static	char		*word[WORDMAX];	/* argument/word pointer array      */
 static	char		**wordp;
 
 /*
- * ==== Function prototypes ====
+ * **** Function Prototypes ****
  */
 static	void		cmd_loop(bool);
 static	void		cmd_verbose(void);
@@ -2457,9 +2457,9 @@ xstrdup(const char *src)
 	return dst;
 }
 
-static	const char	**gavp;	/* points to current gav position      */
-static	const char	**gave;	/* points to current gav end           */
-static	size_t		gavtot;	/* total bytes used for all arguments  */
+static	const char	**gavp;	/* points to current gav position     */
+static	const char	**gave;	/* points to current gav end          */
+static	size_t		gavtot;	/* total bytes used for all arguments */
 
 static	const char	**gavnew(/*@only@*/ const char **);
 /*@null@*/

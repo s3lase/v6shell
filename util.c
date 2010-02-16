@@ -29,11 +29,10 @@
  *	@(#)$Id$
  */
 /*
- *	Derived from:
- *		- osh-20080629:
- *			fd2.c  (r404 2008-05-09 16:52:15Z jneitzel)
- *			goto.c (r465 2008-06-25 22:11:58Z jneitzel)
- *			if.c   (r465 2008-06-25 22:11:58Z jneitzel)
+ *	Derived from: osh-20080629
+ *			fd2.c	(r404 2008-05-09 16:52:15Z jneitzel)
+ *			goto.c	(r465 2008-06-25 22:11:58Z jneitzel)
+ *			if.c	(r465 2008-06-25 22:11:58Z jneitzel)
  */
 /*-
  * Copyright (C) Caldera International Inc.  2001-2002.  All rights reserved.

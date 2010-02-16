@@ -33,7 +33,7 @@
 #define	DEFS_H
 
 /*
- * Required include files
+ * required header files
  */
 #include "config.h"
 

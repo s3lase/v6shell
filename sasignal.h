@@ -33,7 +33,7 @@
 #define	SASIGNAL_H
 
 /*
- * Required include files
+ * required header files
  */
 #include <signal.h>
 
