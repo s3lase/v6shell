@@ -37,7 +37,9 @@ definePathnameConstant()
 		fi
 	done
 
-	wpname="`which $util 2>/dev/null`"
+	#echo "$PATH" >&2
+	wpname="`which $util </dev/tty 2>/dev/null`"
+	#echo "$wpname" >&2
 	if test X"$pname" != X -a X"$wpname" = X"$pname" ; then
 		(echo "$PROGNAME: $const == \"$pname\"";echo "$moderr") >&2
 		def="#define	$const	\"$pname\"$modout"
