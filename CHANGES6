@@ -3,7 +3,7 @@ code for the Sixth Edition (V6) UNIX Thompson shell and global
 command in porting them to run on modern UNIX systems.
 
 -------------------------------------------------------------------------------
-[osh-current]:
+[osh-20100228]:
 	* Refer to GIT.LOG for all changes since last release.
 
 	* No user-visible changes.
