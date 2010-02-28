@@ -2,15 +2,15 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-20100226-beta1]:
+[osh-current]:
 	* Refer to GIT.LOG for all changes since last release.
 
 mkconfig:
 	* Added a search comparison that uses which(1) to find login & newgrp
 	  pathname(s).  This allows for those cases where a sysadmin may use
 	  locally modified versions of these utilities to deal w/ uniquely
-	  local needs.  Notice that this is in addition to the way login &
-	  newgrp pathname(s) have been performed before.
+	  local needs.  Notice that this is in addition to how login & newgrp
+	  pathname(s) were searched for before now.
 
 osh.c:
 	* Changed osh globbing so it's handled in main osh process.  This is
@@ -1574,6 +1574,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2010/02/12
+Jeffrey Allen Neitzel						2010/02/28
 
 @(#)$Id$
