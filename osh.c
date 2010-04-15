@@ -799,7 +799,7 @@ get_dolp(int c)
 		v = user;
 		break;
 	case 'v':
-		r = snprintf(dolbuf, sizeof(dolbuf), "'%s'", OSH_VERSION);
+		r = snprintf(dolbuf, sizeof(dolbuf), "%s", OSH_VERSION);
 		v = (r < 0 || r >= (int)sizeof(dolbuf)) ? NULL : dolbuf;
 		break;
 	default:
