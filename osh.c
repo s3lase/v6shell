@@ -108,6 +108,11 @@
 #define	DO_LOGOUT_DONE		3
 
 /*
+ * This is the history file (in the user's HOME directory) used by osh.
+ */
+#define	FILE_DOT_HISTORY	".osh.history"
+
+/*
  * These are the symbolic names for the types checked by fd_type().
  */
 #define	FD_TMASK	S_IFMT	/* file descriptor (FD) type mask          */
@@ -242,6 +247,8 @@ static	char		**wordp;
  */
 static	void		cmd_loop(bool);
 static	void		cmd_verbose(void);
+static	int		hist_open(void);
+static	void		hist_write(bool);
 static	int		rpx_line(void);
 static	int		get_word(void);
 static	int		xgetc(bool);
@@ -281,10 +288,10 @@ static	bool		sh_on_tty(void);
 static	void		sighup(/*@unused@*/ int IS_UNUSED);
 static	void		rc_init(int *);
 static	void		rc_logout(int *);
-static	char		*rc_build(/*@out@*/ /*@returned@*/ char *,
-				  const char *, size_t);
 /*@maynotreturn@*/
 static	bool		rc_open(/*@null@*/ const char *);
+static	char		*pn_build(/*@out@*/ /*@returned@*/ char *,
+				  const char *, size_t);
 static	void		fd_free(void);
 static	bool		fd_type(int, mode_t);
 /*@maynotreturn@*/ /*@null@*/
@@ -499,6 +506,58 @@ cmd_verbose(void)
 }
 
 /*
+ * Try to open $h/.osh.history for writing if possible.
+ * Return its file descriptor on success.
+ * Return -1 on error.
+ */
+static int
+hist_open(void)
+{
+	char path[PATHMAX];
+	const char *file;
+	int fd;
+
+	file = pn_build(path, FILE_DOT_HISTORY, sizeof(path));
+
+	if ((fd = open(file, O_WRONLY | O_APPEND | O_NONBLOCK)) == -1 ||
+	     fcntl(fd, F_SETFL, (O_WRONLY | O_APPEND) & ~O_NONBLOCK) == -1 ||
+	     fcntl(fd, F_SETFD, FD_CLOEXEC) == -1 || !fd_type(fd, FD_ISREG)) {
+		(void)close(fd);
+		return -1;
+	}
+#ifdef	DEBUG
+	fd_print(FD2, "hist_open:  (O_WRONLY | O_APPEND)                == %04o\n", (O_WRONLY | O_APPEND));
+	fd_print(FD2, "         :  (O_WRONLY | O_APPEND | O_NONBLOCK)   == %04o\n", (O_WRONLY | O_APPEND | O_NONBLOCK));
+	fd_print(FD2, "         : ((O_WRONLY | O_APPEND) & ~O_NONBLOCK) == %04o\n", ((O_WRONLY | O_APPEND) & ~O_NONBLOCK));
+	fd_print(FD2, "         : fd == %d\n", fd);
+#endif
+	return fd;
+}
+
+/*
+ * If $h/.osh.history exists as a readable/writable file, write
+ * each argument/word in the word pointer array to this file.
+ */
+static void
+hist_write(bool hwflag)
+{
+	char **vp;
+	static int fd = -1;
+
+	if (!hwflag)
+		return;
+
+	/* Try to open the file for writing if possible. */
+	if (fd == -1 && (fd = hist_open()) == -1)
+		return;
+
+	/* Write the history entry to the open file. */
+	for (vp = word; **vp != EOL; vp++)
+		fd_print(fd, "%s%s", *vp, (**(vp + 1) != EOL) ? " " : "");
+	fd_print(fd, FMT1S, "");
+}
+
+/*
  * Read, parse, and execute a command line.
  */
 static int
@@ -519,6 +578,7 @@ rpx_line(void)
 	} while (*wp != EOL);
 
 	cmd_verbose();
+	hist_write(PROMPT && wordp - word > 1);
 
 	if (error) {
 		err(-1, FMT2S, getmyname(), error_message);
@@ -2053,10 +2113,10 @@ rc_init(int *rc_flag)
 			file = PATH_SYSTEM_OSHRC;
 			break;
 		case DO_DOT_LOGIN:
-			file = rc_build(path, FILE_DOT_LOGIN, sizeof(path));
+			file = pn_build(path, FILE_DOT_LOGIN, sizeof(path));
 			break;
 		case DO_DOT_OSHRC:
-			file = rc_build(path, FILE_DOT_OSHRC, sizeof(path));
+			file = pn_build(path, FILE_DOT_OSHRC, sizeof(path));
 			break;
 		case DO_INIT_DONE:
 			if (dup2(dupfd0, FD0) == -1)
@@ -2100,7 +2160,7 @@ rc_logout(int *rc_flag)
 			file = PATH_SYSTEM_LOGOUT;
 			break;
 		case DO_DOT_LOGOUT:
-			file = rc_build(path, FILE_DOT_LOGOUT, sizeof(path));
+			file = pn_build(path, FILE_DOT_LOGOUT, sizeof(path));
 			break;
 		case DO_LOGOUT_DONE:
 			shtype &= ~ST_RCFILE;
@@ -2114,31 +2174,6 @@ rc_logout(int *rc_flag)
 		if (rc_open(file))
 			break;
 	}
-}
-
-/*
- * Build a path name for the rc file name pointed to by file.
- * Write the resulting path name to the buffer pointed to by path.
- * The size of the buffer pointed to by path is specified by size.
- * Return path, which will be the empty string if the build fails.
- */
-static char *
-rc_build(char *path, const char *file, size_t size)
-{
-	int len;
-	const char *home;
-
-	*path = EOS;
-	home  = getenv("HOME");
-	if (home != NULL && *home != EOS) {
-		len = snprintf(path, size, "%s/%s", home, file);
-		if (len < 0 || len >= (int)size) {
-			err(-1, "%s: %s/%s: %s\n",
-			    getmyname(), home, file, strerror(ENAMETOOLONG));
-			*path = EOS;
-		}
-	}
-	return path;
 }
 
 /*
@@ -2173,6 +2208,31 @@ rc_open(const char *file)
 	(void)close(fd);
 	shtype |= ST_RCFILE;
 	return true;
+}
+
+/*
+ * Build a path name for the file name pointed to by file.
+ * Write the resulting path name to the buffer pointed to by path.
+ * The size of the buffer pointed to by path is specified by size.
+ * Return path, which will be the empty string if the build fails.
+ */
+static char *
+pn_build(char *path, const char *file, size_t size)
+{
+	int len;
+	const char *home;
+
+	*path = EOS;
+	home  = getenv("HOME");
+	if (home != NULL && *home != EOS) {
+		len = snprintf(path, size, "%s/%s", home, file);
+		if (len < 0 || len >= (int)size) {
+			err(-1, "%s: %s/%s: %s\n",
+			    getmyname(), home, file, strerror(ENAMETOOLONG));
+			*path = EOS;
+		}
+	}
+	return path;
 }
 
 /*

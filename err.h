@@ -100,7 +100,7 @@
 #define	ESTATUS		((getpid() == getmypid()) ? SH_ERR : FC_ERR)
 #define	EXIT(s)		((getpid() == getmypid()) ? exit((s)) : _exit((s)))
 
-#undef	DEBUG
+#define	DEBUG
 
 /*@maynotreturn@*/
 void		err(int, /*@null@*/ const char *, /*@printflike@*/ ...);
