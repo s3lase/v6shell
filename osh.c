@@ -90,7 +90,7 @@
 
 /*
  * These are the rc (init and logout) files used by osh.
- * The `FILE_DOT_*' files are in the user's HOME directory.
+ * The `FILE_DOT_*' files are in user's HOME directory.
  */
 #define	DO_SYSTEM_LOGIN		1
 #define	PATH_SYSTEM_LOGIN	SYSCONFDIR/**/"/osh.login"
@@ -108,7 +108,7 @@
 #define	DO_LOGOUT_DONE		3
 
 /*
- * This is the history file (in the user's HOME directory) used by osh.
+ * This is the history file (in user's HOME directory) used by osh.
  */
 #define	FILE_DOT_HISTORY	".osh.history"
 
@@ -247,8 +247,6 @@ static	char		**wordp;
  */
 static	void		cmd_loop(bool);
 static	void		cmd_verbose(void);
-static	int		hist_open(void);
-static	void		hist_write(bool);
 static	int		rpx_line(void);
 static	int		get_word(void);
 static	int		xgetc(bool);
@@ -286,6 +284,8 @@ static	void		sh_init(/*@null@*/ const char *);
 static	void		sh_magic(void);
 static	bool		sh_on_tty(void);
 static	void		sighup(/*@unused@*/ int IS_UNUSED);
+static	void		hist_write(bool);
+static	int		hist_open(void);
 static	void		rc_init(int *);
 static	void		rc_logout(int *);
 /*@maynotreturn@*/
@@ -503,58 +503,6 @@ cmd_verbose(void)
 	for (vp = word; **vp != EOL; vp++)
 		fd_print(FD2, "%s%s", *vp, (**(vp + 1) != EOL) ? " " : "");
 	fd_print(FD2, FMT1S, "");
-}
-
-/*
- * Try to open $h/.osh.history for writing if possible.
- * Return its file descriptor on success.
- * Return -1 on error.
- */
-static int
-hist_open(void)
-{
-	char path[PATHMAX];
-	const char *file;
-	int fd;
-
-	file = pn_build(path, FILE_DOT_HISTORY, sizeof(path));
-
-	if ((fd = open(file, O_WRONLY | O_APPEND | O_NONBLOCK)) == -1 ||
-	     fcntl(fd, F_SETFL, (O_WRONLY | O_APPEND) & ~O_NONBLOCK) == -1 ||
-	     fcntl(fd, F_SETFD, FD_CLOEXEC) == -1 || !fd_type(fd, FD_ISREG)) {
-		(void)close(fd);
-		return -1;
-	}
-#ifdef	DEBUG
-	fd_print(FD2, "hist_open:  (O_WRONLY | O_APPEND)                == %04o\n", (O_WRONLY | O_APPEND));
-	fd_print(FD2, "         :  (O_WRONLY | O_APPEND | O_NONBLOCK)   == %04o\n", (O_WRONLY | O_APPEND | O_NONBLOCK));
-	fd_print(FD2, "         : ((O_WRONLY | O_APPEND) & ~O_NONBLOCK) == %04o\n", ((O_WRONLY | O_APPEND) & ~O_NONBLOCK));
-	fd_print(FD2, "         : fd == %d\n", fd);
-#endif
-	return fd;
-}
-
-/*
- * If $h/.osh.history exists as a readable/writable file, write
- * each argument/word in the word pointer array to this file.
- */
-static void
-hist_write(bool hwflag)
-{
-	char **vp;
-	static int fd = -1;
-
-	if (!hwflag)
-		return;
-
-	/* Try to open the file for writing if possible. */
-	if (fd == -1 && (fd = hist_open()) == -1)
-		return;
-
-	/* Write the history entry to the open file. */
-	for (vp = word; **vp != EOL; vp++)
-		fd_print(fd, "%s%s", *vp, (**(vp + 1) != EOL) ? " " : "");
-	fd_print(fd, FMT1S, "");
 }
 
 /*
@@ -2088,6 +2036,50 @@ sighup(/*@unused@*/ int signo IS_UNUSED)
 }
 
 /*
+ * If hwflag is true, write each argument/word in the word
+ * pointer array to the $h/.osh.history file if possible.
+ * Otherwise, do nothing.
+ */
+static void
+hist_write(bool hwflag)
+{
+	char **vp;
+	static int fd = -1;
+
+	if (!hwflag)
+		return;
+	if (fd == -1 && (fd = hist_open()) == -1)
+		return;
+	for (vp = word; **vp != EOL; vp++)
+		fd_print(fd, "%s%s", *vp, (**(vp + 1) != EOL) ? " " : "");
+	fd_print(fd, FMT1S, "");
+}
+
+/*
+ * Open the $h/.osh.history file for writing if possible.
+ * Return its file descriptor on success.
+ * Return -1 on error.
+ */
+static int
+hist_open(void)
+{
+	char path[PATHMAX];
+	const char *file;
+	int fd;
+
+	file = pn_build(path, FILE_DOT_HISTORY, sizeof(path));
+
+	if ((fd = open(file, O_WRONLY | O_APPEND | O_NONBLOCK)) == -1 ||
+	     fcntl(fd, F_SETFL, (O_WRONLY | O_APPEND) & ~O_NONBLOCK) == -1 ||
+	     fcntl(fd, F_SETFD, FD_CLOEXEC) == -1 || !fd_type(fd, FD_ISREG)) {
+		(void)close(fd);
+		return -1;
+	}
+
+	return fd;
+}
+
+/*
  * Process the sequence of rc init files used by the shell.
  * For each call to rc_init(), temporarily assign the shell's
  * standard input to come from a given file in the sequence if
@@ -2224,6 +2216,7 @@ pn_build(char *path, const char *file, size_t size)
 
 	*path = EOS;
 	home  = getenv("HOME");
+
 	if (home != NULL && *home != EOS) {
 		len = snprintf(path, size, "%s/%s", home, file);
 		if (len < 0 || len >= (int)size) {
@@ -2232,6 +2225,7 @@ pn_build(char *path, const char *file, size_t size)
 			*path = EOS;
 		}
 	}
+
 	return path;
 }
 
