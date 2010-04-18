@@ -85,8 +85,9 @@
  * The following file descriptors are reserved for special use by osh.
  */
 #define	DUPFD0		10	/* used for input redirection w/ `<-' */
-#define	PWD		11	/* used in do_chdir()                 */
-#define	SAVFD0		12	/* used in do_source()                */
+#define	HWFD		11	/* used for history write fildes      */
+#define	PWD		12	/* used in do_chdir()                 */
+#define	SAVFD0		13	/* used in do_source()                */
 
 /*
  * These are the rc (init and logout) files used by osh.
@@ -115,11 +116,12 @@
 /*
  * These are the symbolic names for the types checked by fd_type().
  */
-#define	FD_TMASK	S_IFMT	/* file descriptor (FD) type mask          */
-#define	FD_ISOPEN	01	/* Does FD refer to an open file?          */
-#define	FD_ISDIROK	02	/* Does FD refer to an existent directory? */
-#define	FD_ISDIR	S_IFDIR	/* Does FD refer to a directory?           */
-#define	FD_ISREG	S_IFREG	/* Does FD refer to a regular file?        */
+#define	FD_TMASK	S_IFMT	/* file descriptor (FD) type mask             */
+#define	FD_ISOPEN	01	/* Does FD refer to an open file?             */
+#define	FD_ISDIROK	02	/* Does FD refer to an existent directory?    */
+#define	FD_ISREGOK	04	/* Does FD refer to an existent regular file? */
+#define	FD_ISDIR	S_IFDIR	/* Does FD refer to a  directory?             */
+#define	FD_ISREG	S_IFREG	/* Does FD refer to a  regular file?          */
 
 /*
  * (NSIG - 1) is the maximum signal number value accepted by `sigign'.
@@ -220,6 +222,7 @@ static	bool		error;		/* error flag for read/parse errors */
 /*@observer@*/
 static	const char	*error_message;	/* error message for read errors    */
 static	bool		error_source;	/* error flag for `source' command  */
+static	int		hwfd = -1;	/* history write file descriptor    */
 static	bool		is_login;	/* login shell flag (true if login) */
 static	char		line[LINEMAX];	/* command-line buffer              */
 static	char		*linep;
@@ -284,14 +287,14 @@ static	void		sh_init(/*@null@*/ const char *);
 static	void		sh_magic(void);
 static	bool		sh_on_tty(void);
 static	void		sighup(/*@unused@*/ int IS_UNUSED);
-static	void		hist_write(bool);
-static	int		hist_open(void);
 static	void		rc_init(int *);
 static	void		rc_logout(int *);
 /*@maynotreturn@*/
 static	bool		rc_open(/*@null@*/ const char *);
 static	char		*pn_build(/*@out@*/ /*@returned@*/ char *,
 				  const char *, size_t);
+static	void		hist_write(bool);
+static	void		hist_open(void);
 static	void		fd_free(void);
 static	bool		fd_type(int, mode_t);
 /*@maynotreturn@*/ /*@null@*/
@@ -397,6 +400,7 @@ main(int argc, char **argv)
 				if (sasignal(SIGHUP, sighup) == SIG_IGN)
 					(void)sasignal(SIGHUP, SIG_IGN);
 			rc_init(&rc_flag);
+			hist_open();
 		}
 	}
 
@@ -490,8 +494,9 @@ cmd_loop(bool halt)
 }
 
 /*
- * If verbose_flag is true, print each argument/word in the word
- * pointer array to the standard error.  Otherwise, do nothing.
+ * If verbose_flag is true, print each argument/word
+ * in the word pointer array to the standard error.
+ * Otherwise, do nothing.
  */
 static void
 cmd_verbose(void)
@@ -2036,50 +2041,6 @@ sighup(/*@unused@*/ int signo IS_UNUSED)
 }
 
 /*
- * If hwflag is true, write each argument/word in the word
- * pointer array to the $h/.osh.history file if possible.
- * Otherwise, do nothing.
- */
-static void
-hist_write(bool hwflag)
-{
-	char **vp;
-	static int fd = -1;
-
-	if (!hwflag)
-		return;
-	if (fd == -1 && (fd = hist_open()) == -1)
-		return;
-	for (vp = word; **vp != EOL; vp++)
-		fd_print(fd, "%s%s", *vp, (**(vp + 1) != EOL) ? " " : "");
-	fd_print(fd, FMT1S, "");
-}
-
-/*
- * Open the $h/.osh.history file for writing if possible.
- * Return its file descriptor on success.
- * Return -1 on error.
- */
-static int
-hist_open(void)
-{
-	char path[PATHMAX];
-	const char *file;
-	int fd;
-
-	file = pn_build(path, FILE_DOT_HISTORY, sizeof(path));
-
-	if ((fd = open(file, O_WRONLY | O_APPEND | O_NONBLOCK)) == -1 ||
-	     fcntl(fd, F_SETFL, (O_WRONLY | O_APPEND) & ~O_NONBLOCK) == -1 ||
-	     fcntl(fd, F_SETFD, FD_CLOEXEC) == -1 || !fd_type(fd, FD_ISREG)) {
-		(void)close(fd);
-		return -1;
-	}
-
-	return fd;
-}
-
-/*
  * Process the sequence of rc init files used by the shell.
  * For each call to rc_init(), temporarily assign the shell's
  * standard input to come from a given file in the sequence if
@@ -2230,6 +2191,55 @@ pn_build(char *path, const char *file, size_t size)
 }
 
 /*
+ * If hwfd is a valid open file descriptor and hwflag is true,
+ * write each argument/word in the word pointer array to hwfd.
+ * Otherwise, do nothing.
+ */
+static void
+hist_write(bool hwflag)
+{
+	char **vp;
+
+	if (hwfd == -1 || !hwflag)
+		return;
+	if (!fd_type(hwfd, FD_ISREGOK)) {
+		if (close(hwfd) != -1)
+			hwfd = -1;
+		return;
+	}
+	for (vp = word; **vp != EOL; vp++)
+		fd_print(hwfd, "%s%s", *vp, (**(vp + 1) != EOL) ? " " : "");
+	fd_print(hwfd, FMT1S, "");
+}
+
+/*
+ * Open the user's FILE_DOT_HISTORY file for writing if possible.
+ * Set the global hwfd to HWFD on success.
+ * Set the global hwfd to -1   on error.
+ */
+static void
+hist_open(void)
+{
+	char path[PATHMAX];
+	const char *file;
+	int fd, fdw;
+
+	hwfd = -1;
+	file = pn_build(path, FILE_DOT_HISTORY, sizeof(path));
+	if ((fd = open(file, O_WRONLY | O_APPEND | O_NONBLOCK)) == -1)
+		return;
+	if ((fdw = dup2(fd, HWFD)) == -1 ||
+	     fcntl(fdw, F_SETFL, (O_WRONLY | O_APPEND) & ~O_NONBLOCK) == -1 ||
+	     fcntl(fdw,F_SETFD,FD_CLOEXEC) == -1 || !fd_type(fdw,FD_ISREG)) {
+		(void)close(fd);
+		(void)close(fdw);
+		return;
+	}
+	(void)close(fd);
+	hwfd = fdw;
+}
+
+/*
  * Attempt to free or release all of the file descriptors in the range
  * from (fd_max - 1) through (FD2 + 1), skipping DUPFD0; the value of
  * fd_max may fall between FDFREEMIN and FDFREEMAX, inclusive.
@@ -2268,6 +2278,10 @@ fd_type(int fd, mode_t type)
 		break;
 	case FD_ISDIROK:
 		if (S_ISDIR(sb.st_mode))
+			rv = sb.st_nlink > 0;
+		break;
+	case FD_ISREGOK:
+		if (S_ISREG(sb.st_mode))
 			rv = sb.st_nlink > 0;
 		break;
 	case FD_ISDIR:
