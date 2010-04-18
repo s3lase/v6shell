@@ -326,7 +326,7 @@ int
 main(int argc, char **argv)
 {
 	char *av0p;
-	int rc_flag = 0;
+	int rcflag = 0;
 	bool dosigs = false;
 
 	sh_init(argv[0]);
@@ -352,14 +352,14 @@ main(int argc, char **argv)
 				dolc  -= 1;
 				argv2p = argv[2];
 			} else if (argv[1][1] == 'i') {
-				rc_flag = DO_SYSTEM_OSHRC;
-				shtype  = ST_INTERACTIVE;
+				rcflag = DO_SYSTEM_OSHRC;
+				shtype = ST_INTERACTIVE;
 				if (!sh_on_tty())
 					err(SH_ERR, FMT3S,
 					    getmyname(), argv[1], ERR_NOTTY);
 			} else if (argv[1][1] == 'l') {
 				is_login = true;
-				rc_flag  = DO_SYSTEM_LOGIN;
+				rcflag   = DO_SYSTEM_LOGIN;
 				shtype   = ST_INTERACTIVE;
 				if (!sh_on_tty())
 					err(SH_ERR, FMT3S,
@@ -389,17 +389,17 @@ main(int argc, char **argv)
 		if (PROMPT) {
 			if (sasignal(SIGTERM, SIG_IGN) == SIG_DFL)
 				sig_child |= SC_SIGTERM;
-			if (rc_flag == 0) {
+			if (rcflag == 0) {
 				if (*argv[0] == HYPHEN) {
 					is_login = true;
-					rc_flag  = DO_SYSTEM_LOGIN;
+					rcflag   = DO_SYSTEM_LOGIN;
 				} else
-					rc_flag  = DO_SYSTEM_OSHRC;
+					rcflag   = DO_SYSTEM_OSHRC;
 			}
 			if (is_login)
 				if (sasignal(SIGHUP, sighup) == SIG_IGN)
 					(void)sasignal(SIGHUP, SIG_IGN);
-			rc_init(&rc_flag);
+			rc_init(&rcflag);
 			hist_open();
 		}
 	}
@@ -416,7 +416,7 @@ main(int argc, char **argv)
 					goto logout;
 				goto done;
 			}
-			rc_init(&rc_flag);
+			rc_init(&rcflag);
 		}
 
 		/* Read and execute the shell's input. */
@@ -426,13 +426,13 @@ main(int argc, char **argv)
 
 logout:
 		/* Read and execute any rc logout files if needed. */
-		rc_flag = DO_SYSTEM_LOGOUT;
-		rc_logout(&rc_flag);
+		rcflag = DO_SYSTEM_LOGOUT;
+		rc_logout(&rcflag);
 		while (SHTYPE(ST_RCFILE)) {
 			cmd_loop(!HALT);
 			if (logout_now != 0)
 				logout_now = 0;
-			rc_logout(&rc_flag);
+			rc_logout(&rcflag);
 		}
 	}
 
@@ -2049,20 +2049,20 @@ sighup(/*@unused@*/ int signo IS_UNUSED)
  * flag, and return.
  */
 static void
-rc_init(int *rc_flag)
+rc_init(int *rcflag)
 {
 	char path[PATHMAX];
 	const char *file;
 
-	while (*rc_flag <= DO_INIT_DONE) {
+	while (*rcflag <= DO_INIT_DONE) {
 		file = NULL;
-		switch (*rc_flag) {
+		switch (*rcflag) {
 		case DO_SYSTEM_LOGIN:
 			file = PATH_SYSTEM_LOGIN;
 			break;
 		case DO_SYSTEM_OSHRC:
 			if (!is_login)
-				(*rc_flag)++;
+				(*rcflag)++;
 			file = PATH_SYSTEM_OSHRC;
 			break;
 		case DO_DOT_LOGIN:
@@ -2075,13 +2075,13 @@ rc_init(int *rc_flag)
 			if (dup2(dupfd0, FD0) == -1)
 				err(SH_ERR,FMT2S,getmyname(),strerror(errno));
 			shtype &= ~ST_RCFILE;
-			(*rc_flag)++;
+			(*rcflag)++;
 			return;
 		default:
 			shtype &= ~ST_RCFILE;
 			return;
 		}
-		(*rc_flag)++;
+		(*rcflag)++;
 		if (rc_open(file))
 			break;
 	}
@@ -2096,7 +2096,7 @@ rc_init(int *rc_flag)
  * the ST_RCFILE flag and return.
  */
 static void
-rc_logout(int *rc_flag)
+rc_logout(int *rcflag)
 {
 	char path[PATHMAX];
 	const char *file;
@@ -2106,9 +2106,9 @@ rc_logout(int *rc_flag)
 		return;
 	}
 
-	while (*rc_flag <= DO_LOGOUT_DONE) {
+	while (*rcflag <= DO_LOGOUT_DONE) {
 		file = NULL;
-		switch (*rc_flag) {
+		switch (*rcflag) {
 		case DO_SYSTEM_LOGOUT:
 			file = PATH_SYSTEM_LOGOUT;
 			break;
@@ -2117,13 +2117,13 @@ rc_logout(int *rc_flag)
 			break;
 		case DO_LOGOUT_DONE:
 			shtype &= ~ST_RCFILE;
-			(*rc_flag)++;
+			(*rcflag)++;
 			return;
 		default:
 			shtype &= ~ST_RCFILE;
 			return;
 		}
-		(*rc_flag)++;
+		(*rcflag)++;
 		if (rc_open(file))
 			break;
 	}
