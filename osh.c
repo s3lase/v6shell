@@ -2228,9 +2228,13 @@ hist_open(void)
 	file = pn_build(path, FILE_DOT_HISTORY, sizeof(path));
 	if ((fd = open(file, O_WRONLY | O_APPEND | O_NONBLOCK)) == -1)
 		return;
+	if (!fd_type(fd, FD_ISREG)) {
+		(void)close(fd);
+		return;
+	}
 	if ((fdw = dup2(fd, HWFD)) == -1 ||
 	     fcntl(fdw, F_SETFL, (O_WRONLY | O_APPEND) & ~O_NONBLOCK) == -1 ||
-	     fcntl(fdw, F_SETFD, FD_CLOEXEC) == -1 || !fd_type(fdw, FD_ISREG)) {
+	     fcntl(fdw, F_SETFD, FD_CLOEXEC) == -1) {
 		(void)close(fd);
 		(void)close(fdw);
 		return;
