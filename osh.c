@@ -2230,7 +2230,7 @@ hist_open(void)
 		return;
 	if ((fdw = dup2(fd, HWFD)) == -1 ||
 	     fcntl(fdw, F_SETFL, (O_WRONLY | O_APPEND) & ~O_NONBLOCK) == -1 ||
-	     fcntl(fdw,F_SETFD,FD_CLOEXEC) == -1 || !fd_type(fdw,FD_ISREG)) {
+	     fcntl(fdw, F_SETFD, FD_CLOEXEC) == -1 || !fd_type(fdw, FD_ISREG)) {
 		(void)close(fd);
 		(void)close(fdw);
 		return;
