@@ -42,7 +42,7 @@ static	void	usage(void);
  *	fd2 - redirect from/to file descriptor 2
  *
  * SYNOPSIS
- *	fd2 [-e] [-f file] command [arg ...]
+ *	fd2 [-e] [-f file] [--] command [arg ...]
  *
  * DESCRIPTION
  *	See the fd2(1) manual page for full details.
@@ -125,5 +125,5 @@ static void
 usage(void)
 {
 
-	err(FC_ERR,"usage: %s [-e] [-f file] command [arg ...]\n",getmyname());
+	err(FC_ERR, FD2_USAGE, getmyname());
 }

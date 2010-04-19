@@ -30,7 +30,7 @@
 fd2 \- redirect from/to file descriptor 2
 .SH SYNOPSIS
 .B fd2
-[\fB\-e\fR] [\fB\-f\fR \fIfile\fR] \fIcommand\fR [\fIarg ...\fR]
+[\fB\-e\fR] [\fB\-f\fR \fIfile\fR] [\fB\-\-\fR] \fIcommand\fR [\fIarg ...\fR]
 .SH DESCRIPTION
 Since the Sixth Edition UNIX shell provides
 no way to redirect the diagnostic output,
@@ -57,6 +57,13 @@ which is created if it does not exist.
 If it already exists,
 all diagnostic output is appended
 to the end of \fIfile\fR.
+.TP
+.B \-\-
+Causes
+.I fd2
+to stop further option processing,
+forcing it to treat all following arguments
+as \fIcommand\fR [\fIarg ...\fR] .
 .SH "EXIT STATUS"
 If
 .I fd2

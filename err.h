@@ -83,6 +83,7 @@
 #define	ERR_SYNTAX	"syntax error"
 #define	ERR_OPUNKNOWN	"unknown operator"
 #define	ERR_BRACE	"} expected"
+#define	FD2_USAGE	"usage: %s [-e] [-f file] [--] command [arg ...]\n"
 
 #define	FMT1S		"%s\n"
 #define	FMT2S		"%s: %s\n"
