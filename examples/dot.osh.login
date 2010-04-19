@@ -32,6 +32,12 @@ if X$u != Xroot goto continue
 	setenv	LESS		-M
 	setenv	TZ		UTC
 
+	:
+	: " Make getopt(3) in the fd2 utility behave the same on  "
+	: " GNU/Linux systems as it does on *BSD & other systems. "
+	:
+	setenv	POSIXLY_CORRECT
+
 	if $n = 1 -a X$1 = Xsh6 goto sh6
 		@SOURCE_OSHDIR@
 	: sh6
