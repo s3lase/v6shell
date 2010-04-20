@@ -694,6 +694,51 @@ The
 special command
 always causes the shell to terminate if it occurs
 in any rc file.
+.SS History file (+)
+If the shell is invoked as an interactive shell,
+it tries to open the
+.I $h/.osh.history
+file to save the user's command-line history.
+Notice that the history file must already exist
+as a writable,
+regular file (or a link to a regular file)
+when the shell is invoked to save
+the user's command-line history.
+Otherwise,
+it will not do so.
+.PP
+An interactive shell reads each command line from
+its terminal and writes the words of each one to
+the history file after performing parameter
+substitution and word splitting.
+.PP
+The shell does not read the history file or have any features
+that allow the user to make direct use of the saved history.
+Such features are available via standard external commands
+and also via the
+.I history
+command file that is available in the v6scripts collection.
+See http://v6shell.org/v6scripts/ for full details.
+.PP
+Notice that the shell never creates or removes the
+.I $h/.osh.history
+file.
+It always leaves these actions to the user.
+For example:
+.PP
+.nf
+	% history -r ; history -c ; exec osh -l
+.fi
+.PP
+causes
+.I history
+to remove the existing history file (if any),
+to create a new (empty) one, and causes
+the current shell to replace itself with
+a new login shell.
+Future interactive shells will then
+save the user's command-line history as long
+as the history file exists.
 .SS End of file
 An end-of-file in the shell's input
 causes it to exit.
@@ -974,6 +1019,9 @@ system-wide rc init file for login shells
 .IR @SYSCONFDIR@/osh.oshrc \ (+)
 system-wide rc init file for \fIall\fR interactive shells
 .TP
+.IR $h/.osh.history \ (+)
+user history file for \fIall\fR interactive shells
+.TP
 .IR $h/.osh.login \ (+)
 user rc init file for login shells
 .TP
@@ -1065,7 +1113,7 @@ undocumented in this manual page.
 Particularly noteworthy is the fact that there
 is no such thing as a usage error.
 Thus,
-the following shell invocations are perfectly valid:
+the following shell invocations are all perfectly valid:
 .PP
 .nf
 	osh \-cats_are_nice!!! ': "Good kitty =)"'
