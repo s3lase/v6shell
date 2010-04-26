@@ -189,20 +189,24 @@ ut_errexit(int es)
 static void
 wmsg(int wfd, const char *msgfmt, va_list va)
 {
-	int r;
-	char fmt[FMTMAX];
 	char msg[MSGMAX];
-	const char *e;
+	char fmt[FMTMAX];
+	struct iovec ev[3];
+	int i;
 
-	e = "wmsg: Invalid message\n";
-	r = snprintf(fmt, sizeof(fmt), "%s", msgfmt);
-	if (r >= 1 && r < (int)sizeof(fmt)) {
-		r = vsnprintf(msg, sizeof(msg), fmt, va);
-		if (r >= 0 && r < (int)sizeof(msg)) {
-			if (write(wfd, msg, strlen(msg)) == -1)
-				(void)write(FD2, e, strlen(e));
-		} else
-			(void)write(FD2, e, strlen(e));
-	} else
-		(void)write(FD2, e, strlen(e));
+	i = snprintf(fmt, sizeof(fmt), "%s", msgfmt);
+	if (i >= 1 && i < (int)sizeof(fmt)) {
+		i = vsnprintf(msg, sizeof(msg), fmt, va);
+		if (i >= 0 && i < (int)sizeof(msg)) {
+			if (write(wfd, msg, strlen(msg)) == -1) {
+				ev[0].iov_base = "\n";
+				ev[0].iov_len  = (size_t)1;
+				ev[1].iov_base = (char *)getmyname();
+				ev[1].iov_len  = strlen(getmyname());
+				ev[2].iov_base = ": Cannot write message\n";
+				ev[2].iov_len  = (size_t)23;
+				(void)writev(FD2, ev, 3);
+			}
+		}
+	}
 }
