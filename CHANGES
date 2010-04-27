@@ -3,8 +3,6 @@ Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
 [osh-current]:
-	* Refer to GIT.LOG for all changes since last release.
-
 mkconfig:
 	* Added a search comparison that uses which(1) to find login & newgrp
 	  pathname(s).  This allows for those cases where a sysadmin may use
@@ -1574,6 +1572,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2010/02/28
+Jeffrey Allen Neitzel						2010/04/27
 
 @(#)$Id$
