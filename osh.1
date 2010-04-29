@@ -739,6 +739,34 @@ a new login shell.
 Future interactive shells will then
 save the user's command-line history as long
 as the history file exists.
+.PP
+If desired,
+the user can use the history file to repeat
+any command line as a command substitution with
+.IR sed (1)
+and
+.IR osh .
+Taking the following command line for example:
+.PP
+.nf
+	% history -n 44
+	Number	Command Line
+	------	------------
+	44		uname -s | \\
+			if { fd2 -ef/dev/null egrep '(Darwin|Linux|NetBSD)' } \\
+			echo 'Running on GNU/Linux, Mac, or NetBSD.'
+.fi
+.PP
+and doing a:
+.PP
+.nf
+	% sed -n 44p <$h/.osh.history | osh
+	Running on GNU/Linux, Mac, or NetBSD.
+.fi
+.PP
+causes sed to output the 44th command line from
+the history file via pipe for repetition as a
+command substitution by osh.
 .SS End of file
 An end-of-file in the shell's input
 causes it to exit.
