@@ -2,7 +2,24 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-current]:
+[osh-20100430]:
+osh.c:
+	* Added a new, osh history-file-support feature to save the user's
+	  command-line history to the user $h/.osh.history file.  Notice
+	  that the history file must already exist as a writable, regular
+	  file (or a link to a regular file) when the shell is invoked to
+	  save the user's command-line history.  Otherwise, it won't do so.
+
+	  An interactive shell reads each command line from its terminal and
+	  writes the words of each one to the history file as a history entry
+	  after performing parameter substitution and word splitting.
+
+osh.1:
+	* Documented the new, osh history-file-support feature in the new
+	  "History file (+)" subsection.
+
+-------------------------------------------------------------------------------
+[osh-20100228]:
 mkconfig:
 	* Added a search comparison that uses which(1) to find login & newgrp
 	  pathname(s).  This allows for those cases where a sysadmin may use
@@ -1572,6 +1589,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2010/04/27
+Jeffrey Allen Neitzel						2010/04/30
 
 @(#)$Id$
