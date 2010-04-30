@@ -709,8 +709,8 @@ it will not do so.
 .PP
 An interactive shell reads each command line from
 its terminal and writes the words of each one to
-the history file after performing parameter
-substitution and word splitting.
+the history file as a history entry after performing
+parameter substitution and word splitting.
 .PP
 The shell does not read the history file or have any features
 that allow the user to make direct use of the saved history.
@@ -718,7 +718,7 @@ Such features are available via standard external commands
 and also via the
 .I history
 command file that is available in the v6scripts collection.
-See http://v6shell.org/v6scripts/ for full details.
+See http://v6shell.org/v6scripts/history.osh for full details.
 .PP
 Notice that the shell never creates or removes the
 .I $h/.osh.history
@@ -735,10 +735,13 @@ causes
 to remove the existing history file (if any),
 to create a new (empty) one, and causes
 the current shell to replace itself with
-a new login shell.
-Future interactive shells will then
-save the user's command-line history as long
-as the history file exists.
+a new login shell,
+while opening the new history file.
+This,
+and future,
+interactive shells then save the user's
+command-line history as long as
+the history file exists.
 .PP
 If desired,
 the user can use the history file to repeat
@@ -746,7 +749,8 @@ any command line as a command substitution with
 .IR sed (1)
 and
 .IR osh .
-Taking the following command line for example:
+Taking the following command line
+and history entry for example:
 .PP
 .nf
 	% history -n 44
@@ -757,7 +761,7 @@ Taking the following command line for example:
 			echo 'Running on GNU/Linux, Mac, or NetBSD.'
 .fi
 .PP
-and doing a:
+and then doing a:
 .PP
 .nf
 	% sed -n 44p <$h/.osh.history | osh
