@@ -758,14 +758,14 @@ and history entry for example:
 	------	------------
 	44		uname -s | \\
 			if { fd2 -ef/dev/null egrep '(Darwin|Linux|NetBSD)' } \\
-			echo 'Running on GNU/Linux, Mac, or NetBSD.'
+			echo 'Running on GNU/Linux, Mac OS X, or NetBSD.'
 .fi
 .PP
 and then doing a:
 .PP
 .nf
 	% sed -n 44p <$h/.osh.history | osh
-	Running on GNU/Linux, Mac, or NetBSD.
+	Running on GNU/Linux, Mac OS X, or NetBSD.
 .fi
 .PP
 causes sed to output the 44th command line from
