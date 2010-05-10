@@ -2,6 +2,10 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
+[osh-current]:
+	* ...
+
+-------------------------------------------------------------------------------
 [osh-20100430]:
 osh.c:
 	* Added a new, osh history-file-support feature to save the user's
@@ -1589,6 +1593,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2010/04/30
+Jeffrey Allen Neitzel						2010/05/10
 
 @(#)$Id$
