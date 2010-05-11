@@ -1,6 +1,7 @@
 *.1.out
 *.o
 .release
+GIT.LOG
 config.h
 fd2
 glob6
