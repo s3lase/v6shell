@@ -2,8 +2,11 @@ Changes that improve compatibility w/ the Sixth Edition (V6) UNIX
 Thompson shell are marked w/ a `C:' in the details below.
 
 -------------------------------------------------------------------------------
-[osh-current]:
-	* ...
+[osh-current]: Friday, 2010-05-14:
+osh.1:
+	* Added [--] to fd2 usage synopsis in "Special commands" subsection.
+
+	* s/Mac/Mac OS X/
 
 -------------------------------------------------------------------------------
 [osh-20100430]:
@@ -1593,6 +1596,6 @@ goto.c:
 	* All releases of osh prior to and including 020214 were authored
 	  and maintained by Gunnar Ritter.
 
-Jeffrey Allen Neitzel						2010/05/10
+Jeffrey Allen Neitzel						2010/05/14
 
 @(#)$Id$
