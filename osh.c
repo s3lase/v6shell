@@ -136,15 +136,6 @@
 #define	DO_TRIM(k)	((k) != SBI_CD && (k) != SBI_CHDIR)
 
 /*
- * signal state flags
- */
-enum ssflags {
-	SS_SIGINT  = 01,
-	SS_SIGQUIT = 02,
-	SS_SIGTERM = 04
-};
-
-/*
  * shell type flags
  */
 enum stflags {
@@ -232,8 +223,8 @@ static	const char	*name;		/* $0 - shell command name          */
 static	int		nul_count;	/* `\0'-character count (per line)  */
 static	int		peekc;		/* just-read, pushed-back character */
 static	enum stflags	shtype;		/* shell type (determines behavior) */
-static	enum scflags	sig_child;	/* SIG(INT|QUIT|TERM) child flags   */
-static	enum ssflags	sig_state;	/* SIG(INT|QUIT|TERM) state flags   */
+static	enum sigflags	sig_child;	/* SIG(INT|QUIT|TERM) child flags   */
+static	enum sigflags	sig_state;	/* SIG(INT|QUIT|TERM) state flags   */
 static	int		status;		/* shell exit status                */
 /*@only@*/
 static	struct tnode	*treep;		/* shell command tree pointer       */
@@ -383,12 +374,12 @@ main(int argc, char **argv)
 	}
 	if (dosigs) {
 		if (sasignal(SIGINT, SIG_IGN) == SIG_DFL)
-			sig_child |= SC_SIGINT;
+			sig_child |= S_SIGINT;
 		if (sasignal(SIGQUIT, SIG_IGN) == SIG_DFL)
-			sig_child |= SC_SIGQUIT;
+			sig_child |= S_SIGQUIT;
 		if (PROMPT) {
 			if (sasignal(SIGTERM, SIG_IGN) == SIG_DFL)
-				sig_child |= SC_SIGTERM;
+				sig_child |= S_SIGTERM;
 			if (rcflag == 0) {
 				if (*argv[0] == HYPHEN) {
 					is_login = true;
@@ -1520,13 +1511,13 @@ execute2(struct tnode *t, int *pin, int *pout)
 				    getmyname(), "/dev/null", ERR_OPEN);
 		}
 	} else {
-		if ((sig_state&SS_SIGINT) == 0 && (sig_child&SC_SIGINT) != 0)
+		if ((sig_state&S_SIGINT) == 0 && (sig_child&S_SIGINT) != 0)
 			(void)sasignal(SIGINT, SIG_DFL);
-		if ((sig_state&SS_SIGQUIT) == 0 && (sig_child&SC_SIGQUIT) != 0)
+		if ((sig_state&S_SIGQUIT) == 0 && (sig_child&S_SIGQUIT) != 0)
 			(void)sasignal(SIGQUIT, SIG_DFL);
 	}
 	/* Set the SIGTERM signal to its default action if needed. */
-	if ((sig_state&SS_SIGTERM) == 0 && (sig_child&SC_SIGTERM) != 0)
+	if ((sig_state&S_SIGTERM) == 0 && (sig_child&S_SIGTERM) != 0)
 		(void)sasignal(SIGTERM, SIG_DFL);
 	if (t->ntype == TSUBSHELL) {
 		if ((t1 = t->nsub) != NULL)
@@ -1705,12 +1696,12 @@ do_sigign(char **av, enum tnflags f)
 			    oact.sa_handler != SIG_IGN)
 				continue;
 			if (!ignlst[i - 1] || ((f & FINTR) == 0 &&
-			    ((i == SIGINT  && (sig_state & SS_SIGINT)  != 0 &&
-			     (sig_child & SC_SIGINT)  != 0)   ||
-			     (i == SIGQUIT && (sig_state & SS_SIGQUIT) != 0 &&
-			     (sig_child & SC_SIGQUIT) != 0))) ||
-			     (i == SIGTERM && (sig_state & SS_SIGTERM) != 0 &&
-			     (sig_child & SC_SIGTERM) != 0))
+			    ((i == SIGINT  && (sig_state & S_SIGINT)  != 0 &&
+			     (sig_child & S_SIGINT)  != 0)   ||
+			     (i == SIGQUIT && (sig_state & S_SIGQUIT) != 0 &&
+			     (sig_child & S_SIGQUIT) != 0))) ||
+			     (i == SIGTERM && (sig_state & S_SIGTERM) != 0 &&
+			     (sig_child & S_SIGTERM) != 0))
 				fd_print(FD1, "%s + %2u\n", av[0], (unsigned)i);
 		}
 	}
@@ -1734,18 +1725,18 @@ set_ss_flags(int sig, action_type act)
 
 	if (act == SIG_IGN) {
 		if (sig == SIGINT)
-			sig_state |= SS_SIGINT;
+			sig_state |= S_SIGINT;
 		else if (sig == SIGQUIT)
-			sig_state |= SS_SIGQUIT;
+			sig_state |= S_SIGQUIT;
 		else if (sig == SIGTERM)
-			sig_state |= SS_SIGTERM;
+			sig_state |= S_SIGTERM;
 	} else if (act == SIG_DFL) {
 		if (sig == SIGINT)
-			sig_state &= ~SS_SIGINT;
+			sig_state &= ~S_SIGINT;
 		else if (sig == SIGQUIT)
-			sig_state &= ~SS_SIGQUIT;
+			sig_state &= ~S_SIGQUIT;
 		else if (sig == SIGTERM)
-			sig_state &= ~SS_SIGTERM;
+			sig_state &= ~S_SIGTERM;
 	}
 }
 

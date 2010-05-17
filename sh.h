@@ -33,12 +33,12 @@
 #define	SH_H
 
 /*
- * signal child flags
+ * signal flags
  */
-enum scflags {
-	SC_SIGINT  = 01,
-	SC_SIGQUIT = 02,
-	SC_SIGTERM = 04
+enum sigflags {
+	S_SIGINT  = 01,
+	S_SIGQUIT = 02,
+	S_SIGTERM = 04
 };
 
 #ifdef	OSH_SHELL

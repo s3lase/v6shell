@@ -115,7 +115,7 @@ static	int		one_line_flag;	/* one-line flag for `-t' option    */
 static	char		peekc;		/* just-read, pushed-back character */
 /*@null@*/ /*@observer@*/
 static	const char	*prompt;	/* interactive-shell prompt pointer */
-static	enum scflags	sig_child;	/* SIG(INT|QUIT|TERM) child flags   */
+static	enum sigflags	sig_child;	/* SIG(INT|QUIT|TERM) child flags   */
 static	int		status;		/* shell exit status                */
 static	char		*word[WORDMAX];	/* argument/word pointer array      */
 static	char		**wordp;
@@ -202,12 +202,12 @@ main(int argc, char **argv)
 	}
 	if (dosigs) {
 		if (sasignal(SIGINT, SIG_IGN) == SIG_DFL)
-			sig_child |= SC_SIGINT;
+			sig_child |= S_SIGINT;
 		if (sasignal(SIGQUIT, SIG_IGN) == SIG_DFL)
-			sig_child |= SC_SIGQUIT;
+			sig_child |= S_SIGQUIT;
 		if (prompt != NULL)
 			if (sasignal(SIGTERM, SIG_IGN) == SIG_DFL)
-				sig_child |= SC_SIGTERM;
+				sig_child |= S_SIGTERM;
 	}
 	fd_free();
 	sh_magic();
@@ -950,13 +950,13 @@ execute(struct tnode *t, int *pin, int *pout)
 					err(FC_ERR,FMT2S,"/dev/null",ERR_OPEN);
 			}
 		} else {
-			if ((sig_child & SC_SIGINT) != 0)
+			if ((sig_child & S_SIGINT) != 0)
 				(void)sasignal(SIGINT, SIG_DFL);
-			if ((sig_child & SC_SIGQUIT) != 0)
+			if ((sig_child & S_SIGQUIT) != 0)
 				(void)sasignal(SIGQUIT, SIG_DFL);
 		}
 		/* Set the SIGTERM signal to its default action if needed. */
-		if ((sig_child & SC_SIGTERM) != 0)
+		if ((sig_child & S_SIGTERM) != 0)
 			(void)sasignal(SIGTERM, SIG_DFL);
 		if (t->ntype == TSUBSHELL) {
 			if ((t1 = t->nsub) != NULL)
