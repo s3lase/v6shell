@@ -148,7 +148,7 @@ static	void		pwait(pid_t);
 static	int		prsig(int, pid_t, pid_t);
 /*@maynotreturn@*/
 static	void		sh_errexit(int);
-static	void		sh_init(void);
+static	void		sh_init(/*@null@*/ const char *);
 static	void		sh_magic(void);
 static	void		fd_free(void);
 static	bool		fd_isdir(int);
@@ -170,7 +170,7 @@ main(int argc, char **argv)
 {
 	bool dosigs = false;
 
-	sh_init();
+	sh_init(argv[0]);
 	if (argv[0] == NULL || *argv[0] == EOS)
 		err(SH_ERR, FMT1S, ERR_ALINVAL);
 	if (fd_isdir(FD0))
@@ -973,17 +973,12 @@ execute(struct tnode *t, int *pin, int *pout)
 			gav[0] = "glob6";
 			cmd = gav[0];
 			(void)memcpy(&gav[1], t->nav, (i + 1) * sizeof(char *));
-			(void)pexec(cmd, (char *const *)gav);
+			(void)err_pexec(cmd, (char *const *)gav);
 		} else {
 			vscan(t->nav, &trim);
 			cmd = t->nav[0];
-			(void)pexec(cmd, (char *const *)t->nav);
+			(void)err_pexec(cmd, (char *const *)t->nav);
 		}
-		if (errno == ENOEXEC)
-			err(125, FMT1S, ERR_NOSHELL);
-		if (errno != ENOENT && errno != ENOTDIR)
-			err(126, FMT2S, cmd, ERR_EXEC);
-		err(127, FMT2S, cmd, ERR_NOTFOUND);
 		/*NOTREACHED*/
 	}
 }
@@ -1087,12 +1082,13 @@ sh_errexit(int es)
  * Initialize the shell.
  */
 static void
-sh_init(void)
+sh_init(const char *av0p)
 {
 	struct stat sb;
 	int i;
 
 	setmyerrexit(&sh_errexit);
+	setmyname(av0p);
 	setmypid(getpid());
 
 	/*

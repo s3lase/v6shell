@@ -97,6 +97,7 @@ main(int argc, char **argv)
 	int pmc = 0;		/* pattern-match count                 */
 
 	setmyerrexit(&ut_errexit);
+	setmyname(argv[0]);
 	setmypid(getpid());
 
 	/*
@@ -120,12 +121,7 @@ main(int argc, char **argv)
 	if (pmc == 0)
 		err(SH_ERR, FMT1S, ERR_NOMATCH);
 
-	(void)pexec(gav[0], (char *const *)gav);
-	if (errno == ENOEXEC)
-		err(SH_ERR, FMT1S, ERR_NOSHELL);
-	if (errno == E2BIG)
-		err(SH_ERR, FMT1S, ERR_E2BIG);
-	err(SH_ERR, FMT1S, ERR_GNOTFOUND);
+	(void)err_pexec(gav[0], (char *const *)gav);
 	/*NOTREACHED*/
 	return SH_ERR;
 }

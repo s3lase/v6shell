@@ -209,8 +209,27 @@ err_pexec(const char *file, char *const *argv)
 	f = (file == NULL) ? "(null)" : file;
 	n = getmyname();
 
-	if (errno == ENOEXEC)			 err(125,FMT3S,n,f,ERR_NOSHELL);
-	if (errno == E2BIG)			 err(126,FMT3S,n,f,ERR_E2BIG);
-	if (errno != ENOENT && errno != ENOTDIR) err(126,FMT3S,n,f,ERR_EXEC);
-	err(127,FMT3S,n,f,ERR_NOTFOUND);
+	if (EQUAL(n, "glob6")) {
+		if (errno == ENOEXEC)
+			err(SH_ERR, FMT1S, ERR_NOSHELL);
+		if (errno == E2BIG)
+			err(SH_ERR, FMT1S, ERR_E2BIG);
+		err(SH_ERR, FMT1S, ERR_GNOTFOUND);
+	} else if (EQUAL(n, "sh6")) {
+		if (errno == ENOEXEC)
+			err(125, FMT1S, ERR_NOSHELL);
+		if (errno == E2BIG)
+			err(126, FMT2S, f, ERR_E2BIG);
+		if (errno != ENOENT && errno != ENOTDIR)
+			err(126, FMT2S, f, ERR_EXEC);
+		err(127, FMT2S, f, ERR_NOTFOUND);
+	} else {
+		if (errno == ENOEXEC)
+			err(125, FMT3S, n, f, ERR_NOSHELL);
+		if (errno == E2BIG)
+			err(126, FMT3S, n, f, ERR_E2BIG);
+		if (errno != ENOENT && errno != ENOTDIR)
+			err(126, FMT3S, n, f, ERR_EXEC);
+		err(127, FMT3S, n, f, ERR_NOTFOUND);
+	}
 }
