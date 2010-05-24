@@ -94,7 +94,7 @@ static	char	*nxtarg(bool);
  *	if - conditional command
  *
  * SYNOPSIS
- *	if expression [command [arg ...]]
+ *	if [expression [command [arg ...]]]
  *
  * DESCRIPTION
  *	See the if(1) manual page for full details.
