@@ -63,16 +63,23 @@
 if \- conditional command
 .SH SYNOPSIS
 .B if
-\fIexpression\fR [\fIcommand\fR [\fIarg ...\fR]]
+[\fIexpression\fR [\fIcommand\fR [\fIarg ...\fR]]]
 .SH DESCRIPTION
 .I If
-evaluates
+evaluates the specified
 .IR expression ,
 and if its value is true,
-returns a zero exit status or executes the specified
+returns a zero exit status or executes
+the specified
 .I command
 with the given arguments.
-Otherwise, a non-zero exit status is returned.
+Otherwise,
+it returns a non-zero exit status.
+When
+.I expression
+is not specified,
+.I if
+also returns a non-zero exit status.
 .PP
 The following primaries are used to construct
 .IR expression :
@@ -80,8 +87,8 @@ The following primaries are used to construct
 \fB{\fR \fIcommand\fR [\fIarg ...\fR] \fB}\fR
 The specified \fIcommand\fR is executed with the
 given arguments to obtain its exit status.
-A zero status is \fItrue\fR,
-and a non-zero status is \fIfalse\fR.
+A zero status is \fItrue\fR;
+a non-zero status is \fIfalse\fR.
 .TP
 .BI \-d \ file
 True if \fIfile\fR exists and is a directory.
@@ -172,6 +179,15 @@ are separate arguments to
 .IR if .
 Notice also that parentheses are meaningful
 to the shell and must be escaped.
+.PP
+In addition,
+except for the
+.B \-h
+primary,
+symbolic links are followed for all
+other \fIfile\fR-related primaries.
+.\" primaries that refer to filesystem objects.
+.\" primaries that refer to files.
 .SH "EXIT STATUS"
 The
 .I if

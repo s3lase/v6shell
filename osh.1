@@ -775,8 +775,12 @@ command substitution by osh.
 An end-of-file in the shell's input
 causes it to exit.
 If the shell is interactive,
-this means it exits when the user
-types an EOT (^D) at the prompt.
+this means it exits by default when
+the user types an EOT (^D) at the prompt.
+If desired,
+the user may change or disable
+the end-of-file character with
+.IR stty (1).
 .SS Special commands
 The shell treats the following built-in commands specially.
 .TP
@@ -830,12 +834,13 @@ See the
 .IR goto (1)
 manual page for full details.
 .TP
-\fBif\fR \fIexpression\fR [\fIcommand\fR [\fIarg ...\fR]] (+)
+\fBif\fR [\fIexpression\fR [\fIcommand\fR [\fIarg ...\fR]]] (+)
 Evaluates
-.I expression
-and conditionally executes
-.I command
-if appropriate.
+.IR expression ,
+conditionally executes
+.IR command ,
+and sets the exit status to zero or non-zero
+as appropriate.
 See the
 .IR if (1)
 manual page for full details.
@@ -1078,7 +1083,8 @@ login(1),
 man(1),
 newgrp(1),
 sed(1),
-sh6(1)
+sh6(1),
+stty(1)
 .PP
 Osh home page:
 http://v6shell.org/

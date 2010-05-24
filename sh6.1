@@ -511,8 +511,12 @@ any files is simply removed from the argument list.
 An end-of-file in the shell's input
 causes it to exit.
 If the shell is interactive,
-this means it exits when the user
-types an EOT (^D) at the prompt.
+this means it exits by default when
+the user types an EOT (^D) at the prompt.
+If desired,
+the user may change or disable
+the end-of-file character with
+.IR stty (1).
 .SS Special commands
 The following commands are special in that they are
 executed by the shell without creating a new process.
@@ -662,7 +666,8 @@ kill(1),
 login(1),
 newgrp(1),
 osh(1),
-sed(1)
+sed(1),
+stty(1)
 .PP
 Osh home page:
 http://v6shell.org/
