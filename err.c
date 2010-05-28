@@ -191,7 +191,7 @@ wmsg(int wfd, const char *msgfmt, va_list va)
 {
 	char msg[MSGMAX];
 	char fmt[FMTMAX];
-	struct iovec ev[3];
+	struct iovec ev[4];
 	int i;
 
 	i = snprintf(fmt, sizeof(fmt), "%s", msgfmt);
@@ -199,13 +199,15 @@ wmsg(int wfd, const char *msgfmt, va_list va)
 		i = vsnprintf(msg, sizeof(msg), fmt, va);
 		if (i >= 0 && i < (int)sizeof(msg)) {
 			if (write(wfd, msg, strlen(msg)) == -1) {
-				ev[0].iov_base = "\n";
-				ev[0].iov_len  = (size_t)1;
-				ev[1].iov_base = (char *)getmyname();
-				ev[1].iov_len  = strlen(getmyname());
-				ev[2].iov_base = ": Cannot write message\n";
-				ev[2].iov_len  = (size_t)23;
-				(void)writev(FD2, ev, 3);
+				ev[0].iov_base = (char *)getmyname();
+				ev[0].iov_len  = strlen(getmyname());
+				ev[1].iov_base = ": ";
+				ev[1].iov_len  = (size_t)2;
+				ev[2].iov_base = ERR_WRITE;
+				ev[2].iov_len  = strlen(ERR_WRITE);
+				ev[3].iov_base = "\n";
+				ev[3].iov_len  = (size_t)1;
+				(void)writev(FD2, ev, 4);
 			}
 		}
 	}
