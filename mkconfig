@@ -38,7 +38,7 @@ definePathnameConstant()
 	done
 
 	#echo "$PATH" >&2
-	wpname="`which $util </dev/null 2>/dev/null`"
+	wpname="`which $util </dev/null 2>/dev/null | grep -v 'not found'`"
 	#echo "$wpname" >&2
 	if test X"$pname" != X -a \( \
 		X"$wpname" = X -o X"$wpname" = X"$pname" \
