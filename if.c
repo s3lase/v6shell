@@ -2,7 +2,7 @@
  * if.c - a port of the Sixth Edition (V6) UNIX conditional command
  */
 /*-
- * Copyright (c) 2004-2010
+ * Copyright (c) 2004-2011
  *	Jeffrey Allen Neitzel <jan (at) v6shell (dot) org>.
  *	All rights reserved.
  *

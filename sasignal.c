@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2008-2010
+ * Copyright (c) 2008-2011
  *	Jeffrey Allen Neitzel <jan (at) v6shell (dot) org>.
  *	All rights reserved.
  *
