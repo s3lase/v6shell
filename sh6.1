@@ -64,7 +64,7 @@ sh6 \- shell (command interpreter)
 .SH SYNOPSIS
 .B sh6
 [\fB\-\fR |
-\fB\-c\fR \fIstring\fR |
+\fB\-c\fR [\fIstring\fR] |
 \fB\-t\fR |
 \fIfile\fR [\fIarg1 ...\fR]]
 .SH DESCRIPTION
@@ -88,10 +88,16 @@ from the standard input until
 end-of-file or
 .BR exit .
 .TP
-.BI \-c \ string
-The shell executes
+\fB\-c\fR [\fIstring\fR]
+If a
 .I string
+is specified,
+the shell executes it
 as a command line and exits.
+Otherwise,
+the shell treats it as the
+.B \-
+option.
 .TP
 .B \-t
 The shell reads a single line from the standard input,

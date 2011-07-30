@@ -160,7 +160,7 @@ static	void		*xmalloc(size_t);
  *	sh6 - shell (command interpreter)
  *
  * SYNOPSIS
- *	sh6 [- | -c string | -t | file [arg1 ...]]
+ *	sh6 [- | -c [string] | -t | file [arg1 ...]]
  *
  * DESCRIPTION
  *	See the sh6(1) manual page for full details.

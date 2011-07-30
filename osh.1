@@ -65,7 +65,7 @@ osh \- old shell (command interpreter)
 .B osh
 [\fB\-v\fR]
 [\fB\-\fR |
-\fB\-c\fR \fIstring\fR |
+\fB\-c\fR [\fIstring\fR] |
 \fB\-i\fR |
 \fB\-l\fR |
 \fB\-t\fR |
@@ -92,10 +92,16 @@ from the standard input until
 end-of-file or
 .BR exit .
 .TP
-.BI \-c \ string
-The shell executes
+\fB\-c\fR [\fIstring\fR]
+If a
 .I string
+is specified,
+the shell executes it
 as a command line and exits.
+Otherwise,
+the shell treats it as the
+.B \-
+option.
 .TP
 .B \-i
 (+)

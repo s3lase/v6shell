@@ -308,7 +308,7 @@ static	const char	**glob(enum sbikey, char **);
  *	osh - old shell (command interpreter)
  *
  * SYNOPSIS
- *	osh [-v] [- | -c string | -i | -l | -t | file [arg1 ...]]
+ *	osh [-v] [- | -c [string] | -i | -l | -t | file [arg1 ...]]
  *
  * DESCRIPTION
  *	See the osh(1) manual page for full details.
