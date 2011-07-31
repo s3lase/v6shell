@@ -291,7 +291,9 @@ doex(bool forked)
 			err(FC_ERR, FMT2S, getmyname(), ERR_COMMAND);
 	}
 
-	/* Invoke a special "exit" utility in this case. */
+	/* Invoke the ":" or "exit" special command. */
+	if (equal(xav[0], ":"))
+		EXIT(SH_TRUE);
 	if (equal(xav[0], "exit")) {
 		(void)lseek(FD0, (off_t)0, SEEK_END);
 		EXIT(SH_TRUE);
