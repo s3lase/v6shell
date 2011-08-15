@@ -454,6 +454,14 @@ Otherwise,
 the parameter is unset when the shell
 cannot determine its value.
 .TP 10
+$# (*)
+The number of positional parameters currently available
+to the shell.
+.TP
+$*
+The values of the positional parameters currently available
+to the shell, from `$1' through the end of its argument list.
+.TP
 $d
 The value of the environment variable OSHDIR.
 .TP
@@ -467,8 +475,7 @@ $m
 The value of the environment variable MANPATH.
 .TP
 $n (*)
-The number of positional parameters currently available
-to the shell.
+A synonym for the `$#' parameter.
 .TP
 $p
 The value of the environment variable PATH.

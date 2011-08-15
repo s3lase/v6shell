@@ -203,6 +203,7 @@ static	const char *const sigmsg[] = {
 
 /*@null@*/
 static	const char	*argv2p;	/* string for `-c' option           */
+static	int		dolac;		/* dollar-argument count for $*     */
 static	char		dolbuf[DOLMAX];	/* dollar buffer for $$, $n, $s, $v */
 static	int		dolc;		/* $N dollar-argument count         */
 /*@null@*/ /*@only@*/
@@ -686,11 +687,23 @@ getd:
 		c = *dolp++;
 		if (c != EOS)
 			return c;
-		dolp = NULL;
+		if (dolac > 0 && ++dolac < dolc) {
+			dolp = dolv[dolac];
+			return SPACE;
+		}
+		dolac = 0;
+		dolp  = NULL;
 	}
 	c = readc();
 	if (c == DOLLAR && dolsub) {
 		c = readc();
+		if (c == ASTERISK) {
+			if (dolc > 1) {
+				dolac = 1;
+				dolp  = dolv[dolac];
+			}
+			goto getd;
+		}
 		if ((dolp = get_dolp(c)) != NULL)
 			goto getd;
 	}
@@ -775,6 +788,7 @@ get_dolp(int c)
 		if ((v = getenv("MANPATH")) == NULL)
 			v = dolbuf;
 		break;
+	case HASH:
 	case 'n':
 		n = (dolc > 1) ? dolc - 1 : 0;
 		r = snprintf(dolbuf, sizeof(dolbuf), "%u", (unsigned)n);
