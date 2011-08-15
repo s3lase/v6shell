@@ -203,7 +203,7 @@ static	const char *const sigmsg[] = {
 
 /*@null@*/
 static	const char	*argv2p;	/* string for `-c' option           */
-static	int		dolac;		/* dollar-argument count for $*     */
+static	int		dolac;		/* $* dollar-argument count         */
 static	char		dolbuf[DOLMAX];	/* dollar buffer for $$, $n, $s, $v */
 static	int		dolc;		/* $N dollar-argument count         */
 /*@null@*/ /*@only@*/
@@ -228,7 +228,7 @@ static	enum sigflags	sig_child;	/* SIG(INT|QUIT|TERM) child flags   */
 static	enum sigflags	sig_state;	/* SIG(INT|QUIT|TERM) state flags   */
 static	int		status;		/* shell exit status                */
 /*@only@*/
-static	struct tnode	*treep;		/* shell command tree pointer       */
+static	struct tnode	*tnp;		/* shell command tree node pointer  */
 /*@null@*/ /*@only@*/
 static	char		*tty;		/* $t - terminal name               */
 /*@null@*/ /*@only@*/
@@ -533,17 +533,17 @@ rpx_line(void)
 	if (wordp - word > 1) {
 		(void)sigfillset(&nmask);
 		(void)sigprocmask(SIG_SETMASK, &nmask, &omask);
-		t = treep;
-		treep = NULL;
-		treep = syntax(word, wordp);
+		t = tnp;
+		tnp = NULL;
+		tnp = syntax(word, wordp);
 		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 		if (error)
 			err(-1, FMT2S, getmyname(), ERR_SYNTAX);
 		else
-			execute(treep, NULL, NULL);
-		tfree(treep);
-		treep = NULL;
-		treep = t;
+			execute(tnp, NULL, NULL);
+		tfree(tnp);
+		tnp = NULL;
+		tnp = t;
 	}
 	return 1;
 }
@@ -2538,7 +2538,7 @@ static	const char	**gavp;	/* points to current gav position     */
 static	const char	**gave;	/* points to current gav end          */
 static	size_t		gavtot;	/* total bytes used for all arguments */
 
-static	const char	**gavnew(/*@only@*/ const char **);
+static	const char	**gnew(/*@only@*/ const char **);
 /*@null@*/
 static	char		*gcat(/*@null@*/ const char *,
 			      /*@null@*/ const char *, bool);
@@ -2593,7 +2593,7 @@ glob(enum sbikey key, char **av)
 }
 
 static const char **
-gavnew(const char **gav)
+gnew(const char **gav)
 {
 	size_t siz;
 	ptrdiff_t gidx;
@@ -2667,7 +2667,7 @@ glob1(enum sbikey key, const char **gav, char *as, int *pmc, bool *gerr)
 	ds = as;
 	slash = false;
 	if ((ps = gchar(as)) == NULL) {
-		gav = gavnew(gav);
+		gav = gnew(gav);
 		if (DO_TRIM(key))
 			(void)atrim(UCPTR(as));
 		if ((p = gcat(as, "", slash)) == NULL) {
@@ -2705,7 +2705,7 @@ glob1(enum sbikey key, const char **gav, char *as, int *pmc, bool *gerr)
 		if (entry->d_name[0] == DOT && *ps != DOT)
 			continue;
 		if (glob2(UCPTR(entry->d_name), UCPTR(ps))) {
-			gav = gavnew(gav);
+			gav = gnew(gav);
 			if ((p = gcat(ds, entry->d_name, slash)) == NULL) {
 				(void)closedir(dirp);
 				*gerr = true;
