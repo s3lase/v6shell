@@ -1759,6 +1759,10 @@ set_ss_flags(int sig, action_type act)
  * Calls to this function can be nested to the point imposed by
  * any limits in the shell's environment, such as running out of
  * file descriptors or hitting a limit on the size of the stack.
+ *
+ * XXX: Add SOURCEMAX (== 20 for now) to avoid opening thousands
+ *	of file descriptors before hitting stack-size limit on
+ *	Mac OS X (10.7.x). No need for more than 20 anyway.
  */
 static void
 do_source(char **av)
@@ -1778,7 +1782,7 @@ do_source(char **av)
 		return;
 	}
 	sfd = dup2(FD0, SAVFD0 + cnt);
-	if (sfd == -1 || dup2(nfd, FD0) == -1 ||
+	if (cnt > SOURCEMAX || sfd == -1 || dup2(nfd, FD0) == -1 ||
 	    fcntl(FD0, F_SETFL, O_RDONLY & ~O_NONBLOCK) == -1) {
 		(void)close(sfd);
 		(void)close(nfd);

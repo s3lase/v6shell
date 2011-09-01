@@ -75,6 +75,9 @@
 #endif
 #define	FDFREEMAX	4096	/* Arbitrary maximum value for fd_free().   */
 
+#define	SOURCEMAX	20	/* Maximum # of nested source invocations:
+				 *	*) same as _POSIX_OPEN_MAX	    */
+
 #define	LINEMAX		2048	/* 1000 in the original Sixth Edition shell */
 #define	WORDMAX		1024	/*   50 ...                                 */
 
