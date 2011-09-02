@@ -160,6 +160,7 @@ static	const struct sbicmd {
 	const enum sbikey sbi_key;
 } sbi[] = {
 	{ ":",		SBI_NULL     },
+	{ "alias",	SBI_ALIAS    },
 	{ "cd",		SBI_CD       },
 	{ "chdir",	SBI_CHDIR    },
 	{ "echo",	SBI_ECHO     },
@@ -175,6 +176,7 @@ static	const struct sbicmd {
 	{ "sigign",	SBI_SIGIGN   },
 	{ "source",	SBI_SOURCE   },
 	{ "umask",	SBI_UMASK    },
+	{ "unalias",	SBI_UNALIAS  },
 	{ "unsetenv",	SBI_UNSETENV },
 	{ "wait",	SBI_WAIT     }
 };
@@ -212,10 +214,11 @@ static	char	*const	*dolv;		/* $N dollar-argument value array   */
 static	int		dupfd0;		/* duplicate of the standard input  */
 static	bool		error;		/* error flag for read/parse errors */
 /*@observer@*/
-static	const char	*error_message;	/* error message for read errors    */
+static	const char	*error_message;	/* error msg for read/parse errors  */
 static	bool		error_source;	/* error flag for `source' command  */
 static	int		hwfd = -1;	/* history write file descriptor    */
 static	bool		is_login;	/* login shell flag (true if login) */
+static	char		aline[LINEMAX];	/* alias-line buffer                */
 static	char		line[LINEMAX];	/* command-line buffer              */
 static	char		*linep;
 static	volatile sig_atomic_t
@@ -227,6 +230,12 @@ static	enum stflags	shtype;		/* shell type (determines behavior) */
 static	enum sigflags	sig_child;	/* SIG(INT|QUIT|TERM) child flags   */
 static	enum sigflags	sig_state;	/* SIG(INT|QUIT|TERM) state flags   */
 static	int		status;		/* shell exit status                */
+static	char		*aword[WORDMAX];/* alias arg/word pointer array     */
+static	char		*word[WORDMAX];	/* arg/word pointer array           */
+static	char		**wordp;
+static	struct anode	*anp;		/* shell alias node pointer         */
+/*@null@*/
+static	const char	*asp;		/* shell alias string pointer       */
 /*@only@*/
 static	struct tnode	*tnp;		/* shell command tree node pointer  */
 /*@null@*/ /*@only@*/
@@ -234,8 +243,6 @@ static	char		*tty;		/* $t - terminal name               */
 /*@null@*/ /*@only@*/
 static	char		*user;		/* $u - effective user name         */
 static	bool		verbose_flag;	/* verbose flag for `-v' option     */
-static	char		*word[WORDMAX];	/* argument/word pointer array      */
-static	char		**wordp;
 
 /*
  * **** Function Prototypes ****
@@ -243,11 +250,16 @@ static	char		**wordp;
 static	void		cmd_loop(bool);
 static	void		cmd_verbose(void);
 static	int		rpx_line(void);
+static	const char	**rp_alias(void);
 static	int		get_word(void);
 static	int		xgetc(bool);
 static	int		readc(void);
 /*@null@*/ /*@only@*/
 static	const char	*get_dolp(int);
+static	void		aalloc(const char *, const char *);
+static	struct anode	*aalloc1(const char *, const char *);
+static	void		afree(/*@null@*/ const char *);
+static	const char	*asget(const char *);
 static	struct tnode	*talloc(void);
 static	void		tfree(/*@null@*/ /*@only@*/ struct tnode *);
 /*@null@*/
@@ -258,6 +270,7 @@ static	struct tnode	*syn1(char **, char **);
 static	struct tnode	*syn2(char **, char **);
 /*@null@*/
 static	struct tnode	*syn3(char **, char **);
+static	const char	**alcheck(const char *, const char **);
 static	bool		any(int, const char *);
 static	bool		vtglob(char **);
 static	void		vtrim(char **);
@@ -431,6 +444,7 @@ logout:
 done:
 	xfree(tty);
 	xfree(user);
+	afree(NULL);
 	return status;
 }
 
@@ -515,12 +529,14 @@ rpx_line(void)
 	linep = line;
 	wordp = word;
 	error = false;
+	error_message = NULL;
 	nul_count = 0;
 	do {
 		wp = linep;
 		if (get_word() == EOF)
 			return EOF;
 	} while (*wp != EOL);
+	*wordp = NULL;
 
 	cmd_verbose();
 	hist_write(PROMPT && wordp - word > 1);
@@ -538,7 +554,7 @@ rpx_line(void)
 		tnp = syntax(word, wordp);
 		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 		if (error)
-			err(-1, FMT2S, getmyname(), ERR_SYNTAX);
+			err(-1, FMT2S, getmyname(), error_message);
 		else
 			execute(tnp, NULL, NULL);
 		tfree(tnp);
@@ -549,9 +565,57 @@ rpx_line(void)
 }
 
 /*
- * Copy a word from the standard input into the line buffer,
+ * Read and parse an alias string.
+ */
+static const char **
+rp_alias(void)
+{
+	struct tnode *t;
+	sigset_t nmask, omask;
+	char *wp;
+
+	linep = aline;
+	wordp = aword;
+	error = false;
+	error_message = NULL;
+	nul_count = 0;
+	do {
+		wp = linep;
+		if (get_word() == EOF)
+			return NULL;
+	} while (*wp != EOL);
+	*wordp = NULL;
+
+	if (error)
+		return NULL;
+
+	if (wordp - aword > 1) {
+		(void)sigfillset(&nmask);
+		(void)sigprocmask(SIG_SETMASK, &nmask, &omask);
+		t = NULL;
+		t = syntax(aword, wordp);
+		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
+		if (error) {
+			tfree(t);
+			t = NULL;
+			return NULL;
+		}
+		tfree(t);
+		t = NULL;
+		/*
+		 * XXX: It may be cleaner to call alcheck() from here
+		 *	instead of calling it from syn3().  Will look
+		 *	into it; it's a relatively simple change...
+		 */
+		return (const char **)aword;
+	}
+	return NULL;
+}
+
+/*
+ * Copy a word from the standard input into the [a]line buffer,
  * and point to it w/ *wordp.  Each copied word is represented
- * in line as an individual `\0'-terminated string.
+ * in [a]line as an individual `\0'-terminated string.
  */
 static int
 get_word(void)
@@ -658,6 +722,8 @@ static int
 xgetc(bool dolsub)
 {
 	int c;
+	char **wordmax;
+	char *linemax;
 
 	if (peekc != EOS) {
 		c = peekc;
@@ -665,7 +731,14 @@ xgetc(bool dolsub)
 		return c;
 	}
 
-	if (wordp >= &word[WORDMAX - 2]) {
+	if (asp != NULL) {
+		wordmax = &aword[WORDMAX - 2];
+		linemax = &aline[LINEMAX - 5];
+	} else {
+		wordmax = &word[WORDMAX - 2];
+		linemax = &line[LINEMAX - 5];
+	}
+	if (wordp >= wordmax) {
 		wordp -= 4;
 		while ((c = xgetc(!DOLSUB)) != EOF && c != EOL)
 			;	/* nothing */
@@ -673,7 +746,7 @@ xgetc(bool dolsub)
 		error_message = ERR_TMARGS;
 		goto geterr;
 	}
-	if (linep >= &line[LINEMAX - 5]) {
+	if (linep >= linemax) {
 		linep -= 10;
 		while ((c = xgetc(!DOLSUB)) != EOF && c != EOL)
 			;	/* nothing */
@@ -733,6 +806,15 @@ readc(void)
 {
 	UChar c;
 
+	if (asp != NULL) {
+		if (asp == (char *)-1)
+			return EOF;
+		if ((c = UCHAR(*asp++)) == EOS) {
+			asp = (char *)-1;
+			c = UCHAR(EOL);
+		}
+		return c;
+	}
 	if (argv2p != NULL) {
 		if (argv2p == (char *)-1)
 			return EOF;
@@ -816,6 +898,136 @@ get_dolp(int c)
 		v = NULL;
 	}
 	return v;
+}
+
+/*
+ * Allocate memory for new alias node (specified by name and string)
+ * if needed, and link it to alias node list.  Insert new alias, or
+ * replace old alias string w/ new alias string if needed.
+ */
+static void
+aalloc(const char *name, const char *string)
+{
+	struct anode *a, *n, *p;
+	int d;
+
+	if (name == NULL || *name == EOS || string == NULL || *string == EOS)
+		return;
+
+	a = anp;
+	if (a == NULL) { /* First */
+		anp = aalloc1(name, string);
+		return;
+	}
+	p = a;
+	/* ascending ASCII sort */
+	while (a != NULL) {
+		if ((d = strcmp(name, a->name)) == 0) {
+			if (!EQUAL(string, a->string)) {
+				/* Replace old string w/ new string. */
+				xfree(a->string);
+				a->string = xstrdup(string);
+			}
+			return;
+		}
+		if (d < 0)
+			break;
+		p = a;
+		a = a->next;
+	}
+	if (a == NULL) { /* Last */
+		p->next = aalloc1(name, string);
+		return;
+	}
+
+	/* Insert new alias between p and a (ascending ASCII insert). */
+	if (a == anp) { /* New Head */
+		n = aalloc1(name, string);
+		n->next = anp;
+		anp = n;
+		return;
+	}
+	n = aalloc1(name, string);
+	n->next = p->next;
+	p->next = n;
+}
+
+/*
+ * Allocate and initialize memory for new alias node
+ * specified by name and string.  Return pointer to new
+ * node on success.  Do not return on error (ENOMEM).
+ */
+static struct anode *
+aalloc1(const char *name, const char *string)
+{
+	struct anode *a;
+
+	a = xmalloc(sizeof(struct anode));
+	a->next   = NULL;
+	a->name   = xstrdup(name);
+	a->string = xstrdup(string);
+	return a;
+}
+
+/*
+ * If name is specified (is not NULL), free its alias.
+ * If name is not specified (is NULL), free all aliases.
+ */
+static void
+afree(const char *name)
+{
+	struct anode *a, *p;
+
+	if (name != NULL) {
+		a = anp;
+		p = a;
+		while (a != NULL) {
+			if (EQUAL(name, a->name)) {
+				if (a == anp)
+					anp = a->next;
+				else
+					p->next = a->next;
+				xfree(a->name);
+				xfree(a->string);
+				xfree(a);
+				break;
+			}
+			p = a;
+			a = a->next;
+		}
+	} else {
+		a = anp;
+		while (a != NULL) {
+			p = a;
+			xfree(a->name);
+			xfree(a->string);
+			a = a->next;
+			xfree(p);
+		}
+	}
+}
+
+/*
+ * Get the alias string specified by name.
+ * Return a pointer the alias string on success.
+ * Return a pointer to NULL on error.
+ */
+static const char *
+asget(const char *name)
+{
+	struct anode *a;
+	const char *as;
+
+	as = NULL;
+	a  = anp;
+	while (a != NULL) {
+		if (EQUAL(name, a->name)) {
+			as = a->string;
+			break;
+		}
+		a = a->next;
+	}
+	return as;
 }
 
 /*
@@ -935,6 +1147,7 @@ syn1(char **p1, char **p2)
 
 synerr:
 	error = true;
+	error_message = ERR_SYNTAX;
 	return NULL;
 }
 
@@ -988,9 +1201,12 @@ syn3(char **p1, char **p2)
 {
 	struct tnode *t;
 	enum tnflags flags;
-	int ac, c, n, subcnt;
-	char **p, **lp, **rp;
+	int ac, ac1, c, n, subcnt;
+	char **p, **pv, **lp, **rp;
+	char **tav, **tavp;
+	const char **av;
 	char *fin, *fout;
+	const char *as;
 
 	flags = 0;
 	if (**p2 == RPARENTHESIS)
@@ -1002,6 +1218,10 @@ syn3(char **p1, char **p2)
 	rp     = NULL;
 	n      = 0;
 	subcnt = 0;
+
+	pv    = xmalloc(((p2 - p1) + 1) * sizeof(char *));
+	pv[n] = NULL;
+
 	for (p = p1; p < p2; p++)
 		switch (c = **p) {
 		case LPARENTHESIS:
@@ -1045,21 +1265,86 @@ syn3(char **p1, char **p2)
 			continue;
 
 		default:
-			if (subcnt == 0)
-				p1[n++] = *p;
+			if (subcnt == 0) {
+				pv[n++] = xstrdup(*p);
+/*
+				fd_print(FD2, "pv[%2d], %p, %s\n",
+				    (n - 1), pv[(n - 1)], pv[(n - 1)]);
+ */
+			}
 		}
 
 	if (lp == NULL) {
 		if (n == 0)
 			goto synerr;
-		t = talloc();
-		t->ntype = TCOMMAND;
-		t->nav   = xmalloc((n + 1) * sizeof(char *));
-		for (ac = 0; ac < n; ac++)
-			t->nav[ac] = xstrdup(p1[ac]);
-		t->nav[ac] = NULL;
-		t->nkey    = cmd_lookup(t->nav[0]);
+		if ((as = asget(pv[0])) != NULL && asp == NULL) {
+			/*
+			 * Substitute alias string pointed to by as
+			 * for alias name pointed to by pv[0].
+			 */
+
+			/* Read and parse as into av. */
+			asp = as;
+			av  = rp_alias();
+			asp = NULL;
+
+			/* Check for alias loop error. */
+			if ((av = alcheck(pv[0], av)) == NULL) {
+				/* cannot alias self; e.g., alias ls 'ls -F' */
+				error_message = ERR_ALIASLOOP;
+				goto synerr;
+			}
+
+			/* Create alias vector. */
+			ac   = vacount(av);
+			tav  = xmalloc((ac + n + 1) * sizeof(char *));
+			tavp = tav;
+
+#ifdef	DEBUG
+			fd_print(FD2, "syn3: (%d + %d + 1) == %d;\n",
+			    ac, n, (ac + n + 1));
+			fd_print(FD2, "    : av  : %p;\n", av);
+			fd_print(FD2, "    : tav : %p;\n", tav);
+			fd_print(FD2, "    : tavp: %p;\n", tavp);
+#endif
+
+			for (ac = 0; *av[ac] != EOL; ac++)
+				*tavp++ = xstrdup(av[ac]);
+			for (ac1 = 1; ac1 < n; ac1++)
+				*tavp++ = xstrdup(pv[ac1]);
+			*tavp++ = xstrdup("\n");
+			*tavp   = NULL;
+
+#ifdef	DEBUG
+			for (tavp = tav; *tavp != NULL; tavp++)
+				fd_print(FD2, "    : tavp: %p, %p, %s;\n",
+				    tavp, *tavp, (**tavp == EOL) ? "\\n" :
+				    (**tavp == EOS) ? "\\0" : *tavp);
+			fd_print(FD2, "    : tavp: %p, NULL;\n", tavp);
+			fd_print(FD2,"    : (tavp - tav)  == %d;\n",(tavp-tav));
+#endif
+
+			/* Execute as TSUBSHELL. */
+			t = talloc();
+			t->ntype = TSUBSHELL;
+			t->nsub  = syn1(tav, tavp);
+			vfree(tav);
+		} else {
+			/*
+			 * Execute as TCOMMAND.
+			 */
+			t = talloc();
+			t->ntype = TCOMMAND;
+			t->nav   = xmalloc((n + 1) * sizeof(char *));
+			for (ac = 0; ac < n; ac++)
+				t->nav[ac] = xstrdup(pv[ac]);
+			t->nav[ac] = NULL;
+			t->nkey    = cmd_lookup(t->nav[0]);
+		}
 	} else {
+		/*
+		 * Execute as TSUBSHELL.
+		 */
 		if (n != 0)
 			goto synerr;
 		t = talloc();
@@ -1069,13 +1354,76 @@ syn3(char **p1, char **p2)
 	t->nfin   = fin;
 	t->nfout  = fout;
 	t->nflags = flags;
+	pv[n] = NULL;
+	vfree(pv);
 	return t;
 
 synerr:
 	xfree(fin);
 	xfree(fout);
+	pv[n] = NULL;
+	vfree(pv);
 	error = true;
+	if (error_message == NULL)
+		error_message = ERR_SYNTAX;
 	return NULL;
+}
+
+/*
+ * Check specified name and vector for alias loop error.
+ * Return pointer to vector on success.
+ * Return pointer to NULL on error.
+ */
+static const char **
+alcheck(const char *name, const char **vector)
+{
+	int s;
+	const char **v;
+	const char *n;
+	bool ncheck;
+
+	for (n = name, ncheck = true, s = 0, v = vector; *v != NULL; v++) {
+		switch (**v) {
+		case LPARENTHESIS:
+			ncheck = true;
+			s++;
+			continue;
+		case RPARENTHESIS:
+			ncheck = false;
+			s--;
+			continue;
+		case SEMICOLON:   case AMPERSAND:
+		case VERTICALBAR: case CARET:
+		case EOL:
+			ncheck = true;
+			continue;
+		case LESSTHAN:
+			ncheck = true;
+			v++;
+			continue;
+		case GREATERTHAN:
+			ncheck = true;
+			v++;
+			if (**v == GREATERTHAN)
+				v++;
+			continue;
+		default:
+#ifdef	DEBUG
+			fd_print(FD2,
+			    "alcheck: ncheck == %s, s == %d, *v == %s;\n",
+			    ncheck ? "true " : "false", s, *v);
+#endif
+			if (ncheck && EQUAL(n, *v)) {
+				vector = NULL;
+				break;
+			} else
+				ncheck = false;
+			continue;
+		}
+		break;	/* on alias loop error */
+	}
+
+	return vector;
 }
 
 /*
@@ -1256,8 +1604,10 @@ execute(struct tnode *t, int *pin, int *pout)
 static void
 execute1(struct tnode *t)
 {
+	struct anode *a;
 	mode_t m;
 	const char *emsg, *p;
+	bool aok;
 
 	if (t->nav == NULL || t->nav[0] == NULL) {
 		/* should never (but can) be true */
@@ -1269,6 +1619,54 @@ execute1(struct tnode *t)
 		/*
 		 * Do nothing and set the exit status to zero.
 		 */
+		status = SH_TRUE;
+		return;
+
+	case SBI_ALIAS:
+		/*
+		 * usage: alias [name [string]]
+		 */
+		if (t->nav[1] != NULL) {
+			aok = true;
+			for (p = t->nav[1]; *p != EOS; p++)
+				if (any(*p, WORDPACK)) {
+					aok = false;
+					break;
+				}
+			if (!aok || *t->nav[1] == EOS ||
+			    EQUAL(t->nav[1], "alias") ||
+			    EQUAL(t->nav[1], "unalias")) {
+				emsg = ERR_BADNAME;
+				break;
+			}
+			if (t->nav[2] != NULL) {
+				if (t->nav[3] != NULL) {
+					emsg = ERR_ARGCOUNT;
+					break;
+				}
+				p = t->nav[2];
+				if (*p == EOS || any(*p, " \t;&")) {
+					emsg = ERR_BADSTRING;
+					break;
+				}
+				asp = t->nav[2];
+				aok = (rp_alias() != NULL) ? true : false;
+				asp = NULL;
+				if (!aok) {
+					emsg = ERR_BADSTRING;
+					break;
+				}
+				aalloc(t->nav[1], t->nav[2]);
+			} else
+				if ((p = asget(t->nav[1])) != NULL)
+					fd_print(FD1, "(%s)\n", p);
+		} else {
+			a = anp;
+			while (a != NULL) {
+				fd_print(FD1, "%s\t(%s)\n", a->name, a->string);
+				a = a->next;
+			}
+		}
 		status = SH_TRUE;
 		return;
 
@@ -1408,6 +1806,30 @@ execute1(struct tnode *t)
 		}
 		status = SH_TRUE;
 		return;
+
+	case SBI_UNALIAS:
+		/*
+		 * usage: unalias name
+		 */
+		if (t->nav[1] != NULL && t->nav[2] == NULL) {
+			aok = true;
+			for (p = t->nav[1]; *p != EOS; p++)
+				if (any(*p, WORDPACK)) {
+					aok = false;
+					break;
+				}
+			if (!aok || *t->nav[1] == EOS ||
+			    EQUAL(t->nav[1], "alias") ||
+			    EQUAL(t->nav[1], "unalias")) {
+				emsg = ERR_BADNAME;
+				break;
+			}
+			afree(t->nav[1]);
+			status = SH_TRUE;
+			return;
+		}
+		emsg = ERR_ARGCOUNT;
+		break;
 
 	case SBI_UNSETENV:
 		/*

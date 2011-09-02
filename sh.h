@@ -46,10 +46,20 @@ enum sigflags {
  * shell special built-in (sbi) command keys
  */
 enum sbikey {
-	SBI_NULL,   SBI_CD,       SBI_CHDIR, SBI_ECHO,   SBI_EXEC,
-	SBI_EXIT,   SBI_FD2,      SBI_GOTO,  SBI_IF,     SBI_LOGIN,
-	SBI_NEWGRP, SBI_SETENV,   SBI_SHIFT, SBI_SIGIGN, SBI_SOURCE,
-	SBI_UMASK,  SBI_UNSETENV, SBI_WAIT,  SBI_UNKNOWN
+	SBI_NULL,   SBI_ALIAS,  SBI_CD,      SBI_CHDIR,    SBI_ECHO,
+	SBI_EXEC,   SBI_EXIT,   SBI_FD2,     SBI_GOTO,     SBI_IF,
+	SBI_LOGIN,  SBI_NEWGRP, SBI_SETENV,  SBI_SHIFT,    SBI_SIGIGN,
+	SBI_SOURCE, SBI_UMASK,  SBI_UNALIAS, SBI_UNSETENV, SBI_WAIT,
+	SBI_UNKNOWN
+};
+
+/*
+ * shell alias node structure
+ */
+struct anode {
+/*@null@*/struct anode	 *next;
+/*@null@*/char		 *name;
+/*@null@*/char		 *string;
 };
 #endif
 
