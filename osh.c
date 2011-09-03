@@ -218,8 +218,8 @@ static	const char	*error_message;	/* error msg for read/parse errors  */
 static	bool		error_source;	/* error flag for `source' command  */
 static	int		hwfd = -1;	/* history write file descriptor    */
 static	bool		is_login;	/* login shell flag (true if login) */
-static	char		aline[LINEMAX];	/* alias-line buffer                */
 static	char		line[LINEMAX];	/* command-line buffer              */
+static	char		aline[LINEMAX];	/* alias-line buffer                */
 static	char		*linep;
 static	volatile sig_atomic_t
 			logout_now;	/* SIGHUP caught flag (1 if caught) */
@@ -230,8 +230,8 @@ static	enum stflags	shtype;		/* shell type (determines behavior) */
 static	enum sigflags	sig_child;	/* SIG(INT|QUIT|TERM) child flags   */
 static	enum sigflags	sig_state;	/* SIG(INT|QUIT|TERM) state flags   */
 static	int		status;		/* shell exit status                */
-static	char		*aword[WORDMAX];/* alias arg/word pointer array     */
 static	char		*word[WORDMAX];	/* arg/word pointer array           */
+static	char		*aword[WORDMAX];/* alias arg/word pointer array     */
 static	char		**wordp;
 static	struct anode	*anp;		/* shell alias node pointer         */
 /*@null@*/
@@ -590,6 +590,10 @@ rp_alias(void)
 		return NULL;
 
 	if (wordp - aword > 1) {
+		if (any(**aword, ";&")) {
+			error_message = ERR_SYNTAX;/* same as: ( ; ) or ( & ) */
+			return NULL;
+		}
 		(void)sigfillset(&nmask);
 		(void)sigprocmask(SIG_SETMASK, &nmask, &omask);
 		t = NULL;
@@ -602,13 +606,9 @@ rp_alias(void)
 		}
 		tfree(t);
 		t = NULL;
-		/*
-		 * XXX: It may be cleaner to call alcheck() from here
-		 *	instead of calling it from syn3().  Will look
-		 *	into it; it's a relatively simple change...
-		 */
 		return (const char **)aword;
 	}
+	error_message = ERR_SYNTAX;/* same as: ( ) */
 	return NULL;
 }
 
@@ -1290,7 +1290,6 @@ syn3(char **p1, char **p2)
 
 			/* Check for alias loop error. */
 			if ((av = alcheck(pv[0], av)) == NULL) {
-				/* cannot alias self; e.g., alias ls 'ls -F' */
 				error_message = ERR_ALIASLOOP;
 				goto synerr;
 			}
@@ -1305,7 +1304,6 @@ syn3(char **p1, char **p2)
 			    ac, n, (ac + n + 1));
 			fd_print(FD2, "    : av  : %p;\n", av);
 			fd_print(FD2, "    : tav : %p;\n", tav);
-			fd_print(FD2, "    : tavp: %p;\n", tavp);
 #endif
 
 			for (ac = 0; *av[ac] != EOL; ac++)
@@ -1324,7 +1322,7 @@ syn3(char **p1, char **p2)
 			fd_print(FD2,"    : (tavp - tav)  == %d;\n",(tavp-tav));
 #endif
 
-			/* Execute as TSUBSHELL. */
+			/* Execute as TSUBSHELL w/o ( ) . */
 			t = talloc();
 			t->ntype = TSUBSHELL;
 			t->nsub  = syn1(tav, tavp);
@@ -1343,7 +1341,7 @@ syn3(char **p1, char **p2)
 		}
 	} else {
 		/*
-		 * Execute as TSUBSHELL.
+		 * Execute as TSUBSHELL w/ ( ) .
 		 */
 		if (n != 0)
 			goto synerr;
@@ -1644,16 +1642,11 @@ execute1(struct tnode *t)
 					emsg = ERR_ARGCOUNT;
 					break;
 				}
-				p = t->nav[2];
-				if (*p == EOS || any(*p, " \t;&")) {
-					emsg = ERR_BADSTRING;
-					break;
-				}
 				asp = t->nav[2];
 				aok = (rp_alias() != NULL) ? true : false;
 				asp = NULL;
 				if (!aok) {
-					emsg = ERR_BADSTRING;
+					emsg = error_message;
 					break;
 				}
 				aalloc(t->nav[1], t->nav[2]);

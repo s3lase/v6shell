@@ -67,7 +67,6 @@
 #define	ERR_BADMASK	"bad mask"
 #define	ERR_BADNAME	"bad name"
 #define	ERR_BADSIGNAL	"bad signal"
-#define	ERR_BADSTRING	"bad string"
 #define	ERR_CREATE	"cannot create"
 #define	ERR_EXEC	"cannot execute"
 #define	ERR_OPEN	"cannot open"
