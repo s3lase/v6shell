@@ -565,7 +565,9 @@ rpx_line(void)
 }
 
 /*
- * Read and parse an alias string.
+ * Read and parse an alias string pointed to by the global asp.
+ * Return a pointer to aword on success.
+ * Return a pointer to NULL  on error.
  */
 static const char **
 rp_alias(void)
@@ -1288,9 +1290,9 @@ syn3(char **p1, char **p2)
 			av  = rp_alias();
 			asp = NULL;
 
-			/* Check for alias loop error. */
+			/* Check for cannot alias self error. */
 			if ((av = alcheck(pv[0], av)) == NULL) {
-				error_message = ERR_ALIASLOOP;
+				error_message = ERR_ALIASSELF;
 				goto synerr;
 			}
 
@@ -1368,9 +1370,9 @@ synerr:
 }
 
 /*
- * Check specified name and vector for alias loop error.
+ * Check specified name and vector for cannot alias self error.
  * Return pointer to vector on success.
- * Return pointer to NULL on error.
+ * Return pointer to NULL   on error.
  */
 static const char **
 alcheck(const char *name, const char **vector)
@@ -1418,7 +1420,7 @@ alcheck(const char *name, const char **vector)
 				ncheck = false;
 			continue;
 		}
-		break;	/* on alias loop error */
+		break;	/* on cannot alias self error */
 	}
 
 	return vector;
