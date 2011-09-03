@@ -72,7 +72,7 @@ static	const char	**gavp;	/* points to current gav position     */
 static	const char	**gave;	/* points to current gav end          */
 static	size_t		gavtot;	/* total bytes used for all arguments */
 
-static	const char	**gavnew(/*@only@*/ const char **);
+static	const char	**gnew(/*@only@*/ const char **);
 static	char		*gcat(const char *, const char *);
 static	const char	**glob1(/*@only@*/ const char **, char *, int *);
 static	bool		glob2(const UChar *, const UChar *);
@@ -127,7 +127,7 @@ main(int argc, char **argv)
 }
 
 static const char **
-gavnew(const char **gav)
+gnew(const char **gav)
 {
 	size_t siz;
 	ptrdiff_t gidx;
@@ -197,7 +197,7 @@ glob1(const char **gav, char *as, int *pmc)
 	ds = ps = as;
 	while (*ps != ASTERISK && *ps != QUESTION && *ps != LBRACKET)
 		if (*ps++ == EOS) {
-			gav = gavnew(gav);
+			gav = gnew(gav);
 			*gavp++ = gcat(as, "");
 			*gavp = NULL;
 			return gav;
@@ -226,7 +226,7 @@ glob1(const char **gav, char *as, int *pmc)
 		if (entry->d_name[0] == DOT && (*ps & ASCII) != DOT)
 			continue;
 		if (glob2(UCPTR(entry->d_name), UCPTR(ps))) {
-			gav = gavnew(gav);
+			gav = gnew(gav);
 			*gavp++ = gcat(ds, entry->d_name);
 			(*pmc)++;
 		}
