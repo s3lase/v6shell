@@ -1634,8 +1634,9 @@ execute1(struct tnode *t)
 			if (!aok || *t->nav[1] == EOS ||
 			    EQUAL(t->nav[1], "alias") ||
 			    EQUAL(t->nav[1], "unalias")) {
-				emsg = ERR_BADNAME;
-				break;
+				err(-1, FMT4S, getmyname(),
+				    t->nav[0], t->nav[1], ERR_BADNAME);
+				return;
 			}
 			if (t->nav[2] != NULL) {
 				if (t->nav[3] != NULL) {
@@ -1814,8 +1815,9 @@ execute1(struct tnode *t)
 			if (!aok || *t->nav[1] == EOS ||
 			    EQUAL(t->nav[1], "alias") ||
 			    EQUAL(t->nav[1], "unalias")) {
-				emsg = ERR_BADNAME;
-				break;
+				err(-1, FMT4S, getmyname(),
+				    t->nav[0], t->nav[1], ERR_BADNAME);
+				return;
 			}
 			afree(t->nav[1]);
 			status = SH_TRUE;
