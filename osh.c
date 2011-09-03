@@ -2171,13 +2171,10 @@ set_ss_flags(int sig, action_type act)
 
 /*
  * Read and execute commands from the file av[1] and return.
- * Calls to this function can be nested to the point imposed by
- * any limits in the shell's environment, such as running out of
- * file descriptors or hitting a limit on the size of the stack.
- *
- * XXX: Add SOURCEMAX (== 20 for now) to avoid opening thousands
- *	of file descriptors before hitting stack-size limit on
- *	Mac OS X (10.7.x). No need for more than 20 anyway.
+ * Calls to this function may be nested either to the point imposed by
+ * SOURCEMAX (64) or to that of any limits in the shell's environment,
+ * such as running out of file descriptors, hitting a limit on the
+ * size of the stack, etc.
  */
 static void
 do_source(char **av)
