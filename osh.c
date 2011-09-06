@@ -221,6 +221,7 @@ static	bool		is_login;	/* login shell flag (true if login) */
 static	char		line[LINEMAX];	/* command-line buffer              */
 static	char		aline[LINEMAX];	/* alias-line buffer                */
 static	char		*linep;
+static	char		*elinep;
 static	volatile sig_atomic_t
 			logout_now;	/* SIGHUP caught flag (1 if caught) */
 static	const char	*name;		/* $0 - shell command name          */
@@ -233,6 +234,7 @@ static	int		status;		/* shell exit status                */
 static	char		*word[WORDMAX];	/* arg/word pointer array           */
 static	char		*aword[WORDMAX];/* alias arg/word pointer array     */
 static	char		**wordp;
+static	char		**ewordp;
 static	struct anode	*anp;		/* shell alias node pointer         */
 /*@null@*/
 static	const char	*asp;		/* shell alias string pointer       */
@@ -270,7 +272,6 @@ static	struct tnode	*syn1(char **, char **);
 static	struct tnode	*syn2(char **, char **);
 /*@null@*/
 static	struct tnode	*syn3(char **, char **);
-static	const char	**alcheck(const char *, const char **);
 static	bool		any(int, const char *);
 static	bool		vtglob(char **);
 static	void		vtrim(char **);
@@ -526,9 +527,11 @@ rpx_line(void)
 	sigset_t nmask, omask;
 	char *wp;
 
-	linep = line;
-	wordp = word;
-	error = false;
+	linep  = line;
+	elinep = &line[LINEMAX - 5];
+	wordp  = word;
+	ewordp = &word[WORDMAX - 5];
+	error  = false;
 	error_message = NULL;
 	nul_count = 0;
 	do {
@@ -576,9 +579,11 @@ rp_alias(void)
 	sigset_t nmask, omask;
 	char *wp;
 
-	linep = aline;
-	wordp = aword;
-	error = false;
+	linep  = aline;
+	elinep = &aline[LINEMAX - 5];
+	wordp  = aword;
+	ewordp = &aword[WORDMAX - 5];
+	error  = false;
 	error_message = NULL;
 	nul_count = 0;
 	do {
@@ -724,8 +729,6 @@ static int
 xgetc(bool dolsub)
 {
 	int c;
-	char **wordmax;
-	char *linemax;
 
 	if (peekc != EOS) {
 		c = peekc;
@@ -733,22 +736,15 @@ xgetc(bool dolsub)
 		return c;
 	}
 
-	if (asp != NULL) {
-		wordmax = &aword[WORDMAX - 2];
-		linemax = &aline[LINEMAX - 5];
-	} else {
-		wordmax = &word[WORDMAX - 2];
-		linemax = &line[LINEMAX - 5];
-	}
-	if (wordp >= wordmax) {
-		wordp -= 4;
+	if (wordp >= ewordp) {
+		wordp -= 10;
 		while ((c = xgetc(!DOLSUB)) != EOF && c != EOL)
 			;	/* nothing */
-		wordp += 4;
+		wordp += 10;
 		error_message = ERR_TMARGS;
 		goto geterr;
 	}
-	if (linep >= linemax) {
+	if (linep >= elinep) {
 		linep -= 10;
 		while ((c = xgetc(!DOLSUB)) != EOF && c != EOL)
 			;	/* nothing */
@@ -798,10 +794,10 @@ geterr:
 }
 
 /*
- * Read and return a character from the string pointed to by
- * argv2p or from the standard input.  When reading from argv2p,
- * return the character, `\n', or EOF.  When reading from the
- * standard input, return the character or EOF.
+ * Read and return a character from the string pointed to by asp
+ * or argv2p or from the standard input.  When reading from asp
+ * or argv2p, return the character, `\n', or EOF.  When reading
+ * from the standard input, return the character or EOF.
  */
 static int
 readc(void)
@@ -1203,6 +1199,7 @@ syn3(char **p1, char **p2)
 {
 	struct tnode *t;
 	enum tnflags flags;
+	static int alcnt;
 	int ac, ac1, c, n, subcnt;
 	char **p, **pv, **lp, **rp;
 	char **tav, **tavp;
@@ -1210,6 +1207,8 @@ syn3(char **p1, char **p2)
 	char *fin, *fout;
 	const char *as;
 
+	pv    = xmalloc(((p2 - p1) + 1) * sizeof(char *));
+	pv[n] = NULL;
 	flags = 0;
 	if (**p2 == RPARENTHESIS)
 		flags |= FNOFORK;
@@ -1220,10 +1219,6 @@ syn3(char **p1, char **p2)
 	rp     = NULL;
 	n      = 0;
 	subcnt = 0;
-
-	pv    = xmalloc(((p2 - p1) + 1) * sizeof(char *));
-	pv[n] = NULL;
-
 	for (p = p1; p < p2; p++)
 		switch (c = **p) {
 		case LPARENTHESIS:
@@ -1267,13 +1262,8 @@ syn3(char **p1, char **p2)
 			continue;
 
 		default:
-			if (subcnt == 0) {
+			if (subcnt == 0)
 				pv[n++] = xstrdup(*p);
-/*
-				fd_print(FD2, "pv[%2d], %p, %s\n",
-				    (n - 1), pv[(n - 1)], pv[(n - 1)]);
- */
-			}
 		}
 
 	if (lp == NULL) {
@@ -1285,28 +1275,21 @@ syn3(char **p1, char **p2)
 			 * for alias name pointed to by pv[0].
 			 */
 
+			/* Check for alias loop error. */
+			if (alcnt > 2) {
+				error_message = ERR_ALIASLOOP;
+				goto synerr;
+			}
+
 			/* Read and parse as into av. */
 			asp = as;
 			av  = rp_alias();
 			asp = NULL;
 
-			/* Check for cannot alias self error. */
-			if ((av = alcheck(pv[0], av)) == NULL) {
-				error_message = ERR_ALIASSELF;
-				goto synerr;
-			}
-
 			/* Create alias vector. */
 			ac   = vacount(av);
 			tav  = xmalloc((ac + n + 1) * sizeof(char *));
 			tavp = tav;
-
-#ifdef	DEBUG
-			fd_print(FD2, "syn3: (%d + %d + 1) == %d;\n",
-			    ac, n, (ac + n + 1));
-			fd_print(FD2, "    : av  : %p;\n", av);
-			fd_print(FD2, "    : tav : %p;\n", tav);
-#endif
 
 			for (ac = 0; *av[ac] != EOL; ac++)
 				*tavp++ = xstrdup(av[ac]);
@@ -1315,20 +1298,13 @@ syn3(char **p1, char **p2)
 			*tavp++ = xstrdup("\n");
 			*tavp   = NULL;
 
-#ifdef	DEBUG
-			for (tavp = tav; *tavp != NULL; tavp++)
-				fd_print(FD2, "    : tavp: %p, %p, %s;\n",
-				    tavp, *tavp, (**tavp == EOL) ? "\\n" :
-				    (**tavp == EOS) ? "\\0" : *tavp);
-			fd_print(FD2, "    : tavp: %p, NULL;\n", tavp);
-			fd_print(FD2,"    : (tavp - tav)  == %d;\n",(tavp-tav));
-#endif
-
 			/* Execute as TSUBSHELL w/o ( ) . */
+			alcnt++;
 			t = talloc();
 			t->ntype = TSUBSHELL;
 			t->nsub  = syn1(tav, tavp);
 			vfree(tav);
+			alcnt--;
 		} else {
 			/*
 			 * Execute as TCOMMAND.
@@ -1367,63 +1343,6 @@ synerr:
 	if (error_message == NULL)
 		error_message = ERR_SYNTAX;
 	return NULL;
-}
-
-/*
- * Check specified name and vector for cannot alias self error.
- * Return pointer to vector on success.
- * Return pointer to NULL   on error.
- */
-static const char **
-alcheck(const char *name, const char **vector)
-{
-	int s;
-	const char **v;
-	const char *n;
-	bool ncheck;
-
-	for (n = name, ncheck = true, s = 0, v = vector; *v != NULL; v++) {
-		switch (**v) {
-		case LPARENTHESIS:
-			ncheck = true;
-			s++;
-			continue;
-		case RPARENTHESIS:
-			ncheck = false;
-			s--;
-			continue;
-		case SEMICOLON:   case AMPERSAND:
-		case VERTICALBAR: case CARET:
-		case EOL:
-			ncheck = true;
-			continue;
-		case LESSTHAN:
-			ncheck = true;
-			v++;
-			continue;
-		case GREATERTHAN:
-			ncheck = true;
-			v++;
-			if (**v == GREATERTHAN)
-				v++;
-			continue;
-		default:
-#ifdef	DEBUG
-			fd_print(FD2,
-			    "alcheck: ncheck == %s, s == %d, *v == %s;\n",
-			    ncheck ? "true " : "false", s, *v);
-#endif
-			if (ncheck && EQUAL(n, *v)) {
-				vector = NULL;
-				break;
-			} else
-				ncheck = false;
-			continue;
-		}
-		break;	/* on cannot alias self error */
-	}
-
-	return vector;
 }
 
 /*

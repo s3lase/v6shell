@@ -41,9 +41,9 @@
  * diagnostics
  */
 #define	ERR_PAREN	") expected"
+#define	ERR_ALIASLOOP	"Alias loop error"
 #define	ERR_GARGCOUNT	"Arg count"
 #define	ERR_E2BIG	"Arg list too long"
-#define	ERR_ALIASSELF	"Cannot alias self"
 #define	ERR_FORK	"Cannot fork - try again"
 #define	ERR_PIPE	"Cannot pipe - try again"
 #define	ERR_TRIM	"Cannot trim"
