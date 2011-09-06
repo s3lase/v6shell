@@ -360,11 +360,11 @@ xgetc(bool dolsub)
 		return c;
 	}
 
-	if (wordp >= &word[WORDMAX - 2]) {
-		wordp -= 4;
+	if (wordp >= &word[WORDMAX - 5]) {
+		wordp -= 10;
 		while (xgetc(!DOLSUB) != EOL)
 			;	/* nothing */
-		wordp += 4;
+		wordp += 10;
 		error_message = ERR_TMARGS;
 		goto geterr;
 	}
