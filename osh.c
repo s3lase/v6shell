@@ -252,7 +252,7 @@ static	bool		verbose_flag;	/* verbose flag for `-v' option     */
 static	void		cmd_loop(bool);
 static	void		cmd_verbose(void);
 static	int		rpx_line(void);
-static	const char	**rp_alias(void);
+static	const char	**rp_alias(const char *);
 static	int		get_word(void);
 static	int		xgetc(bool);
 static	int		readc(void);
@@ -568,17 +568,18 @@ rpx_line(void)
 }
 
 /*
- * Read and parse an alias string pointed to by the global asp.
+ * Read and parse the alias string specified by string.
  * Return a pointer to aword on success.
  * Return a pointer to NULL  on error.
  */
 static const char **
-rp_alias(void)
+rp_alias(const char *string)
 {
 	struct tnode *t;
 	sigset_t nmask, omask;
 	char *wp;
 
+	asp = string;
 	linep  = aline;
 	elinep = &aline[LINEMAX - 5];
 	wordp  = aword;
@@ -588,17 +589,23 @@ rp_alias(void)
 	nul_count = 0;
 	do {
 		wp = linep;
-		if (get_word() == EOF)
+		if (get_word() == EOF) {
+			error_message = ERR_SYNTAX;/* same as: ([...] \) */
+			asp = NULL;
 			return NULL;
+		}
 	} while (*wp != EOL);
 	*wordp = NULL;
 
-	if (error)
+	if (error) {
+		asp = NULL;
 		return NULL;
+	}
 
 	if (wordp - aword > 1) {
 		if (any(**aword, ";&")) {
-			error_message = ERR_SYNTAX;/* same as: ( ; ) or ( & ) */
+			error_message = ERR_SYNTAX;/* same as: (;) or (&) */
+			asp = NULL;
 			return NULL;
 		}
 		(void)sigfillset(&nmask);
@@ -609,13 +616,16 @@ rp_alias(void)
 		if (error) {
 			tfree(t);
 			t = NULL;
+			asp = NULL;
 			return NULL;
 		}
 		tfree(t);
 		t = NULL;
+		asp = NULL;
 		return (const char **)aword;
 	}
-	error_message = ERR_SYNTAX;/* same as: ( ) */
+	error_message = ERR_SYNTAX;/* same as: () */
+	asp = NULL;
 	return NULL;
 }
 
@@ -1281,10 +1291,9 @@ syn3(char **p1, char **p2)
 				goto synerr;
 			}
 
-			/* Read and parse as into av. */
-			asp = as;
-			av  = rp_alias();
-			asp = NULL;
+			/* Read and parse as into av, bailing out on error. */
+			if ((av = rp_alias(as)) == NULL)
+				goto synerr;
 
 			/* Create alias vector. */
 			ac   = vacount(av);
@@ -1564,10 +1573,7 @@ execute1(struct tnode *t)
 					emsg = ERR_ARGCOUNT;
 					break;
 				}
-				asp = t->nav[2];
-				aok = (rp_alias() != NULL) ? true : false;
-				asp = NULL;
-				if (!aok) {
+				if (rp_alias(t->nav[2]) == NULL) {
 					emsg = error_message;
 					break;
 				}
