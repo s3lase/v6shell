@@ -1552,6 +1552,15 @@ execute1(struct tnode *t)
 
 	case SBI_ALIAS:
 		/*
+		 * If both name and string are specified, set alias name
+		 * to alias string.  If no string is specified, print the
+		 * current value of alias name's string.  If no arguments
+		 * are specified, print the name and string of each alias.
+		 *
+		 * NOTE: Each alias string value is printed as (value)
+		 *	 to indicate that the shell executes each alias
+		 *	 in a subshell.
+		 *
 		 * usage: alias [name [string]]
 		 */
 		if (t->nav[1] != NULL) {
@@ -1730,6 +1739,8 @@ execute1(struct tnode *t)
 
 	case SBI_UNALIAS:
 		/*
+		 * Unset the specified alias name and its string.
+		 *
 		 * usage: unalias name
 		 */
 		if (t->nav[1] != NULL && t->nav[2] == NULL) {
