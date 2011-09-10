@@ -1285,13 +1285,14 @@ syn3(char **p1, char **p2)
 			 * for alias name pointed to by pv[0].
 			 */
 
-			/* Check for alias loop error. */
+			/* Check for errors. */
+			if (error)
+				goto synerr;
 			if (alcnt > 2) {
 				error_message = ERR_ALIASLOOP;
 				goto synerr;
 			}
-
-			/* Read and parse as into av, bailing out on error. */
+			/* Read and parse as into av. */
 			if ((av = rp_alias(as)) == NULL)
 				goto synerr;
 
@@ -1299,7 +1300,6 @@ syn3(char **p1, char **p2)
 			ac   = vacount(av);
 			tav  = xmalloc((ac + n + 1) * sizeof(char *));
 			tavp = tav;
-
 			for (ac = 0; *av[ac] != EOL; ac++)
 				*tavp++ = xstrdup(av[ac]);
 			for (ac1 = 1; ac1 < n; ac1++)
