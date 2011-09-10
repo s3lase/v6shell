@@ -1218,7 +1218,7 @@ syn3(char **p1, char **p2)
 	const char *as;
 
 	pv    = xmalloc(((p2 - p1) + 1) * sizeof(char *));
-	pv[n] = NULL;
+	pv[0] = NULL;
 	flags = 0;
 	if (**p2 == RPARENTHESIS)
 		flags |= FNOFORK;
